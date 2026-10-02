@@ -1,19 +1,28 @@
 'use client';
 
-import type { ModelInfo, ViewerError } from '@twirl/viewer';
+import type { MeshOverrides, ModelInfo, ViewerError } from '@twirl/viewer';
 import { useCallback, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 
 import { LazyViewer } from './LazyViewer';
+import { PartsPanel } from './PartsPanel';
+
+const NO_OVERRIDES: MeshOverrides = {};
 
 export function DemoApp() {
   const [modelUrl, setModelUrl] = useState(SAMPLE_MODELS[0]?.url ?? null);
   const [info, setInfo] = useState<ModelInfo | null>(null);
+  const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [highlightedId, setHighlightedId] = useState<string | null>(null);
 
-  const selectSample = (url: string) => {
+  const loadModel = (url: string | null) => {
     setInfo(null);
+    setOverrides(NO_OVERRIDES);
+    setSelectedId(null);
+    setHighlightedId(null);
     setModelUrl(url);
   };
 
@@ -32,7 +41,7 @@ export function DemoApp() {
           <select
             className="rounded-md border border-neutral-300 bg-white px-2 py-1.5"
             value={modelUrl ?? ''}
-            onChange={(e) => selectSample(e.target.value)}
+            onChange={(e) => loadModel(e.target.value)}
           >
             {SAMPLE_MODELS.map((m) => (
               <option key={m.id} value={m.url}>
@@ -43,19 +52,39 @@ export function DemoApp() {
         </label>
       </header>
 
-      <main className="relative min-h-0 flex-1">
-        <LazyViewer
-          modelUrl={modelUrl}
-          environmentSources={ENVIRONMENT_SOURCES}
-          onLoad={setInfo}
-          onError={onError}
-        />
-        {info && (
-          <p className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/80 px-2 py-1 text-xs text-neutral-600">
-            {info.meshCount} meshes · {info.triangleCount.toLocaleString()} triangles
-          </p>
-        )}
-      </main>
+      <div className="flex min-h-0 flex-1">
+        <main className="relative min-h-0 flex-1">
+          <LazyViewer
+            modelUrl={modelUrl}
+            environmentSources={ENVIRONMENT_SOURCES}
+            meshOverrides={overrides}
+            highlightedMeshId={highlightedId ?? selectedId}
+            onMeshSelect={setSelectedId}
+            onLoad={setInfo}
+            onError={onError}
+          />
+          {info && (
+            <p className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/80 px-2 py-1 text-xs text-neutral-600">
+              {info.meshCount} meshes · {info.triangleCount.toLocaleString()} triangles
+            </p>
+          )}
+        </main>
+
+        <aside
+          className="w-[360px] shrink-0 overflow-y-auto border-l border-neutral-200 bg-white"
+          aria-label="Configure"
+        >
+          <h2 className="px-4 pt-4 text-sm font-semibold">Parts</h2>
+          <PartsPanel
+            nodes={info?.meshTree ?? []}
+            overrides={overrides}
+            selectedId={selectedId}
+            onSelect={setSelectedId}
+            onHighlight={setHighlightedId}
+            onOverridesChange={setOverrides}
+          />
+        </aside>
+      </div>
     </div>
   );
 }
