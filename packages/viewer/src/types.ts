@@ -54,6 +54,8 @@ export interface ViewerError {
 export interface MeshOverride {
   /** CSS hex color (#rrggbb). Multiplies with any base-color texture (tints it). */
   color?: string;
+  /** Show or hide this node. Hiding a group hides everything under it. */
+  visible?: boolean;
 }
 
 export type MeshOverrides = Record<string, MeshOverride>;

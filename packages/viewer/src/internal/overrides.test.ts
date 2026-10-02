@@ -85,3 +85,48 @@ describe('MeshOverrideApplier (color)', () => {
     expect(hex(m.a)).toBe('#ffffff');
   });
 });
+
+describe('MeshOverrideApplier (visibility)', () => {
+  it('hides and shows individual meshes', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root));
+    applier.apply({ '1': { visible: false } });
+    expect([m.frame.visible, m.seat.visible]).toEqual([true, false]);
+    applier.apply({ '1': { visible: true } });
+    expect(m.seat.visible).toBe(true);
+  });
+
+  it('hides a group (and so its subtree) by setting the group itself', () => {
+    const m = model();
+    new MeshOverrideApplier(indexNodes(m.root)).apply({ '2': { visible: false } });
+    expect(m.a.parent?.visible).toBe(false);
+    expect(m.a.visible).toBe(true); // children keep their own flag; three skips hidden parents
+  });
+
+  it("restores the file's own visibility when the override is removed", () => {
+    const m = model();
+    m.b.visible = false; // hidden in the source file
+    const applier = new MeshOverrideApplier(indexNodes(m.root));
+    applier.apply({ '2/1': { visible: true } });
+    expect(m.b.visible).toBe(true);
+    applier.apply({});
+    expect(m.b.visible).toBe(false);
+  });
+
+  it('combines color and visibility on the same node', () => {
+    const m = model();
+    new MeshOverrideApplier(indexNodes(m.root)).apply({
+      '0': { color: '#ff0000', visible: false },
+    });
+    expect(hex(m.frame)).toBe('#ff0000');
+    expect(m.frame.visible).toBe(false);
+  });
+
+  it('dispose() restores visibility too', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root));
+    applier.apply({ '0': { visible: false } });
+    applier.dispose();
+    expect(m.frame.visible).toBe(true);
+  });
+});

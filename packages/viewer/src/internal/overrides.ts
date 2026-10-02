@@ -38,7 +38,7 @@ export function resolveOverride<K extends keyof MeshOverride>(
 }
 
 /**
- * Applies color overrides to a model without touching shared or cached materials:
+ * Applies color and visibility overrides to a model without touching shared or cached materials:
  * a mesh gets private clones of its materials the first time it's colored, and gets its
  * originals back (clones disposed) when the override is removed.
  *
@@ -46,11 +46,14 @@ export function resolveOverride<K extends keyof MeshOverride>(
  */
 export class MeshOverrideApplier {
   private readonly originals = new Map<Mesh, MaterialSlot>();
+  private readonly originalVisibility = new Map<Object3D, boolean>();
 
   constructor(private readonly index: ReadonlyMap<NodeId, Object3D>) {}
 
   apply(overrides: MeshOverrides) {
     for (const [id, object] of this.index) {
+      // Visibility applies to the node itself; three.js hides a hidden group's subtree.
+      this.setVisibility(object, overrides[id]?.visible);
       if (!isMesh(object)) continue;
       const color = resolveOverride(id, overrides, 'color');
       if (color === undefined) this.restoreMaterials(object);
@@ -58,9 +61,22 @@ export class MeshOverrideApplier {
     }
   }
 
-  /** Restores every original material and frees the clones. */
+  /** Restores every original material and visibility, and frees the clones. */
   dispose() {
     for (const mesh of [...this.originals.keys()]) this.restoreMaterials(mesh);
+    for (const object of [...this.originalVisibility.keys()]) this.setVisibility(object, undefined);
+  }
+
+  private setVisibility(object: Object3D, visible: boolean | undefined) {
+    if (visible === undefined) {
+      const original = this.originalVisibility.get(object);
+      if (original === undefined) return;
+      object.visible = original;
+      this.originalVisibility.delete(object);
+      return;
+    }
+    if (!this.originalVisibility.has(object)) this.originalVisibility.set(object, object.visible);
+    object.visible = visible;
   }
 
   private tint(mesh: Mesh, color: string) {
