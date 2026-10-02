@@ -1,0 +1,171 @@
+# Architecture
+
+This document gives the big picture and is kept up to date as milestones land. Decisions and their
+reasoning live in the [ADRs](adr/). Sections marked **Planned** describe the intended design from
+the product spec; they become **Implemented** when the code exists and may change along the way.
+
+| Area                       | Status           |
+| -------------------------- | ---------------- |
+| Monorepo, tooling, CI      | Implemented (M0) |
+| Viewer (scene, parts)      | Planned (M1)     |
+| Config, rules, pricing     | Planned (M2)     |
+| Accounts, data, plans      | Planned (M3)     |
+| Uploads, editor, publish   | Planned (M4)     |
+| Embed, share links, export | Planned (M5)     |
+| Leads, events              | Planned (M6)     |
+
+## System overview
+
+```mermaid
+flowchart LR
+  subgraph Browser
+    Merchant["Merchant<br/>(dashboard)"]
+    Shopper["Shopper on merchant site<br/>(iframe embed)"]
+  end
+
+  subgraph Vercel["Vercel: apps/web (Next.js)"]
+    Dashboard["Dashboard pages"]
+    Embed["/embed/[id], /c/[shortId]"]
+    API["Route handlers / server actions"]
+    EmbedJS["public/embed.js"]
+  end
+
+  subgraph Packages["Shared packages"]
+    Viewer["@twirl/viewer<br/>React + R3F"]
+    Schema["@twirl/config-schema<br/>Zod, rules, pricing"]
+  end
+
+  Neon[("Neon Postgres<br/>(Prisma)")]
+  R2[("Cloudflare R2<br/>models & images")]
+  Resend["Resend<br/>email"]
+  Upstash[("Upstash Redis<br/>rate limits")]
+
+  Merchant --> Dashboard
+  Shopper --> EmbedJS --> Embed
+  Dashboard --> Viewer
+  Embed --> Viewer
+  Viewer --> Schema
+  API --> Schema
+  Dashboard --> API
+  Embed --> API
+  API --> Neon
+  API -- presigned URLs --> R2
+  Merchant -- direct upload --> R2
+  Viewer -- load GLB --> R2
+  API --> Resend
+  API --> Upstash
+```
+
+Key properties:
+
+- **Model files never pass through Vercel functions.** Their request bodies are limited to about
+  4.5 MB, while models can be up to 15 MB. The browser uploads straight to R2 using a presigned
+  URL, and the viewer loads models straight from R2.
+- **One rules/pricing implementation.** `@twirl/config-schema` computes the live price in the
+  browser, and the server recomputes it from the stored, immutable version before accepting a
+  quote.
+- **The viewer is portable.** It receives a config, a model URL and selections, renders them, and
+  reports events through callbacks. No Next.js, DB or auth imports (lint-enforced; see
+  [ADR-0001](adr/0001-monorepo.md)).
+
+## Package dependencies (Implemented)
+
+```mermaid
+flowchart TD
+  web["apps/web"] --> viewer["@twirl/viewer"]
+  web --> schema["@twirl/config-schema"]
+  viewer --> schema
+  web -. dev .-> eslint["@twirl/eslint-config"]
+  web -. dev .-> tsconfig["@twirl/tsconfig"]
+  viewer -. dev .-> eslint
+  viewer -. dev .-> tsconfig
+  schema -. dev .-> eslint
+  schema -. dev .-> tsconfig
+```
+
+## Data model (Planned, M3)
+
+Starting point from the spec. The final model will be recorded in an ADR in M3.
+
+```mermaid
+erDiagram
+  User ||--o{ Account : "OAuth accounts"
+  User ||--o{ Session : has
+  User ||--o{ Membership : has
+  Workspace ||--o{ Membership : has
+  Workspace ||--o{ Product : owns
+  Workspace ||--o{ Asset : owns
+  Workspace ||--o{ QuoteRequest : receives
+  Product ||--o{ ProductVersion : "draft / published"
+  ProductVersion }o--|| Asset : "uses model"
+  ProductVersion ||--o{ SharedConfiguration : "share links"
+  ProductVersion ||--o{ QuoteRequest : "quoted from"
+  Product ||--o{ Event : tracks
+
+  Workspace {
+    string id
+    string plan "FREE | STARTER | PRO"
+  }
+  Membership {
+    string role "OWNER (only role used in v1)"
+  }
+  ProductVersion {
+    json config "Zod-validated, schemaVersion"
+    string status "DRAFT | PUBLISHED (immutable)"
+  }
+  Asset {
+    string r2Key
+    int size
+    string status
+    json validationReport
+  }
+  SharedConfiguration {
+    string shortId
+    json selections
+  }
+```
+
+`ModelRequest` (modeling-service requests) and Auth.js's `VerificationToken` stand alone.
+
+## Upload flow (Planned, M4)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  actor M as Merchant browser
+  participant API as apps/web API
+  participant R2 as Cloudflare R2
+  participant DB as Postgres
+
+  M->>M: Validate file locally (type, ≤ 15 MB, parses, ≥ 1 mesh) and build report
+  M->>API: Request upload (name, size, mime)
+  API->>API: Auth + workspace check, plan limits
+  API->>DB: Create Asset (status = PENDING)
+  API-->>M: Presigned PUT URL
+  M->>R2: PUT file directly (bypasses Vercel)
+  M->>API: Confirm upload + client report
+  API->>R2: HEAD object (size, content type)
+  API->>DB: Asset status = READY, store report
+  API-->>M: Asset + validation report
+```
+
+## Embed flow (Planned, M5)
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant Page as Merchant page
+  participant JS as embed.js
+  participant Frame as iframe /embed/[id]
+  participant API as apps/web API
+
+  Page->>JS: script async, div with data-twirl-product
+  JS->>Frame: Create iframe for each div
+  Frame->>API: Load published version (config + model URL)
+  Frame->>Frame: Render viewer, evaluate rules + price
+  Frame-->>JS: postMessage resize / events
+  JS->>JS: Check origin + message shape, then resize the iframe
+  JS-->>Page: Forward events (CustomEvent)
+```
+
+`/embed/*` may be framed by any site. Every other route sends headers that forbid framing.
