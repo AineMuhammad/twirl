@@ -1,12 +1,29 @@
 import { Canvas } from '@react-three/fiber';
-import { type CSSProperties, useMemo } from 'react';
+import { type CSSProperties, Suspense, useCallback, useMemo, useState } from 'react';
 
 import { CameraControls } from './components/CameraControls';
+import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
+import { Model } from './components/Model';
+import { ModelErrorBoundary } from './components/ModelErrorBoundary';
 import { dprRange, readDeviceHints } from './internal/device';
+import { progressFromEvent, toViewerError } from './internal/errors';
+import {
+  DEFAULT_DECODER_PATHS,
+  type DecoderPaths,
+  type ModelInfo,
+  type ViewerError,
+} from './types';
 
 export interface ViewerProps {
+  /** GLB/glTF URL (http(s) or blob:). `null` renders an empty stage. */
+  modelUrl: string | null;
+  /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
+  decoderPaths?: Partial<DecoderPaths>;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
+  onLoad?: (info: ModelInfo) => void;
+  /** Called with a friendly message and the original error (for logging). */
+  onError?: (error: ViewerError) => void;
   className?: string;
   style?: CSSProperties;
 }
@@ -20,10 +37,57 @@ const rootStyle: CSSProperties = {
   touchAction: 'none',
 };
 
-export function Viewer({ enablePan = false, className, style }: ViewerProps) {
+export function Viewer({
+  modelUrl,
+  decoderPaths,
+  enablePan = false,
+  onLoad,
+  onError,
+  className,
+  style,
+}: ViewerProps) {
   const dpr = useMemo(
     () => dprRange(readDeviceHints(typeof window === 'undefined' ? undefined : window)),
     [],
+  );
+  const dracoPath = decoderPaths?.draco ?? DEFAULT_DECODER_PATHS.draco;
+  const basisPath = decoderPaths?.basis ?? DEFAULT_DECODER_PATHS.basis;
+  const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
+
+  // Overlay state is keyed by URL so a new model starts in "loading" without an extra effect.
+  const [overlay, setOverlay] = useState<{ url: string | null; state: OverlayState }>({
+    url: null,
+    state: { phase: 'idle' },
+  });
+  const overlayState: OverlayState =
+    overlay.url === modelUrl
+      ? overlay.state
+      : modelUrl
+        ? { phase: 'loading', progress: { fraction: null, loadedBytes: 0 } }
+        : { phase: 'idle' };
+
+  const handleProgress = useCallback(
+    (event: ProgressEvent) =>
+      setOverlay({
+        url: modelUrl,
+        state: { phase: 'loading', progress: progressFromEvent(event) },
+      }),
+    [modelUrl],
+  );
+  const handleLoaded = useCallback(
+    (info: ModelInfo) => {
+      setOverlay({ url: modelUrl, state: { phase: 'ready' } });
+      onLoad?.(info);
+    },
+    [modelUrl, onLoad],
+  );
+  const handleError = useCallback(
+    (cause: unknown) => {
+      const error = toViewerError(cause);
+      setOverlay({ url: modelUrl, state: { phase: 'error', error } });
+      onError?.(error);
+    },
+    [modelUrl, onError],
   );
 
   return (
@@ -35,17 +99,26 @@ export function Viewer({ enablePan = false, className, style }: ViewerProps) {
       >
         <ambientLight intensity={0.6} />
         <directionalLight position={[3, 5, 4]} intensity={1.5} />
-        <mesh>
-          <boxGeometry args={[1, 1, 1]} />
-          <meshStandardMaterial color="#9ca3af" />
-        </mesh>
+        {modelUrl && (
+          <ModelErrorBoundary key={modelUrl} onError={handleError}>
+            <Suspense fallback={null}>
+              <Model
+                url={modelUrl}
+                decoders={decoders}
+                onProgress={handleProgress}
+                onLoaded={handleLoaded}
+              />
+            </Suspense>
+          </ModelErrorBoundary>
+        )}
         <CameraControls
           enablePan={enablePan}
-          minDistance={1}
+          minDistance={0.5}
           maxDistance={20}
           maxPolarAngle={Math.PI / 2 - 0.05}
         />
       </Canvas>
+      <LoadingOverlay state={overlayState} />
     </div>
   );
 }
