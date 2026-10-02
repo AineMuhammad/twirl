@@ -1,7 +1,7 @@
 'use client';
 
 import type { MeshOverrides, MeshTreeNode } from '@twirl/viewer';
-import { useEffect, useId, useRef } from 'react';
+import { useId } from 'react';
 
 import { DEMO_SWATCHES, isHidden, patchOverride } from '@/lib/overrides';
 
@@ -12,14 +12,13 @@ export interface PartsPanelProps {
   overrides: MeshOverrides;
   selectedId: string | null;
   onSelect: (id: string | null) => void;
-  /** Hover/focus a part to outline it in 3D. */
-  onHighlight: (id: string | null) => void;
   onOverridesChange: (overrides: MeshOverrides) => void;
 }
 
 /**
- * Every part of the model with show/hide and color controls. Rows are plain buttons, so the
- * whole panel works with Tab/Shift+Tab, Enter and Space.
+ * Every part of the model with show/hide and color controls. Parts are chosen here, not by
+ * clicking the model, and nothing is outlined in 3D. Rows are plain buttons, so the whole panel
+ * works with Tab/Shift+Tab, Enter and Space.
  */
 export function PartsPanel(props: PartsPanelProps) {
   if (props.nodes.length === 0) {
@@ -40,7 +39,6 @@ function PartRow({
   overrides,
   selectedId,
   onSelect,
-  onHighlight,
   onOverridesChange,
   nodes,
 }: PartsPanelProps & { node: MeshTreeNode; depth: number }) {
@@ -48,12 +46,6 @@ function PartRow({
   const color = overrides[node.id]?.color;
   const selected = node.id === selectedId;
   const pickerId = useId();
-  const rowRef = useRef<HTMLDivElement>(null);
-
-  // When a part is picked in 3D, bring its row into view.
-  useEffect(() => {
-    if (selected) rowRef.current?.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
-  }, [selected]);
 
   const update = (patch: Parameters<typeof patchOverride>[2]) =>
     onOverridesChange(patchOverride(overrides, node.id, patch));
@@ -61,11 +53,8 @@ function PartRow({
   return (
     <li>
       <div
-        ref={rowRef}
         className={`flex items-center gap-1 rounded-md pr-2 ${selected ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-neutral-100'}`}
         style={{ paddingLeft: 4 + depth * 16 }}
-        onPointerEnter={() => onHighlight(node.id)}
-        onPointerLeave={() => onHighlight(null)}
       >
         <button
           type="button"
@@ -74,8 +63,6 @@ function PartRow({
           aria-label={`${hidden ? 'Show' : 'Hide'} ${node.name}`}
           title={hidden ? 'Show' : 'Hide'}
           onClick={() => update({ visible: hidden ? undefined : false })}
-          onFocus={() => onHighlight(node.id)}
-          onBlur={() => onHighlight(null)}
         >
           {hidden ? <EyeOffIcon /> : <EyeIcon />}
         </button>
@@ -85,8 +72,6 @@ function PartRow({
           aria-expanded={selected}
           aria-controls={pickerId}
           onClick={() => onSelect(selected ? null : node.id)}
-          onFocus={() => onHighlight(node.id)}
-          onBlur={() => onHighlight(null)}
         >
           <ChevronIcon className={`shrink-0 transition-transform ${selected ? 'rotate-90' : ''}`} />
           <span
@@ -168,7 +153,6 @@ function PartRow({
               overrides={overrides}
               selectedId={selectedId}
               onSelect={onSelect}
-              onHighlight={onHighlight}
               onOverridesChange={onOverridesChange}
             />
           ))}

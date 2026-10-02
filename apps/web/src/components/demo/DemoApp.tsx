@@ -26,22 +26,14 @@ export function DemoApp() {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [highlightedId, setHighlightedId] = useState<string | null>(null);
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
   const [tab, setTab] = useState('parts');
   const viewer = useRef<ViewerHandle>(null);
-
-  // Picking a part in 3D shows it in the Parts tab.
-  const selectFromModel = useCallback((id: string | null) => {
-    setSelectedId(id);
-    if (id) setTab('parts');
-  }, []);
 
   const loadModel = useCallback((url: string | null) => {
     setInfo(null);
     setOverrides(NO_OVERRIDES);
     setSelectedId(null);
-    setHighlightedId(null);
     setModelUrl(url);
   }, []);
   const local = useLocalModel(loadModel);
@@ -126,8 +118,6 @@ export function DemoApp() {
             scene={scene}
             environmentSources={ENVIRONMENT_SOURCES}
             meshOverrides={overrides}
-            highlightedMeshId={highlightedId ?? selectedId}
-            onMeshSelect={selectFromModel}
             onLoad={setInfo}
             onError={onError}
           />
@@ -164,7 +154,6 @@ export function DemoApp() {
                     overrides={overrides}
                     selectedId={selectedId}
                     onSelect={setSelectedId}
-                    onHighlight={setHighlightedId}
                     onOverridesChange={setOverrides}
                   />
                 ),
