@@ -1,6 +1,6 @@
 # 0002. HDRI environments and static asset hosting
 
-- **Status:** Accepted
+- **Status:** Accepted; partially superseded by [0003](0003-hdris-light-only.md) (backgrounds, ground projection, 2k rule)
 - **Date:** 2026-10-02
 
 ## Context
