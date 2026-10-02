@@ -8,9 +8,11 @@ import {
 } from '../environments';
 import type { Stage } from '../internal/stage';
 import type { SceneSettings } from '../scene';
+import type { EnvironmentStatus } from '../types';
 import { EnvironmentLighting } from './EnvironmentLighting';
 import { ErrorBoundary } from './ErrorBoundary';
 import { Lighting } from './Lighting';
+import { StatusReporter } from './StatusReporter';
 
 export interface SceneLightingProps {
   scene: SceneSettings;
@@ -18,6 +20,7 @@ export interface SceneLightingProps {
   shadowMapSize: number;
   sources: EnvironmentSources;
   resolution: EnvironmentResolution;
+  onStatus: (status: EnvironmentStatus) => void;
 }
 
 /**
@@ -31,6 +34,7 @@ export function SceneLighting({
   shadowMapSize,
   sources,
   resolution,
+  onStatus,
 }: SceneLightingProps) {
   const procedural = (
     <Lighting
@@ -41,12 +45,25 @@ export function SceneLighting({
     />
   );
   const id = scene.lighting;
+  const failed = useCallback(
+    (error: unknown) => {
+      console.warn('[twirl] Environment failed to load; using studio lighting.', error);
+      onStatus('error');
+    },
+    [onStatus],
+  );
   const warn = useCallback(
-    (error: unknown) =>
-      console.warn('[twirl] Environment failed to load; using studio lighting.', error),
+    (error: unknown) => console.warn('[twirl] 2k environment failed; keeping 1k.', error),
     [],
   );
-  if (!isEnvironmentId(id)) return procedural;
+  if (!isEnvironmentId(id)) {
+    return (
+      <>
+        <StatusReporter status="ready" onStatus={onStatus} />
+        {procedural}
+      </>
+    );
+  }
 
   const common = { id, stage, shadows: scene.shadows, shadowMapSize };
   const url1k = environmentUrl(id, '1k', sources);
@@ -54,12 +71,21 @@ export function SceneLighting({
   const base = <EnvironmentLighting {...common} url={url1k} />;
 
   return (
-    <ErrorBoundary key={url1k} onError={warn} fallback={procedural}>
-      <Suspense fallback={procedural}>
+    <ErrorBoundary key={url1k} onError={failed} fallback={procedural}>
+      <Suspense
+        fallback={
+          <>
+            {/* Studio light stands in while the HDRI downloads and decodes. */}
+            <StatusReporter status="loading" onStatus={onStatus} />
+            {procedural}
+          </>
+        }
+      >
+        <StatusReporter status="ready" onStatus={onStatus} />
         {url === url1k ? (
           base
         ) : (
-          // If only the 2k file fails, keep the 1k one.
+          // The 2k upgrade loads silently over the 1k version; if it fails, 1k stays.
           <ErrorBoundary key={url} onError={warn} fallback={base}>
             <Suspense fallback={base}>
               <EnvironmentLighting {...common} url={url} />

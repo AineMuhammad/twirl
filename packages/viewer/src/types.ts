@@ -59,3 +59,6 @@ export interface MeshOverride {
 }
 
 export type MeshOverrides = Record<string, MeshOverride>;
+
+/** HDRI environment loading state ('ready' also covers procedural presets, which are instant). */
+export type EnvironmentStatus = 'loading' | 'ready' | 'error';
