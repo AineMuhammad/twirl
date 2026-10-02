@@ -54,6 +54,8 @@ export function Playground() {
   const onFile = (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) selectModel(URL.createObjectURL(file));
+    // Reset so choosing the same file again still fires onChange.
+    event.target.value = '';
   };
 
   const onError = useCallback((e: ViewerError) => {
