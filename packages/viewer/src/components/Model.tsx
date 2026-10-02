@@ -44,7 +44,15 @@ export function Model({
 
   // useLoader caches by URL; clone so two viewers of the same model don't fight over one
   // Object3D (an object can only have one parent). SkeletonUtils keeps skinned meshes intact.
-  const scene = useMemo(() => cloneSkinned(gltf.scene), [gltf.scene]);
+  const scene = useMemo(() => {
+    const copy = cloneSkinned(gltf.scene);
+    copy.traverse((object) => {
+      // Whether shadows actually render is decided by the key light (castShadow), not here.
+      object.castShadow = true;
+      object.receiveShadow = true;
+    });
+    return copy;
+  }, [gltf.scene]);
   const mixer = useMemo(() => new AnimationMixer(scene), [scene]);
 
   useEffect(() => {

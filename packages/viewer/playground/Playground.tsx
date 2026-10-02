@@ -1,6 +1,15 @@
 import { type ChangeEvent, type CSSProperties, useCallback, useRef, useState } from 'react';
 
-import { type ModelInfo, Viewer, type ViewerError, type ViewerHandle } from '../src';
+import {
+  DEFAULT_SCENE,
+  LIGHTING_PRESETS,
+  type LightingPreset,
+  type ModelInfo,
+  type SceneSettings,
+  Viewer,
+  type ViewerError,
+  type ViewerHandle,
+} from '../src';
 
 const SAMPLES = [
   { label: 'Sofa (Draco + WebP, animated)', url: '/samples/sofa.glb' },
@@ -26,6 +35,9 @@ export function Playground() {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [error, setError] = useState<ViewerError | null>(null);
   const [mounted, setMounted] = useState(true);
+  const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const bg = scene.background;
+  const bgColors = bg.type === 'solid' ? [bg.color, bg.color] : [bg.from, bg.to];
 
   const blobUrl = useRef<string | null>(null);
   const viewer = useRef<ViewerHandle>(null);
@@ -72,6 +84,84 @@ export function Playground() {
           Local .glb file
           <input type="file" accept=".glb,.gltf" onChange={onFile} style={{ display: 'block' }} />
         </label>
+        <fieldset>
+          <legend>Scene</legend>
+          <label>
+            Background{' '}
+            <select
+              value={bg.type}
+              onChange={(e) =>
+                setScene({
+                  ...scene,
+                  background:
+                    e.target.value === 'solid'
+                      ? { type: 'solid', color: bgColors[0] ?? '#ffffff' }
+                      : {
+                          type: 'gradient',
+                          from: bgColors[0] ?? '#ffffff',
+                          to: bgColors[1] ?? '#e9e9ec',
+                        },
+                })
+              }
+            >
+              <option value="solid">Solid</option>
+              <option value="gradient">Gradient</option>
+            </select>
+          </label>
+          <div>
+            <input
+              type="color"
+              aria-label={bg.type === 'solid' ? 'Background color' : 'Gradient top color'}
+              value={bgColors[0]}
+              onChange={(e) =>
+                setScene({
+                  ...scene,
+                  background:
+                    bg.type === 'solid'
+                      ? { type: 'solid', color: e.target.value }
+                      : { ...bg, from: e.target.value },
+                })
+              }
+            />
+            {bg.type === 'gradient' && (
+              <input
+                type="color"
+                aria-label="Gradient bottom color"
+                value={bg.to}
+                onChange={(e) => setScene({ ...scene, background: { ...bg, to: e.target.value } })}
+              />
+            )}
+          </div>
+          <label>
+            Lighting{' '}
+            <select
+              value={scene.lighting}
+              onChange={(e) => setScene({ ...scene, lighting: e.target.value as LightingPreset })}
+            >
+              {LIGHTING_PRESETS.map((p) => (
+                <option key={p} value={p}>
+                  {p}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label style={{ display: 'block' }}>
+            <input
+              type="checkbox"
+              checked={scene.floor}
+              onChange={(e) => setScene({ ...scene, floor: e.target.checked })}
+            />{' '}
+            Floor
+          </label>
+          <label style={{ display: 'block' }}>
+            <input
+              type="checkbox"
+              checked={scene.shadows}
+              onChange={(e) => setScene({ ...scene, shadows: e.target.checked })}
+            />{' '}
+            Shadows
+          </label>
+        </fieldset>
         <button
           type="button"
           onClick={() => viewer.current?.replayAnimations()}
@@ -98,7 +188,15 @@ export function Playground() {
         </section>
       </aside>
       <main style={{ flex: 1, minWidth: 280, minHeight: 360 }}>
-        {mounted && <Viewer ref={viewer} modelUrl={modelUrl} onLoad={setInfo} onError={onError} />}
+        {mounted && (
+          <Viewer
+            ref={viewer}
+            modelUrl={modelUrl}
+            scene={scene}
+            onLoad={setInfo}
+            onError={onError}
+          />
+        )}
       </main>
     </div>
   );

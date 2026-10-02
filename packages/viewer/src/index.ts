@@ -12,3 +12,11 @@ export {
   type ViewerError,
   type ViewerErrorKind,
 } from './types';
+export {
+  backgroundCss,
+  DEFAULT_SCENE,
+  LIGHTING_PRESETS,
+  type LightingPreset,
+  type SceneBackground,
+  type SceneSettings,
+} from './scene';
