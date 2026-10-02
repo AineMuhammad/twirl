@@ -15,7 +15,8 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@twirl/config-schema": "workspace:*"
+    "@twirl/config-schema": "workspace:*",
+    "three-mesh-bvh": "0.8.3"
   },
   "devDependencies": {
     "@react-three/drei": "10.7.9",
