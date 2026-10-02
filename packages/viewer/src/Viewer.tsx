@@ -10,13 +10,14 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { Box3 } from 'three';
+import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'three';
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig } from './components/CameraRig';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
 import { SceneLighting } from './components/SceneLighting';
+import { SoftShadow } from './components/SoftShadow';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
 import { Model, type ModelController } from './components/Model';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -92,6 +93,19 @@ export interface ViewerProps {
 }
 
 const CAMERA_FOV = 35;
+
+/**
+ * Khronos PBR Neutral tone mapping: designed for product rendering, it keeps base colors true
+ * (a picked color looks like that color) where ACES darkens and desaturates them.
+ */
+const GL: Partial<WebGLRendererParameters> & { toneMapping: number; toneMappingExposure: number } =
+  {
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: false,
+    toneMapping: NeutralToneMapping,
+    toneMappingExposure: 1,
+  };
 const NO_OVERRIDES: MeshOverrides = {};
 const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
 
@@ -216,6 +230,14 @@ export function Viewer({
 
   const stage = current?.stage ?? DEFAULT_STAGE;
 
+  // Soft shadows re-render only while the model moves, or once after its shape changes.
+  const [animating, setAnimating] = useState(false);
+  const hiddenSignature = Object.entries(meshOverrides)
+    .filter(([, o]) => o.visible === false)
+    .map(([id]) => id)
+    .sort()
+    .join(',');
+
   const [environmentStatus, setEnvironmentStatus] = useState<EnvironmentStatus>('ready');
   const handleEnvironmentStatus = useCallback(
     (status: EnvironmentStatus) => {
@@ -236,7 +258,7 @@ export function Viewer({
         dpr={quality.dpr}
         shadows="percentage"
         camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
-        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
+        gl={GL}
       >
         <AdaptiveQuality onChange={setQualityFactor} />
         <SceneLighting
@@ -260,9 +282,17 @@ export function Viewer({
                 controllerRef={modelController}
                 onProgress={handleProgress}
                 onLoaded={handleLoaded}
+                onAnimatingChange={setAnimating}
               />
             </Suspense>
           </ErrorBoundary>
+        )}
+        {current && scene.shadows && (
+          <SoftShadow
+            key={`${current.url}|${hiddenSignature}|${animating}`}
+            stage={stage}
+            live={animating}
+          />
         )}
         {current && (
           <Floor

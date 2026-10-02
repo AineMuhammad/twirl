@@ -62,7 +62,8 @@ export function Floor({ stage, color, visible, shadows }: FloorProps) {
           dithering
         />
       ) : (
-        <shadowMaterial opacity={0.22} transparent depthWrite={false} />
+        // Faint: the soft contact shadow does the grounding, this only adds light direction.
+        <shadowMaterial opacity={0.12} transparent depthWrite={false} />
       )}
     </mesh>
   );

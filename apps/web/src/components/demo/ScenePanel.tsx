@@ -1,10 +1,10 @@
 'use client';
 
 import {
+  backgroundCss,
   ENVIRONMENT_IDS,
   ENVIRONMENTS,
   LIGHTING_PRESETS,
-  type SceneBackground,
   type SceneSettings,
 } from '@twirl/viewer/settings';
 import { useState } from 'react';
@@ -66,10 +66,6 @@ function LightingTile({
   );
 }
 
-function paint(bg: SceneBackground) {
-  return bg.type === 'solid' ? bg.color : `linear-gradient(${bg.from}, ${bg.to})`;
-}
-
 export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps) {
   const set = (patch: Partial<SceneSettings>) => onChange({ ...scene, ...patch });
   const [customOpen, setCustomOpen] = useState(false);
@@ -78,22 +74,6 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
 
   return (
     <div className="space-y-8 px-5 pb-6">
-      <section>
-        <SectionTitle hint="Real places, lighting only">Environment</SectionTitle>
-        <div className="grid grid-cols-2 gap-3">
-          {ENVIRONMENT_IDS.map((id) => (
-            <LightingTile
-              key={id}
-              label={ENVIRONMENTS[id].label}
-              tones={LIGHTING_TONES[id]}
-              pressed={scene.lighting === id}
-              loading={scene.lighting === id && lightingLoading}
-              onClick={() => set({ lighting: id })}
-            />
-          ))}
-        </div>
-      </section>
-
       <section>
         <SectionTitle hint="Instant">Studio light</SectionTitle>
         <div className="grid grid-cols-2 gap-3">
@@ -105,6 +85,22 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
               pressed={scene.lighting === preset}
               loading={false}
               onClick={() => set({ lighting: preset })}
+            />
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <SectionTitle hint="Real places, lighting only">Environment</SectionTitle>
+        <div className="grid grid-cols-2 gap-3">
+          {ENVIRONMENT_IDS.map((id) => (
+            <LightingTile
+              key={id}
+              label={ENVIRONMENTS[id].label}
+              tones={LIGHTING_TONES[id]}
+              pressed={scene.lighting === id}
+              loading={scene.lighting === id && lightingLoading}
+              onClick={() => set({ lighting: id })}
             />
           ))}
         </div>
@@ -127,7 +123,7 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
                   setCustomOpen(false);
                 }}
                 className={`grid size-11 place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform hover:scale-105 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2' : ''}`}
-                style={{ background: paint(preset.background) }}
+                style={{ background: backgroundCss(preset.background) }}
               >
                 {active && <CheckBadge />}
               </button>

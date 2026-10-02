@@ -8,9 +8,12 @@ import type { EnvironmentId } from './environments';
  * until then they're plain types. Colors are CSS hex strings (#rrggbb).
  */
 export type SceneBackground =
-  { type: 'solid'; color: string } | { type: 'gradient'; from: string; to: string };
+  | { type: 'solid'; color: string }
+  | { type: 'gradient'; from: string; to: string }
+  /** Soft studio backdrop: a lighter centre (behind the product) falling off to `outer`. */
+  | { type: 'radial'; inner: string; outer: string };
 
-export const LIGHTING_PRESETS = ['studio', 'soft', 'outdoor', 'dramatic'] as const;
+export const LIGHTING_PRESETS = ['warm', 'studio', 'soft', 'outdoor', 'dramatic'] as const;
 /** Procedural lighting built in-scene: instant, no download. */
 export type LightingPreset = (typeof LIGHTING_PRESETS)[number];
 
@@ -25,12 +28,13 @@ export interface SceneSettings {
   shadows: boolean;
 }
 
-const DEFAULT_BACKGROUND: SceneBackground = { type: 'gradient', from: '#ffffff', to: '#e9e9ec' };
+const DEFAULT_BACKGROUND: SceneBackground = { type: 'radial', inner: '#fffaf3', outer: '#eadbc8' };
 
 export const DEFAULT_SCENE: SceneSettings = {
   background: DEFAULT_BACKGROUND,
-  lighting: 'studio',
-  floor: true,
+  lighting: 'warm',
+  // Seamless studio look: the product sits on the backdrop with a soft contact shadow.
+  floor: false,
   shadows: true,
 };
 
@@ -39,6 +43,8 @@ export function backgroundCss(background: SceneBackground): string {
   switch (background.type) {
     case 'solid':
       return background.color;
+    case 'radial':
+      return `radial-gradient(120% 95% at 50% 38%, ${background.inner} 0%, ${background.outer} 100%)`;
     case 'gradient':
       return `linear-gradient(180deg, ${background.from} 0%, ${background.to} 100%)`;
   }

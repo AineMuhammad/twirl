@@ -21,7 +21,11 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
 
   const setBackground = (background: SceneBackground) => onChange({ ...scene, background });
   const backgroundFor = (type: SceneBackground['type']): SceneBackground =>
-    type === 'solid' ? { type, color: colors.solid } : { type, from: colors.from, to: colors.to };
+    type === 'solid'
+      ? { type, color: colors.solid }
+      : type === 'radial'
+        ? { type, inner: colors.from, outer: colors.to }
+        : { type, from: colors.from, to: colors.to };
 
   return (
     <fieldset>
@@ -59,6 +63,7 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
         >
           <option value="solid">Solid</option>
           <option value="gradient">Gradient</option>
+          <option value="radial">Radial</option>
         </select>
       </label>
 
@@ -83,6 +88,22 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
               value={bg[key]}
               onChange={(e) => {
                 setColors({ ...colors, [key]: e.target.value });
+                setBackground({ ...bg, [key]: e.target.value });
+              }}
+            />
+          ))}
+        </div>
+      )}
+      {bg.type === 'radial' && (
+        <div>
+          {(['inner', 'outer'] as const).map((key) => (
+            <input
+              key={key}
+              type="color"
+              aria-label={key === 'inner' ? 'Backdrop centre color' : 'Backdrop edge color'}
+              value={bg[key]}
+              onChange={(e) => {
+                setColors({ ...colors, [key === 'inner' ? 'from' : 'to']: e.target.value });
                 setBackground({ ...bg, [key]: e.target.value });
               }}
             />

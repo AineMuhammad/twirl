@@ -1,5 +1,12 @@
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
-import { type RefObject, useEffect, useImperativeHandle, useLayoutEffect, useMemo } from 'react';
+import {
+  type RefObject,
+  useEffect,
+  useImperativeHandle,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+} from 'react';
 import { AnimationMixer, type Box3 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -28,6 +35,8 @@ export interface ModelProps {
   onMeshSelect: ((id: NodeId | null) => void) | undefined;
   controllerRef: RefObject<ModelController | null>;
   onProgress: (event: ProgressEvent) => void;
+  /** Called when the model starts or stops animating (e.g. to refresh soft shadows). */
+  onAnimatingChange: (animating: boolean) => void;
   /** `bounds` is the model's world-space box once its animations have finished. */
   onLoaded: (info: ModelInfo, bounds: Box3) => void;
 }
@@ -43,6 +52,7 @@ export function Model({
   controllerRef,
   onProgress,
   onLoaded,
+  onAnimatingChange,
 }: ModelProps) {
   const renderer = useThree((state) => state.gl);
   const gltf = useLoader(
@@ -120,8 +130,14 @@ export function Model({
     [mixer, clips],
   );
 
+  const animating = useRef(false);
   useFrame((_, delta) => {
     mixer.update(delta);
+    const running = clips.some((clip) => mixer.existingAction(clip)?.isRunning() === true);
+    if (running !== animating.current) {
+      animating.current = running;
+      onAnimatingChange(running);
+    }
   });
 
   return (

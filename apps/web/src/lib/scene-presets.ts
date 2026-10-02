@@ -1,14 +1,15 @@
 import type { EnvironmentId, LightingPreset, SceneBackground } from '@twirl/viewer';
 
 export const BACKGROUND_PRESETS: { name: string; background: SceneBackground }[] = [
-  { name: 'Studio white', background: { type: 'gradient', from: '#ffffff', to: '#e9e9ec' } },
-  { name: 'Warm', background: { type: 'gradient', from: '#fffaf3', to: '#eadfce' } },
-  { name: 'Cool', background: { type: 'gradient', from: '#f7fafc', to: '#d9e2ec' } },
-  { name: 'Light grey', background: { type: 'solid', color: '#f1f1f2' } },
-  { name: 'Charcoal', background: { type: 'solid', color: '#26272b' } },
+  { name: 'Warm studio', background: { type: 'radial', inner: '#fffaf3', outer: '#eadbc8' } },
+  { name: 'White studio', background: { type: 'radial', inner: '#ffffff', outer: '#e4e4e8' } },
+  { name: 'Cool studio', background: { type: 'radial', inner: '#f8fbff', outer: '#d5dfec' } },
+  { name: 'Sage', background: { type: 'radial', inner: '#f6f8f3', outer: '#d6dccd' } },
+  { name: 'Charcoal', background: { type: 'radial', inner: '#3b3c41', outer: '#18191c' } },
 ];
 
 export const PROCEDURAL_LABELS: Record<LightingPreset, string> = {
+  warm: 'Warm',
   studio: 'Studio',
   soft: 'Soft',
   outdoor: 'Outdoor',
@@ -17,6 +18,7 @@ export const PROCEDURAL_LABELS: Record<LightingPreset, string> = {
 
 /** Two-tone mood previews for the lighting cards (approximate colors of each light). */
 export const LIGHTING_TONES: Record<LightingPreset | EnvironmentId, [string, string]> = {
+  warm: ['#fff1dc', '#e0b98a'],
   studio: ['#ffffff', '#d4d4d8'],
   soft: ['#fafafa', '#e7e5e4'],
   outdoor: ['#dbeafe', '#a7c4a0'],

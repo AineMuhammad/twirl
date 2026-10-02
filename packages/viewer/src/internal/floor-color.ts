@@ -7,7 +7,12 @@ import type { SceneBackground } from '../scene';
  * slightly darkened so the floor's soft edge is visible but not a hard disc.
  */
 export function floorColorFor(background: SceneBackground): string {
-  const base = background.type === 'solid' ? background.color : background.to;
+  const base =
+    background.type === 'solid'
+      ? background.color
+      : background.type === 'radial'
+        ? background.outer
+        : background.to;
   const color = new Color(base);
   const hsl = { h: 0, s: 0, l: 0 };
   color.getHSL(hsl);
