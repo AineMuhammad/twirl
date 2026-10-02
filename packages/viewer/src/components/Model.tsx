@@ -5,6 +5,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 import { longestClipDuration, playAllOnce, settledBounds } from '../internal/animation';
+import { createDeferredDisposer, disposeObject3D } from '../internal/dispose';
 import { configureGltfLoader } from '../internal/loaders';
 import { describeModel } from '../internal/model-info';
 import { prefersReducedMotion } from '../internal/motion';
@@ -69,7 +70,21 @@ export function Model({
     };
   }, [mixer, clips, playAnimationsOnLoad]);
 
-  useEffect(() => () => mixer.uncacheRoot(scene), [mixer, scene]);
+  // Free GPU memory, decoded textures and the loader cache entry when the model goes away.
+  // Deferred so StrictMode's dev-only unmount/remount doesn't destroy resources still in use.
+  const disposer = useMemo(
+    () =>
+      createDeferredDisposer(() => {
+        mixer.uncacheRoot(scene);
+        disposeObject3D(gltf.scene, { closeImageBitmaps: true });
+        useLoader.clear(GLTFLoader, url);
+      }),
+    [mixer, scene, gltf.scene, url],
+  );
+  useEffect(() => {
+    disposer.cancel();
+    return () => disposer.schedule();
+  }, [disposer]);
 
   useImperativeHandle(
     controllerRef,
