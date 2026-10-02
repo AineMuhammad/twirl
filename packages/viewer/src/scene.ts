@@ -7,15 +7,7 @@ import type { EnvironmentId } from './environments';
  * until then they're plain types. Colors are CSS hex strings (#rrggbb).
  */
 export type SceneBackground =
-  | { type: 'solid'; color: string }
-  | { type: 'gradient'; from: string; to: string }
-  /**
-   * Show the HDRI itself behind the product. Only applies when `lighting` is an environment;
-   * otherwise the default gradient is used. `blur` 0–1 (0 = sharp). Blurring hides the low
-   * resolution of a 1k panorama and reads like depth of field. `ground` projects the
-   * panorama's floor under the model so it stands in the scene (blur doesn't apply then).
-   */
-  | { type: 'environment'; blur: number; ground?: boolean };
+  { type: 'solid'; color: string } | { type: 'gradient'; from: string; to: string };
 
 export const LIGHTING_PRESETS = ['studio', 'soft', 'outdoor', 'dramatic'] as const;
 /** Procedural lighting built in-scene: instant, no download. */
@@ -23,7 +15,10 @@ export type LightingPreset = (typeof LIGHTING_PRESETS)[number];
 
 export interface SceneSettings {
   background: SceneBackground;
-  /** A procedural preset, or an HDRI environment id (downloads ~1.5 MB). */
+  /**
+   * A procedural preset, or an HDRI environment id (downloads ~1.5 MB). HDRIs only light the
+   * product (lighting and reflections); they're never shown as the background.
+   */
   lighting: LightingPreset | EnvironmentId;
   floor: boolean;
   shadows: boolean;
@@ -45,9 +40,6 @@ export function backgroundCss(background: SceneBackground): string {
       return background.color;
     case 'gradient':
       return `linear-gradient(180deg, ${background.from} 0%, ${background.to} 100%)`;
-    case 'environment':
-      // Painted behind the canvas while the HDRI loads, or if it can't be shown.
-      return backgroundCss(DEFAULT_BACKGROUND);
   }
 }
 
@@ -56,12 +48,7 @@ export function backgroundCss(background: SceneBackground): string {
  * slightly darkened so the floor's soft edge is visible but not a hard disc.
  */
 export function floorColorFor(background: SceneBackground): string {
-  const base =
-    background.type === 'solid'
-      ? background.color
-      : background.type === 'gradient'
-        ? background.to
-        : '#9a9a9a'; // neutral ground under a photographic environment
+  const base = background.type === 'solid' ? background.color : background.to;
   const color = new Color(base);
   const hsl = { h: 0, s: 0, l: 0 };
   color.getHSL(hsl);

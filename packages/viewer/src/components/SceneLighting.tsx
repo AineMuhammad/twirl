@@ -48,10 +48,7 @@ export function SceneLighting({
   );
   if (!isEnvironmentId(id)) return procedural;
 
-  const bg = scene.background;
-  const backgroundBlur = bg.type === 'environment' ? bg.blur : null;
-  const ground = bg.type === 'environment' && bg.ground === true;
-  const common = { id, stage, shadows: scene.shadows, shadowMapSize, backgroundBlur, ground };
+  const common = { id, stage, shadows: scene.shadows, shadowMapSize };
   const url1k = environmentUrl(id, '1k', sources);
   const url = environmentUrl(id, resolution, sources);
   const base = <EnvironmentLighting {...common} url={url1k} />;

@@ -22,7 +22,6 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import {
   DEFAULT_ENVIRONMENT_SOURCES,
   type EnvironmentSources,
-  isEnvironmentId,
   pickEnvironmentResolution,
 } from './environments';
 import { dprRange, readDeviceHints } from './internal/device';
@@ -63,8 +62,7 @@ export interface ViewerProps {
   onMeshSelect?: (id: string | null) => void;
   /**
    * Where HDRI environments are served from: base URLs ending in `/` for `1k` (default
-   * `/hdri/1k/`) and optionally `2k`, which is used for visible environment backgrounds on
-   * large screens.
+   * `/hdri/1k/`) and optionally `2k`, used on large viewers for sharper reflections.
    */
   environmentSources?: Partial<EnvironmentSources>;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
@@ -135,8 +133,6 @@ export function Viewer({
     () => (sources2k ? { '1k': sources1k, '2k': sources2k } : { '1k': sources1k }),
     [sources1k, sources2k],
   );
-  const environmentShown =
-    scene.background.type === 'environment' && isEnvironmentId(scene.lighting);
   const dracoPath = decoderPaths?.draco ?? DEFAULT_DECODER_PATHS.draco;
   const basisPath = decoderPaths?.basis ?? DEFAULT_DECODER_PATHS.basis;
   const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
@@ -149,7 +145,7 @@ export function Viewer({
   );
 
   const container = useRef<HTMLDivElement>(null);
-  // Physical width of the viewer, to decide whether a visible HDRI background deserves 2k.
+  // Physical width of the viewer, to decide whether HDRIs are worth loading at 2k.
   const [physicalWidth, setPhysicalWidth] = useState(0);
   useEffect(() => {
     const element = container.current;
@@ -161,7 +157,6 @@ export function Viewer({
     return () => observer.disconnect();
   }, [device.devicePixelRatio]);
   const resolution = pickEnvironmentResolution({
-    backgroundVisible: environmentShown,
     physicalWidth,
     has2k: Boolean(sources['2k']),
   });
@@ -254,8 +249,7 @@ export function Viewer({
           <Floor
             stage={stage}
             color={floorColorFor(scene.background)}
-            // Over a photographic background a coloured disc looks pasted on; keep only the shadow.
-            visible={scene.floor && !environmentShown}
+            visible={scene.floor}
             shadows={scene.shadows}
           />
         )}
