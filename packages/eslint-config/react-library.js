@@ -29,7 +29,10 @@ export default defineConfig(
               group: ['@prisma/*', 'next-auth', 'next-auth/*', '@auth/*'],
               message: 'Library packages must not know about the database or auth.',
             },
-            { group: ['@twirl/web', '@twirl/web/*'], message: 'Libraries must not import the app.' },
+            {
+              group: ['@twirl/web', '@twirl/web/*'],
+              message: 'Libraries must not import the app.',
+            },
           ],
         },
       ],
