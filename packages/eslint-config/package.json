@@ -1,0 +1,37 @@
+{
+  "name": "@twirl/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./base": "./base.js",
+    "./react-library": "./react-library.js",
+    "./next": "./next.js"
+  },
+  "dependencies": {
+    "@eslint/js": "9.39.5",
+    "eslint-config-next": "16.3.8",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-jsx-a11y": "6.10.2",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "globals": "17.13.0",
+    "typescript-eslint": "8.71.0"
+  },
+  "devDependencies": {
+    "eslint": "9.39.5",
+    "next": "16.3.8",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "typescript": "6.0.3"
+  },
+  "peerDependencies": {
+    "eslint": "^9.39.0",
+    "typescript": ">=5.8 <6.1",
+    "next": ">=16"
+  },
+  "peerDependenciesMeta": {
+    "next": {
+      "optional": true
+    }
+  }
+}
