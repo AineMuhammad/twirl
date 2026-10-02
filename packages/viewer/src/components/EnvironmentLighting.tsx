@@ -1,13 +1,17 @@
 import { Environment } from '@react-three/drei';
 import { useLoader } from '@react-three/fiber';
 import { useEffect, useMemo } from 'react';
-import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
 import { type EnvironmentId, ENVIRONMENTS } from '../environments';
 import { createDeferredDisposer } from '../internal/dispose';
-import { keyIntensityFor, prepareEquirect, raiseToMinElevation, sunOf } from '../internal/hdr';
+import { keyIntensityFor, raiseToMinElevation } from '../internal/hdr';
+import { sunOfTexture } from '../internal/hdr-decode';
+import { HDRWorkerLoader } from '../internal/hdr-worker-loader';
+import type { SunEstimate } from '../internal/sun';
 import type { Stage } from '../internal/stage';
 import { KeyLight } from './KeyLight';
+
+const OVERHEAD: SunEstimate = { direction: [0, 1, 0], dominance: 1 };
 
 export interface EnvironmentLightingProps {
   id: EnvironmentId;
@@ -29,9 +33,9 @@ export function EnvironmentLighting({
   shadows,
   shadowMapSize,
 }: EnvironmentLightingProps) {
-  const loaded = useLoader(HDRLoader, url);
-  const texture = useMemo(() => prepareEquirect(loaded), [loaded]);
-  const sun = useMemo(() => sunOf(texture), [texture]);
+  // Fetched, decoded and analysed in a Web Worker; the main thread only uploads the texture.
+  const texture = useLoader(HDRWorkerLoader, url);
+  const sun: SunEstimate = sunOfTexture(texture) ?? OVERHEAD;
   const keyDirection = useMemo(() => raiseToMinElevation(sun.direction), [sun]);
 
   // Free the panorama (GPU + cache) when switching away; deferred for StrictMode remounts.
@@ -39,7 +43,7 @@ export function EnvironmentLighting({
     () =>
       createDeferredDisposer(() => {
         texture.dispose();
-        useLoader.clear(HDRLoader, url);
+        useLoader.clear(HDRWorkerLoader, url);
       }),
     [texture, url],
   );
