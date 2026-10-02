@@ -1,13 +1,22 @@
 'use client';
 
-import type { MeshOverrides, ModelInfo, ViewerError } from '@twirl/viewer';
-import { useCallback, useState } from 'react';
+import {
+  DEFAULT_SCENE,
+  type MeshOverrides,
+  type ModelInfo,
+  type SceneSettings,
+  type ViewerError,
+  type ViewerHandle,
+} from '@twirl/viewer';
+import { useCallback, useRef, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 
 import { LazyViewer } from './LazyViewer';
 import { PartsPanel } from './PartsPanel';
+import { ScenePanel } from './ScenePanel';
+import { Tabs } from './Tabs';
 
 const NO_OVERRIDES: MeshOverrides = {};
 
@@ -17,6 +26,15 @@ export function DemoApp() {
   const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [highlightedId, setHighlightedId] = useState<string | null>(null);
+  const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const [tab, setTab] = useState('parts');
+  const viewer = useRef<ViewerHandle>(null);
+
+  // Picking a part in 3D shows it in the Parts tab.
+  const selectFromModel = useCallback((id: string | null) => {
+    setSelectedId(id);
+    if (id) setTab('parts');
+  }, []);
 
   const loadModel = (url: string | null) => {
     setInfo(null);
@@ -55,14 +73,25 @@ export function DemoApp() {
       <div className="flex min-h-0 flex-1">
         <main className="relative min-h-0 flex-1">
           <LazyViewer
+            ref={viewer}
             modelUrl={modelUrl}
+            scene={scene}
             environmentSources={ENVIRONMENT_SOURCES}
             meshOverrides={overrides}
             highlightedMeshId={highlightedId ?? selectedId}
-            onMeshSelect={setSelectedId}
+            onMeshSelect={selectFromModel}
             onLoad={setInfo}
             onError={onError}
           />
+          {info && info.animationNames.length > 0 && (
+            <button
+              type="button"
+              onClick={() => viewer.current?.replayAnimations()}
+              className="absolute right-3 bottom-3 rounded-md border border-neutral-300 bg-white/90 px-3 py-1.5 text-sm shadow-sm hover:bg-white focus-visible:outline-2 focus-visible:outline-blue-600"
+            >
+              Replay animation
+            </button>
+          )}
           {info && (
             <p className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/80 px-2 py-1 text-xs text-neutral-600">
               {info.meshCount} meshes · {info.triangleCount.toLocaleString()} triangles
@@ -74,14 +103,30 @@ export function DemoApp() {
           className="w-[360px] shrink-0 overflow-y-auto border-l border-neutral-200 bg-white"
           aria-label="Configure"
         >
-          <h2 className="px-4 pt-4 text-sm font-semibold">Parts</h2>
-          <PartsPanel
-            nodes={info?.meshTree ?? []}
-            overrides={overrides}
-            selectedId={selectedId}
-            onSelect={setSelectedId}
-            onHighlight={setHighlightedId}
-            onOverridesChange={setOverrides}
+          <Tabs
+            active={tab}
+            onChange={setTab}
+            tabs={[
+              {
+                id: 'parts',
+                label: 'Parts',
+                content: (
+                  <PartsPanel
+                    nodes={info?.meshTree ?? []}
+                    overrides={overrides}
+                    selectedId={selectedId}
+                    onSelect={setSelectedId}
+                    onHighlight={setHighlightedId}
+                    onOverridesChange={setOverrides}
+                  />
+                ),
+              },
+              {
+                id: 'scene',
+                label: 'Scene',
+                content: <ScenePanel scene={scene} onChange={setScene} />,
+              },
+            ]}
           />
         </aside>
       </div>
