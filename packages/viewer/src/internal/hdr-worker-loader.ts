@@ -3,7 +3,7 @@ import { type DataTexture, Loader } from 'three';
 import { decodeHdr, type DecodedHdr, hdrTexture } from './hdr-decode';
 import type { HdrRequest, HdrResponse } from './hdr.worker';
 
-type Pending = { resolve: (d: DecodedHdr) => void; reject: (e: Error) => void };
+type Pending = { url: string; resolve: (d: DecodedHdr) => void; reject: (e: unknown) => void };
 
 let worker: Worker | null | undefined; // undefined = not tried yet, null = unavailable
 let nextId = 0;
@@ -21,13 +21,14 @@ function getWorker(): Worker | null {
       if (data.ok) job.resolve(data.decoded);
       else job.reject(new Error(data.message));
     };
-    worker.onerror = (event) => {
-      // The worker itself failed (e.g. blocked by CSP): fail in-flight jobs and stop using it.
-      for (const job of pending.values())
-        job.reject(new Error(event.message || 'HDR worker failed'));
-      pending.clear();
+    worker.onerror = () => {
+      // The worker itself failed (e.g. its script was blocked by a CSP): stop using it and
+      // finish in-flight jobs on the main thread instead of failing them.
       worker?.terminate();
       worker = null;
+      const jobs = [...pending.values()];
+      pending.clear();
+      for (const job of jobs) decodeOnMainThread(job.url).then(job.resolve, job.reject);
     };
   } catch {
     worker = null;
@@ -48,7 +49,7 @@ export function decodeHdrUrl(url: string): Promise<DecodedHdr> {
   if (!w) return decodeOnMainThread(absolute);
   return new Promise((resolve, reject) => {
     const id = ++nextId;
-    pending.set(id, { resolve, reject });
+    pending.set(id, { url: absolute, resolve, reject });
     w.postMessage({ id, url: absolute } satisfies HdrRequest);
   });
 }

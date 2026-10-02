@@ -60,3 +60,43 @@ describe('HDRWorkerLoader', () => {
     await expect(new HDRWorkerLoader().loadAsync('/missing.hdr')).rejects.toThrow(/404/);
   });
 });
+
+describe('HDRWorkerLoader worker failure', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it('finishes in-flight jobs on the main thread when the worker script fails to load', async () => {
+    vi.resetModules(); // fresh module state: the worker hasn't been created yet
+    const created: string[] = [];
+    class FailingWorker {
+      onmessage: ((e: MessageEvent) => void) | null = null;
+      onerror: ((e: ErrorEvent) => void) | null = null;
+      constructor(url: URL | string) {
+        created.push(String(url));
+      }
+      postMessage() {
+        // Simulate the script being blocked (e.g. by a CSP) after the job was queued.
+        setTimeout(() => this.onerror?.(new Event('error') as ErrorEvent), 0);
+      }
+      terminate() {}
+    }
+    vi.stubGlobal('Worker', FailingWorker);
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(async () => new Response(bytes())),
+    );
+
+    const { HDRWorkerLoader: Loader } = await import('./hdr-worker-loader');
+    const texture = await new Loader().loadAsync(
+      'https://cdn.example.com/hdri/venice_sunset_1k.hdr',
+    );
+    expect(created).toHaveLength(1);
+    expect(texture.image.width).toBe(1024);
+
+    // Later loads skip the broken worker entirely.
+    await new Loader().loadAsync('https://cdn.example.com/hdri/venice_sunset_1k.hdr');
+    expect(created).toHaveLength(1);
+  });
+});
