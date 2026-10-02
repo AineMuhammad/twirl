@@ -1,8 +1,9 @@
-import { Color } from 'three';
-
 import type { EnvironmentId } from './environments';
 
 /**
+ * Scene settings. Pure data and helpers with no three.js import, so apps can use them (via
+ * `@twirl/viewer/settings`) without pulling the 3D engine into their initial JavaScript.
+ *
  * Scene settings. In M2 these move into the Zod product-config schema in @twirl/config-schema;
  * until then they're plain types. Colors are CSS hex strings (#rrggbb).
  */
@@ -41,18 +42,4 @@ export function backgroundCss(background: SceneBackground): string {
     case 'gradient':
       return `linear-gradient(180deg, ${background.from} 0%, ${background.to} 100%)`;
   }
-}
-
-/**
- * A floor color that reads as "ground" against the background: the bottom background color,
- * slightly darkened so the floor's soft edge is visible but not a hard disc.
- */
-export function floorColorFor(background: SceneBackground): string {
-  const base = background.type === 'solid' ? background.color : background.to;
-  const color = new Color(base);
-  const hsl = { h: 0, s: 0, l: 0 };
-  color.getHSL(hsl);
-  // Darken light grounds a little; lighten very dark ones so the floor is still visible.
-  const l = hsl.l > 0.15 ? hsl.l * 0.94 : hsl.l + 0.06;
-  return `#${color.setHSL(hsl.h, hsl.s, Math.min(1, l)).getHexString()}`;
 }

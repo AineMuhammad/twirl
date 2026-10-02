@@ -16,4 +16,9 @@ export const serverSchema = z.object({
  */
 export const clientSchema = z.object({
   NEXT_PUBLIC_APP_URL: z.url().optional(),
+  /** Public base URL of the asset bucket (Cloudflare R2), without a trailing slash. */
+  NEXT_PUBLIC_ASSETS_BASE_URL: z
+    .url()
+    .transform((url) => url.replace(/\/+$/, ''))
+    .optional(),
 });
