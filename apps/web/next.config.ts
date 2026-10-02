@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
   // Workspace packages ship TypeScript source; Next compiles them.
-  transpilePackages: [],
+  transpilePackages: ['@twirl/config-schema', '@twirl/viewer'],
 };
 
 export default nextConfig;
