@@ -31,7 +31,7 @@ test('home links to the demo, which loads the sample with its parts', async ({ p
   expect(errors).toEqual([]);
 });
 
-test('parts can be hidden and recolored', async ({ page }) => {
+test('parts can be hidden and recolored, including a custom color', async ({ page }) => {
   await page.goto('/demo');
   await page.getByRole('button', { name: 'Hide Pillow 01' }).click();
   await expect(page.getByRole('button', { name: 'Show Pillow 01' })).toHaveAttribute(
@@ -45,8 +45,19 @@ test('parts can be hidden and recolored', async ({ page }) => {
     .getByRole('button', { name: 'Terracotta' });
   await swatch.click();
   await expect(swatch).toHaveAttribute('aria-pressed', 'true');
+  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('Terracotta');
+
+  // The custom picker opens inline, right under the swatches.
+  await page.getByRole('button', { name: 'Custom color' }).click();
+  const hex = page.getByRole('textbox', { name: 'Hex color for Iron' });
+  await expect(hex).toBeVisible();
+  await hex.fill('12AB34');
+  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('#12AB34');
+  await page.getByRole('button', { name: 'Done' }).click();
+  await expect(hex).toBeHidden();
+
   await page.getByRole('button', { name: 'Original', exact: true }).click();
-  await expect(swatch).toHaveAttribute('aria-pressed', 'false');
+  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('Original finish');
 });
 
 test('scene tab is keyboard reachable and switches lighting', async ({ page }) => {
@@ -56,6 +67,7 @@ test('scene tab is keyboard reachable and switches lighting', async ({ page }) =
   await expect(page.getByRole('tab', { name: 'Scene' })).toHaveAttribute('aria-selected', 'true');
 
   const livingRoom = page.getByRole('button', { name: 'Living room' });
+  await expect(livingRoom).toBeVisible();
   await livingRoom.click();
   await expect(livingRoom).toHaveAttribute('aria-pressed', 'true');
   await page.getByRole('switch', { name: 'Shadows' }).click();
@@ -93,11 +105,17 @@ test('layout: panel beside the viewer on desktop, below it on phones', async ({ 
   const viewer = await page.locator('canvas').boundingBox();
   const panel = await page.getByRole('complementary', { name: 'Configure' }).boundingBox();
   if (!viewer || !panel) throw new Error('layout not rendered');
-  // The canvas tucks just under the panel's edge (≤ 32px) so its edge is hidden by the glass.
+  const viewport = page.viewportSize();
+  if (!viewport) throw new Error('no viewport');
   if (info.project.name === 'mobile') {
+    // Bottom sheet: the stage sits above it (tucked ≤ 32px under its rounded top edge).
     expect(panel.y).toBeGreaterThan(viewer.y + viewer.height - 32);
     expect(panel.y).toBeGreaterThan(viewer.y + viewer.height / 2);
   } else {
-    expect(panel.x).toBeGreaterThan(viewer.x + viewer.width - 32);
+    // Full-height sidebar flush with the right edge; the stage ends where it begins.
+    expect(Math.round(panel.y)).toBe(0);
+    expect(Math.round(panel.height)).toBe(viewport.height);
+    expect(Math.round(panel.x + panel.width)).toBe(viewport.width);
+    expect(Math.round(viewer.x + viewer.width)).toBeLessThanOrEqual(Math.round(panel.x) + 1);
   }
 });

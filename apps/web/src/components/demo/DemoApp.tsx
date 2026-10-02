@@ -1,13 +1,20 @@
 'use client';
 
-import type { MeshOverrides, ModelInfo, ViewerError, ViewerHandle } from '@twirl/viewer';
+import type {
+  EnvironmentStatus,
+  MeshOverrides,
+  ModelInfo,
+  ViewerError,
+  ViewerHandle,
+} from '@twirl/viewer';
 import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
+import Link from 'next/link';
 import { useCallback, useRef, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 
-import { CloseIcon, LogoMark, PlayIcon, UploadIcon } from './icons';
+import { CloseIcon, LogoMark, PlayIcon, ResetIcon, UploadIcon } from './icons';
 import { LazyViewer } from './LazyViewer';
 import { PartsPanel } from './PartsPanel';
 import { ScenePanel } from './ScenePanel';
@@ -16,6 +23,7 @@ import { focusRing, glass } from './ui';
 import { useLocalModel } from './useLocalModel';
 
 const NO_OVERRIDES: MeshOverrides = {};
+const PANEL_WIDTH = 'lg:w-[400px]';
 
 export function DemoApp() {
   const [modelUrl, setModelUrl] = useState(SAMPLE_MODELS[0]?.url ?? null);
@@ -23,8 +31,10 @@ export function DemoApp() {
   const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const [lighting, setLighting] = useState<EnvironmentStatus>('ready');
   const [tab, setTab] = useState('parts');
   const [sheetOpen, setSheetOpen] = useState(true);
+  const [hintVisible, setHintVisible] = useState(true);
   const viewer = useRef<ViewerHandle>(null);
   const fileInput = useRef<HTMLInputElement>(null);
 
@@ -42,6 +52,7 @@ export function DemoApp() {
 
   const current = SAMPLE_MODELS.find((m) => m.url === modelUrl);
   const title = current?.label ?? local.model?.name ?? 'Your model';
+  const changes = Object.keys(overrides).length;
 
   return (
     <div
@@ -49,11 +60,11 @@ export function DemoApp() {
       style={{ background: backgroundCss(scene.background) }}
       {...local.dropHandlers}
     >
-      {/* The 3D stage ends just under the panel's edge, so the product is centred in the visible
-          area (left of the floating panel on desktop, above the bottom sheet on phones) and the
-          canvas edge stays hidden behind the frosted panel. */}
+      {/* Stage: left of the full-height panel on desktop, above the bottom sheet on phones. */}
       <div
-        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 lg:top-0 lg:right-[380px] lg:bottom-0 ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : 'bottom-[124px]'}`}
+        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 lg:top-0 lg:right-[400px] lg:bottom-0 ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : 'bottom-[124px]'}`}
+        onPointerDown={() => setHintVisible(false)}
+        onWheel={() => setHintVisible(false)}
       >
         <LazyViewer
           ref={viewer}
@@ -62,21 +73,28 @@ export function DemoApp() {
           environmentSources={ENVIRONMENT_SOURCES}
           meshOverrides={overrides}
           onLoad={setInfo}
+          onEnvironmentStatus={setLighting}
           onError={onError}
         />
+        {info && hintVisible && (
+          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-white/70 px-3 py-1.5 text-xs text-neutral-600 ring-1 ring-black/5 backdrop-blur lg:block">
+            Drag to rotate · Scroll to zoom
+          </p>
+        )}
       </div>
 
-      {/* Top bar */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-3 lg:right-[412px]">
-        <div
-          className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass}`}
+      {/* Top bar, floating over the stage. */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-3 lg:right-[400px] lg:p-5">
+        <Link
+          href="/"
+          className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass} ${focusRing}`}
         >
-          <LogoMark className="text-neutral-900" />
+          <LogoMark className="text-brand-600" />
           <span className="font-semibold tracking-tight">{APP_NAME}</span>
-          <span className="hidden rounded-full bg-neutral-900/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-600 sm:inline">
+          <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline">
             Demo
           </span>
-        </div>
+        </Link>
 
         <div className="pointer-events-auto flex items-center gap-2">
           <div
@@ -90,7 +108,7 @@ export function DemoApp() {
                 type="button"
                 aria-pressed={modelUrl === m.url}
                 onClick={() => loadModel(m.url)}
-                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
               >
                 {m.label}
               </button>
@@ -101,7 +119,7 @@ export function DemoApp() {
                 aria-pressed={modelUrl === local.model.url}
                 title={local.model.name}
                 onClick={() => local.model && loadModel(local.model.url)}
-                className={`max-w-32 truncate rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
               >
                 Your file
               </button>
@@ -111,7 +129,7 @@ export function DemoApp() {
             type="button"
             onClick={() => fileInput.current?.click()}
             aria-label="Upload a model"
-            className={`flex items-center gap-2 rounded-full bg-neutral-900 px-3.5 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] transition-colors hover:bg-neutral-700 ${focusRing}`}
+            className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
           >
             <UploadIcon />
             <span className="hidden sm:inline">Upload</span>
@@ -135,7 +153,7 @@ export function DemoApp() {
       {local.error && (
         <div
           role="alert"
-          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-white/90 px-4 py-3 text-sm shadow-[0_12px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 backdrop-blur-xl lg:left-[calc((100%-412px)/2)]"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 lg:left-[calc((100%-400px)/2)]"
         >
           <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
           <p className="flex-1 text-neutral-800">{local.error}</p>
@@ -150,10 +168,10 @@ export function DemoApp() {
         </div>
       )}
 
-      {/* Control panel: floating card on desktop, bottom sheet on phones. */}
+      {/* Control panel: full-height sidebar flush right on desktop; bottom sheet on phones. */}
       <aside
         aria-label="Configure"
-        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] transition-[height] duration-300 lg:inset-x-auto lg:top-3 lg:right-3 lg:bottom-3 lg:h-auto lg:w-[392px] lg:rounded-3xl lg:pb-0 ${glass} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:inset-y-0 lg:right-0 lg:left-auto lg:h-full lg:rounded-none lg:border-l lg:border-neutral-200/80 lg:pb-0 lg:shadow-none ${PANEL_WIDTH} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
       >
         <button
           type="button"
@@ -173,8 +191,13 @@ export function DemoApp() {
           header={
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
-                <p className="text-xs text-neutral-500">
+                <p className="hidden text-xs font-semibold tracking-wider text-brand-600 uppercase lg:block">
+                  Configure
+                </p>
+                <h1 className="truncate text-lg font-semibold tracking-tight lg:mt-1 lg:text-xl">
+                  {title}
+                </h1>
+                <p className="mt-0.5 text-xs text-neutral-500">
                   {info
                     ? `${info.meshCount} parts · ${info.triangleCount.toLocaleString()} triangles`
                     : 'Loading model…'}
@@ -184,9 +207,11 @@ export function DemoApp() {
                 <button
                   type="button"
                   onClick={() => viewer.current?.replayAnimations()}
-                  className={`flex shrink-0 items-center gap-1.5 rounded-full bg-neutral-900/[0.06] px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-900/10 ${focusRing}`}
+                  aria-label="Replay animation"
+                  title="Replay animation"
+                  className={`grid size-9 shrink-0 place-items-center rounded-full bg-neutral-900/[0.05] text-neutral-800 hover:bg-neutral-900/10 ${focusRing}`}
                 >
-                  <PlayIcon width={12} height={12} /> Replay animation
+                  <PlayIcon width={14} height={14} />
                 </button>
               )}
             </div>
@@ -208,14 +233,36 @@ export function DemoApp() {
             {
               id: 'scene',
               label: 'Scene',
-              content: <ScenePanel scene={scene} onChange={setScene} />,
+              content: (
+                <ScenePanel
+                  scene={scene}
+                  onChange={setScene}
+                  lightingLoading={lighting === 'loading'}
+                />
+              ),
             },
           ]}
         />
+        <footer className="hidden shrink-0 items-center justify-between gap-3 border-t border-neutral-100 px-5 py-3.5 lg:flex">
+          <p className="text-xs text-neutral-500">
+            {changes === 0 ? 'Original design' : `${changes} change${changes === 1 ? '' : 's'}`}
+          </p>
+          <button
+            type="button"
+            disabled={changes === 0}
+            onClick={() => {
+              setOverrides(NO_OVERRIDES);
+              setSelectedId(null);
+            }}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+          >
+            <ResetIcon width={14} height={14} /> Reset all
+          </button>
+        </footer>
       </aside>
 
       {local.dragging && (
-        <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-neutral-950/30 backdrop-blur-md">
+        <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-brand-900/30 backdrop-blur-md">
           <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
             <UploadIcon width={28} height={28} />
             <p className="text-lg font-semibold">Drop to view your model</p>
