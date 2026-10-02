@@ -26,10 +26,11 @@ import {
 } from './environments';
 import { dprRange, readDeviceHints } from './internal/device';
 import { progressFromEvent, toViewerError } from './internal/errors';
+import { floorColorFor } from './internal/floor-color';
 import { computeFraming, type Framing } from './internal/framing';
 import { qualitySettings } from './internal/quality';
 import { type Stage, stageFromBounds } from './internal/stage';
-import { backgroundCss, DEFAULT_SCENE, floorColorFor, type SceneSettings } from './scene';
+import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from './scene';
 import {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
