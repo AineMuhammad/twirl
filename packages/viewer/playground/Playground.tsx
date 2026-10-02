@@ -4,12 +4,15 @@ import {
   DEFAULT_SCENE,
   LIGHTING_PRESETS,
   type LightingPreset,
+  type MeshOverride,
+  type MeshOverrides,
   type ModelInfo,
   type SceneSettings,
   Viewer,
   type ViewerError,
   type ViewerHandle,
 } from '../src';
+import { MeshTreePanel } from './MeshTreePanel';
 
 const SAMPLES = [
   { label: 'Sofa (Draco + WebP, animated)', url: '/samples/sofa.glb' },
@@ -36,6 +39,15 @@ export function Playground() {
   const [error, setError] = useState<ViewerError | null>(null);
   const [mounted, setMounted] = useState(true);
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const [overrides, setOverrides] = useState<MeshOverrides>({});
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const setOverride = useCallback((id: string, override: MeshOverride | null) => {
+    setOverrides((current) => {
+      const rest = Object.fromEntries(Object.entries(current).filter(([key]) => key !== id));
+      return override ? { ...rest, [id]: override } : rest;
+    });
+  }, []);
   const bg = scene.background;
   const bgColors = bg.type === 'solid' ? [bg.color, bg.color] : [bg.from, bg.to];
 
@@ -48,6 +60,9 @@ export function Playground() {
     blobUrl.current = url?.startsWith('blob:') ? url : null;
     setInfo(null);
     setError(null);
+    setOverrides({});
+    setSelectedId(null);
+    setHoveredId(null);
     setModelUrl(url);
   }, []);
 
@@ -182,6 +197,15 @@ export function Playground() {
               <li>Animations: {info.animationNames.join(', ') || 'none'}</li>
             </ul>
           )}
+          {info && (
+            <MeshTreePanel
+              nodes={info.meshTree}
+              overrides={overrides}
+              selectedId={selectedId}
+              onChange={setOverride}
+              onHover={setHoveredId}
+            />
+          )}
           {error && (
             <p style={{ color: '#b91c1c' }}>
               Error ({error.kind}): {error.message}
@@ -195,6 +219,9 @@ export function Playground() {
             ref={viewer}
             modelUrl={modelUrl}
             scene={scene}
+            meshOverrides={overrides}
+            highlightedMeshId={hoveredId ?? selectedId}
+            onMeshSelect={setSelectedId}
             onLoad={setInfo}
             onError={onError}
           />
