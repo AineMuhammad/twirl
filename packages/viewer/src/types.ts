@@ -17,10 +17,27 @@ export interface LoadProgress {
   loadedBytes: number;
 }
 
+/** One node of the model's hierarchy, as shown in a mesh tree. */
+export interface MeshTreeNode {
+  /** Stable for the same file: the child-index path from the model root, e.g. "0/2/1". */
+  id: string;
+  /** The node name, or a generated label like "Unnamed mesh 3". */
+  name: string;
+  /** False when the file didn't name this node (worth warning merchants about). */
+  hasName: boolean;
+  kind: 'mesh' | 'group';
+  /** Triangles in this mesh, or in all meshes under this group. */
+  triangleCount: number;
+  materialNames: string[];
+  children: MeshTreeNode[];
+}
+
 export interface ModelInfo {
   meshCount: number;
   triangleCount: number;
   animationNames: string[];
+  /** Hierarchy of nodes that contain meshes. */
+  meshTree: MeshTreeNode[];
 }
 
 export type ViewerErrorKind = 'network' | 'parse' | 'unknown';

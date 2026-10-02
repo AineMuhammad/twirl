@@ -8,6 +8,7 @@ export {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
   type LoadProgress,
+  type MeshTreeNode,
   type ModelInfo,
   type ViewerError,
   type ViewerErrorKind,
