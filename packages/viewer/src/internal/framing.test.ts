@@ -1,7 +1,7 @@
 import { Box3, MathUtils, PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 
-import { computeFraming } from './framing';
+import { computeFraming, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from './framing';
 
 const unitBox = () => new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
 
@@ -92,5 +92,22 @@ describe('computeFraming', () => {
     const f = computeFraming(new Box3(), { fov: 35, aspect: 1 });
     expect(f.target).toEqual([0, 0, 0]);
     expect(f.radius).toBe(1);
+  });
+
+  it.each([
+    ['tiny', 0.01],
+    ['chair-sized', 0.9],
+    ['car-sized', 2.7],
+    ['building-sized', 40],
+  ])('limits zoom on a %s model relative to its framing', (_, r) => {
+    const box = new Box3(new Vector3(-r, -r, -r), new Vector3(r, r, r));
+    const f = computeFraming(box, { fov: 35, aspect: 1.6 });
+    const distance = new Vector3()
+      .fromArray(f.position)
+      .distanceTo(new Vector3().fromArray(f.target));
+    expect(f.minDistance).toBeGreaterThan(f.radius * 1.2); // never inside the model
+    expect(f.minDistance).toBeCloseTo(Math.max(f.radius * 1.25, distance * MIN_ZOOM_FACTOR));
+    expect(f.maxDistance).toBeCloseTo(distance * MAX_ZOOM_FACTOR);
+    expect(f.maxDistance / f.minDistance).toBeLessThan(4);
   });
 });

@@ -2,6 +2,7 @@ import type { Color, Material, Mesh, Object3D } from 'three';
 
 import type { MeshOverride, MeshOverrides } from '../types';
 import type { NodeId } from './mesh-tree';
+import { prepareForTint } from './tint';
 
 type MaterialSlot = Material | Material[];
 
@@ -42,7 +43,7 @@ export function resolveOverride<K extends keyof MeshOverride>(
  * a mesh gets private clones of its materials the first time it's colored, and gets its
  * originals back (clones disposed) when the override is removed.
  *
- * Note: color multiplies with any base-color texture, so textured parts are tinted.
+ * Textured parts keep their texture's light/dark detail but take the chosen color (see tint.ts).
  */
 export class MeshOverrideApplier {
   private readonly originals = new Map<Mesh, MaterialSlot>();
@@ -86,7 +87,11 @@ export class MeshOverrideApplier {
         ? mesh.material.map((m) => m.clone())
         : mesh.material.clone();
     }
-    for (const material of asList(mesh.material)) colorOf(material)?.set(color);
+    for (const material of asList(mesh.material)) {
+      // Make texture/vertex colors show the chosen color rather than mostly their own.
+      prepareForTint(material, mesh);
+      colorOf(material)?.set(color);
+    }
   }
 
   private restoreMaterials(mesh: Mesh) {

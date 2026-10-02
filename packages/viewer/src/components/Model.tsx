@@ -89,15 +89,16 @@ export function Model({
     };
   }, [mixer, clips, playAnimationsOnLoad]);
 
-  // Free GPU memory, decoded textures and the loader cache entry when the model goes away.
-  // Deferred so StrictMode's dev-only unmount/remount doesn't destroy resources still in use.
+  // Free GPU memory and the loader cache entry when the model goes away; decoded images are then
+  // garbage-collected. They're deliberately not closed: a texture still referenced after
+  // unmount would be re-uploaded as 0x0, raising WebGL errors that can stall rendering on real
+  // GPUs (switching chair → jeep did). Deferred so StrictMode's dev-only remount keeps them.
   const disposer = useMemo(
     () =>
       createDeferredDisposer(() => {
         mixer.uncacheRoot(scene);
         overrides.dispose(); // frees per-mesh material clones
-
-        disposeObject3D(gltf.scene, { closeImageBitmaps: true });
+        disposeObject3D(gltf.scene);
         useLoader.clear(GLTFLoader, url);
       }),
     [mixer, overrides, scene, gltf.scene, url],

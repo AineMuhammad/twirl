@@ -52,10 +52,13 @@ export interface ViewerError {
 /** Per-node appearance changes, keyed by `MeshTreeNode.id`. Overrides on a group apply to every
  * mesh under it unless a descendant sets its own. */
 export interface MeshOverride {
-  /** CSS hex color (#rrggbb). Multiplies with any base-color texture (tints it). */
+  /** CSS hex color (#rrggbb). Textured parts keep the texture's detail but take this color. */
   color?: string;
   /** Show or hide this node. Hiding a group hides everything under it. */
   visible?: boolean;
 }
 
 export type MeshOverrides = Record<string, MeshOverride>;
+
+/** HDRI environment loading state ('ready' also covers procedural presets, which are instant). */
+export type EnvironmentStatus = 'loading' | 'ready' | 'error';

@@ -24,6 +24,11 @@ export interface Framing {
   radius: number;
 }
 
+/** Closest zoom, as a fraction of the framing distance. */
+export const MIN_ZOOM_FACTOR = 0.5;
+/** Farthest zoom, as a multiple of the framing distance. */
+export const MAX_ZOOM_FACTOR = 1.6;
+
 /** Fallback when the box is empty (no geometry): a unit sphere at the origin. */
 const EMPTY_RADIUS = 1;
 
@@ -58,9 +63,10 @@ export function computeFraming(box: Box3, options: FramingOptions): Framing {
     position: position.toArray(),
     near: distance / 100,
     far: distance * 100,
-    // Don't let shoppers zoom inside the model or so far out it becomes a speck.
-    minDistance: radius * 1.05,
-    maxDistance: distance * 3,
+    // Zoom range per model: in to about twice the framed size (never inside the model), out to
+    // a little smaller than framed, so the product never becomes a speck.
+    minDistance: Math.max(radius * 1.25, distance * MIN_ZOOM_FACTOR),
+    maxDistance: distance * MAX_ZOOM_FACTOR,
     radius,
   };
 }

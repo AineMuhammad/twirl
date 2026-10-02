@@ -14,6 +14,7 @@ import type { Box3 } from 'three';
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig } from './components/CameraRig';
+import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
 import { SceneLighting } from './components/SceneLighting';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
@@ -34,6 +35,7 @@ import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from './scene';
 import {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
+  type EnvironmentStatus,
   type MeshOverrides,
   type ModelInfo,
   type ViewerError,
@@ -78,6 +80,11 @@ export interface ViewerProps {
    */
   playAnimationsOnLoad?: boolean;
   onLoad?: (info: ModelInfo) => void;
+  /**
+   * HDRI loading state. The viewer shows its own "Loading lighting…" indicator; use this to
+   * reflect it elsewhere (e.g. a spinner on the chosen lighting option).
+   */
+  onEnvironmentStatus?: (status: EnvironmentStatus) => void;
   /** Called with a friendly message and the original error (for logging). */
   onError?: (error: ViewerError) => void;
   className?: string;
@@ -115,6 +122,7 @@ export function Viewer({
   enablePan = false,
   playAnimationsOnLoad = true,
   onLoad,
+  onEnvironmentStatus,
   onError,
   className,
   style,
@@ -208,6 +216,15 @@ export function Viewer({
 
   const stage = current?.stage ?? DEFAULT_STAGE;
 
+  const [environmentStatus, setEnvironmentStatus] = useState<EnvironmentStatus>('ready');
+  const handleEnvironmentStatus = useCallback(
+    (status: EnvironmentStatus) => {
+      setEnvironmentStatus(status);
+      onEnvironmentStatus?.(status);
+    },
+    [onEnvironmentStatus],
+  );
+
   return (
     <div
       ref={container}
@@ -228,6 +245,7 @@ export function Viewer({
           shadowMapSize={quality.shadowMapSize}
           sources={sources}
           resolution={resolution}
+          onStatus={handleEnvironmentStatus}
         />
         {modelUrl && (
           <ErrorBoundary key={modelUrl} onError={handleError}>
@@ -261,6 +279,9 @@ export function Viewer({
         />
       </Canvas>
       <LoadingOverlay state={overlayState} />
+      {environmentStatus === 'loading' && overlayState.phase !== 'loading' && (
+        <EnvironmentIndicator />
+      )}
     </div>
   );
 }
