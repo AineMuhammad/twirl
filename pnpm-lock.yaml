@@ -308,6 +308,9 @@ importers:
       '@twirl/config-schema':
         specifier: workspace:*
         version: link:../config-schema
+      three-mesh-bvh:
+        specifier: 0.8.3
+        version: 0.8.3(three@0.186.1)
     devDependencies:
       '@react-three/drei':
         specifier: 10.7.9

@@ -11,7 +11,7 @@ describe('describeModel', () => {
     child.add(new Mesh(new PlaneGeometry(), new MeshBasicMaterial())); // 2 triangles
     root.add(child);
 
-    expect(describeModel(root, [new AnimationClip('Open', 1, [])])).toEqual({
+    expect(describeModel(root, [new AnimationClip('Open', 1, [])])).toMatchObject({
       meshCount: 2,
       triangleCount: 14,
       animationNames: ['Open'],

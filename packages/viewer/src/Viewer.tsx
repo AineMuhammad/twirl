@@ -27,6 +27,7 @@ import { backgroundCss, DEFAULT_SCENE, floorColorFor, type SceneSettings } from 
 import {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
+  type MeshOverrides,
   type ModelInfo,
   type ViewerError,
 } from './types';
@@ -41,6 +42,18 @@ export interface ViewerProps {
   ref?: Ref<ViewerHandle>;
   /** GLB/glTF URL (http(s) or blob:). `null` renders an empty stage. */
   modelUrl: string | null;
+  /**
+   * Per-mesh appearance, keyed by `MeshTreeNode.id` from `onLoad`. Pass a stable object
+   * (memoize it); a new object re-applies every override.
+   */
+  meshOverrides?: MeshOverrides;
+  /** Outline this node (e.g. while hovering it in a mesh tree). */
+  highlightedMeshId?: string | null;
+  /**
+   * Called when the shopper clicks/taps a mesh (`null` when they click empty space).
+   * Drags are orbiting, not selection. Omit to disable picking entirely.
+   */
+  onMeshSelect?: (id: string | null) => void;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
   scene?: Partial<SceneSettings>;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
@@ -60,6 +73,7 @@ export interface ViewerProps {
 }
 
 const CAMERA_FOV = 35;
+const NO_OVERRIDES: MeshOverrides = {};
 const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
 
 const rootStyle: CSSProperties = {
@@ -80,6 +94,9 @@ interface Placement {
 export function Viewer({
   ref,
   modelUrl,
+  meshOverrides = NO_OVERRIDES,
+  highlightedMeshId = null,
+  onMeshSelect,
   scene: sceneOverrides,
   decoderPaths,
   enablePan = false,
@@ -184,6 +201,9 @@ export function Viewer({
                 url={modelUrl}
                 decoders={decoders}
                 playAnimationsOnLoad={playAnimationsOnLoad}
+                meshOverrides={meshOverrides}
+                highlightedMeshId={highlightedMeshId}
+                onMeshSelect={onMeshSelect}
                 controllerRef={modelController}
                 onProgress={handleProgress}
                 onLoaded={handleLoaded}

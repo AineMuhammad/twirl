@@ -1,6 +1,7 @@
 import type { AnimationClip, BufferGeometry, Mesh, Object3D } from 'three';
 
 import type { ModelInfo } from '../types';
+import { buildMeshTree } from './mesh-tree';
 
 function triangleCount(geometry: BufferGeometry) {
   const count = geometry.index ? geometry.index.count : (geometry.attributes.position?.count ?? 0);
@@ -17,5 +18,10 @@ export function describeModel(root: Object3D, animations: AnimationClip[]): Mode
       triangles += triangleCount(mesh.geometry);
     }
   });
-  return { meshCount, triangleCount: triangles, animationNames: animations.map((a) => a.name) };
+  return {
+    meshCount,
+    triangleCount: triangles,
+    animationNames: animations.map((a) => a.name),
+    meshTree: buildMeshTree(root),
+  };
 }
