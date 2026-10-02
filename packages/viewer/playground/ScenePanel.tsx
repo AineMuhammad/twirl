@@ -3,7 +3,6 @@ import { useState } from 'react';
 import {
   ENVIRONMENT_IDS,
   ENVIRONMENTS,
-  isEnvironmentId,
   LIGHTING_PRESETS,
   type SceneBackground,
   type SceneSettings,
@@ -19,16 +18,10 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
   const bg = scene.background;
   // Remember colors while switching background types.
   const [colors, setColors] = useState({ solid: '#ffffff', from: '#ffffff', to: '#e9e9ec' });
-  const [blur, setBlur] = useState(0.4);
-  const environmentLighting = isEnvironmentId(scene.lighting);
 
   const setBackground = (background: SceneBackground) => onChange({ ...scene, background });
   const backgroundFor = (type: SceneBackground['type']): SceneBackground =>
-    type === 'solid'
-      ? { type, color: colors.solid }
-      : type === 'gradient'
-        ? { type, from: colors.from, to: colors.to }
-        : { type, blur };
+    type === 'solid' ? { type, color: colors.solid } : { type, from: colors.from, to: colors.to };
 
   return (
     <fieldset>
@@ -37,15 +30,9 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
         Lighting{' '}
         <select
           value={scene.lighting}
-          onChange={(e) => {
-            const lighting = e.target.value as SceneSettings['lighting'];
-            // An environment background needs an environment to show.
-            const background =
-              bg.type === 'environment' && !isEnvironmentId(lighting)
-                ? backgroundFor('gradient')
-                : bg;
-            onChange({ ...scene, lighting, background });
-          }}
+          onChange={(e) =>
+            onChange({ ...scene, lighting: e.target.value as SceneSettings['lighting'] })
+          }
         >
           <optgroup label="Procedural (instant)">
             {LIGHTING_PRESETS.map((p) => (
@@ -54,7 +41,7 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
               </option>
             ))}
           </optgroup>
-          <optgroup label="HDRI environments (~1.5 MB)">
+          <optgroup label="HDRI lighting (~1.5 MB; lighting only)">
             {ENVIRONMENT_IDS.map((id) => (
               <option key={id} value={id}>
                 {ENVIRONMENTS[id].label}
@@ -72,9 +59,6 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
         >
           <option value="solid">Solid</option>
           <option value="gradient">Gradient</option>
-          <option value="environment" disabled={!environmentLighting}>
-            Environment{environmentLighting ? '' : ' (pick an HDRI)'}
-          </option>
         </select>
       </label>
 
@@ -104,33 +88,6 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
             />
           ))}
         </div>
-      )}
-      {bg.type === 'environment' && (
-        <label style={{ display: 'block' }}>
-          <input
-            type="checkbox"
-            checked={bg.ground === true}
-            onChange={(e) => setBackground({ ...bg, ground: e.target.checked })}
-          />{' '}
-          Ground projection
-        </label>
-      )}
-      {bg.type === 'environment' && !bg.ground && (
-        <label style={{ display: 'block' }}>
-          Blur {bg.blur.toFixed(2)}
-          <input
-            type="range"
-            min={0}
-            max={1}
-            step={0.05}
-            value={bg.blur}
-            onChange={(e) => {
-              setBlur(Number(e.target.value));
-              setBackground({ ...bg, blur: Number(e.target.value) });
-            }}
-            style={{ display: 'block', width: '100%' }}
-          />
-        </label>
       )}
 
       <label style={{ display: 'block' }}>

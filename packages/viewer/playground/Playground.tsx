@@ -13,9 +13,10 @@ import {
 import { MeshTreePanel } from './MeshTreePanel';
 import { ScenePanel } from './ScenePanel';
 
-// Optional: base URL of the 2k HDRIs (e.g. the R2 public URL + "/hdri/2k/"), via
-// VITE_HDRI_2K_BASE_URL in packages/viewer/.env.local. Without it, 1k is used everywhere.
-const HDRI_2K: string | undefined = import.meta.env.VITE_HDRI_2K_BASE_URL || undefined;
+// 2k HDRIs (used on large viewers for sharper reflections) live on R2. Override with
+// VITE_HDRI_2K_BASE_URL in packages/viewer/.env.local; set it to "" to test 1k only.
+const HDRI_2K_DEFAULT = 'https://pub-1e330adafeba4efd868fabae2c698a76.r2.dev/hdri/2k/';
+const HDRI_2K: string = import.meta.env.VITE_HDRI_2K_BASE_URL ?? HDRI_2K_DEFAULT;
 const ENVIRONMENT_SOURCES = HDRI_2K ? { '1k': '/hdri/1k/', '2k': HDRI_2K } : { '1k': '/hdri/1k/' };
 
 const SAMPLES = [

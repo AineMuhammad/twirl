@@ -30,16 +30,13 @@ describe('environmentUrl', () => {
 });
 
 describe('pickEnvironmentResolution', () => {
-  it('uses 2k only for a visible background on a large screen', () => {
-    expect(
-      pickEnvironmentResolution({ backgroundVisible: true, physicalWidth: 2400, has2k: true }),
-    ).toBe('2k');
+  it('uses 2k on large viewers when a 2k source exists', () => {
+    expect(pickEnvironmentResolution({ physicalWidth: 2400, has2k: true })).toBe('2k');
   });
 
   it.each([
-    { backgroundVisible: false, physicalWidth: 2400, has2k: true },
-    { backgroundVisible: true, physicalWidth: 1170, has2k: true },
-    { backgroundVisible: true, physicalWidth: 2400, has2k: false },
+    { physicalWidth: 1170, has2k: true }, // phone
+    { physicalWidth: 2400, has2k: false }, // no 2k hosting configured
   ])('uses 1k otherwise (%o)', (opts) => {
     expect(pickEnvironmentResolution(opts)).toBe('1k');
   });

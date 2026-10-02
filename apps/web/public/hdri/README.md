@@ -15,8 +15,10 @@ and licensed **CC0** (public domain; no attribution required).
 | `venice_sunset`                        | https://polyhaven.com/a/venice_sunset                        | Warm sunset            |
 
 - `1k/` (committed, ~1.5 MB each): the default for lighting everywhere.
-- `2k/` (~6 MB each): **not in git**. Hosted on Cloudflare R2 under `hdri/2k/` and only loaded on
-  large screens when the environment is shown as the background.
+- `2k/` (~6 MB each): **not in git**. Hosted on Cloudflare R2 under `hdri/2k/` and loaded only on
+  viewers at least 1600 physical px wide, for sharper reflections.
+
+HDRIs only light the product; they are never shown as the background (ADR-0003).
 
 Filenames follow Poly Haven's convention: `<id>_<res>.hdr`. To replace a file, add it under a new
 name rather than overwriting, because browsers cache these for a long time.

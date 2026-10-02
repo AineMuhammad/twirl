@@ -43,19 +43,18 @@ export function environmentUrl(
   return `${base.endsWith('/') ? base : `${base}/`}${id}_${res}.hdr`;
 }
 
-/** Physical pixel width from which a visible environment background switches to 2k. */
+/** Physical pixel width of the viewer from which environments load at 2k. */
 export const LARGE_SCREEN_PX = 1600;
 
 /**
- * 1k is plenty for lighting and reflections; 2k only matters when the panorama is visible as
- * the background on a large screen (a 1k panorama spans 360° in 1024 px).
+ * HDRIs only light the scene. Diffuse lighting looks the same at 1k and 2k, but three.js sizes
+ * its sharpest reflection level from the panorama (a 2k file gives 2× sharper mirror-like
+ * reflections on chrome, glass and glossy paint). That's only visible on large viewers, so phones
+ * and small embeds stay at 1k (~1.5 MB instead of ~6 MB).
  */
 export function pickEnvironmentResolution(opts: {
-  backgroundVisible: boolean;
   physicalWidth: number;
   has2k: boolean;
 }): EnvironmentResolution {
-  return opts.backgroundVisible && opts.has2k && opts.physicalWidth >= LARGE_SCREEN_PX
-    ? '2k'
-    : '1k';
+  return opts.has2k && opts.physicalWidth >= LARGE_SCREEN_PX ? '2k' : '1k';
 }
