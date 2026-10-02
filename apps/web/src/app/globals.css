@@ -34,3 +34,29 @@ body {
   --color-brand-700: #4338ca;
   --color-brand-900: #1e1b4b;
 }
+
+/* react-colorful, styled to match the demo. */
+.twirl-color-picker .react-colorful {
+  width: 100%;
+  height: 168px;
+  gap: 12px;
+}
+.twirl-color-picker .react-colorful__saturation {
+  border-radius: 14px;
+  border-bottom: none;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.twirl-color-picker .react-colorful__hue {
+  height: 12px;
+  border-radius: 999px;
+}
+.twirl-color-picker .react-colorful__pointer {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.twirl-color-picker .react-colorful__interactive:focus .react-colorful__pointer {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 0 3px var(--color-brand-500);
+}
