@@ -166,7 +166,7 @@ export function Viewer({
     >
       <Canvas
         dpr={quality.dpr}
-        shadows
+        shadows="percentage"
         camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
       >
