@@ -1,10 +1,9 @@
 import { Environment, Lightformer } from '@react-three/drei';
-import { useMemo } from 'react';
-import { Object3D, Vector3 } from 'three';
 
 import { LIGHTING_RIGS } from '../internal/lighting-presets';
 import type { Stage } from '../internal/stage';
 import type { LightingPreset } from '../scene';
+import { KeyLight } from './KeyLight';
 
 /** Scale of the virtual "room" the environment panels sit in. */
 const ENV_ROOM = 5;
@@ -16,22 +15,9 @@ export interface LightingProps {
   shadowMapSize: number;
 }
 
+/** Procedural lighting: an environment built from Lightformer panels plus key and fill lights. */
 export function Lighting({ preset, stage, shadows, shadowMapSize }: LightingProps) {
   const rig = LIGHTING_RIGS[preset];
-  const { center, radius } = stage;
-
-  const keyPosition = useMemo(
-    () =>
-      new Vector3(...rig.key.direction)
-        .normalize()
-        .multiplyScalar(radius * 4)
-        .add(new Vector3(...center))
-        .toArray(),
-    [rig, radius, center],
-  );
-  // The key light must aim at the model; its target has to be in the scene graph to update.
-  const target = useMemo(() => new Object3D(), []);
-  const extent = radius * 1.6;
 
   return (
     <>
@@ -59,24 +45,14 @@ export function Lighting({ preset, stage, shadows, shadowMapSize }: LightingProp
         args={[rig.hemisphere.sky, rig.hemisphere.ground, rig.hemisphere.intensity]}
       />
 
-      <primitive object={target} position={center} />
-      <directionalLight
-        // Remount when the map size changes: three only allocates the shadow map once.
-        key={shadowMapSize}
-        target={target}
-        position={keyPosition}
+      <KeyLight
+        stage={stage}
+        direction={rig.key.direction}
         color={rig.key.color}
         intensity={rig.key.intensity}
-        castShadow={shadows}
-        shadow-mapSize={[shadowMapSize, shadowMapSize]}
-        shadow-bias={-0.0002}
-        shadow-normalBias={radius * 0.01}
-      >
-        <orthographicCamera
-          attach="shadow-camera"
-          args={[-extent, extent, extent, -extent, radius * 0.1, radius * 8]}
-        />
-      </directionalLight>
+        shadows={shadows}
+        shadowMapSize={shadowMapSize}
+      />
     </>
   );
 }

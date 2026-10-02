@@ -4,6 +4,7 @@ import {
   type Ref,
   Suspense,
   useCallback,
+  useEffect,
   useImperativeHandle,
   useMemo,
   useRef,
@@ -14,10 +15,16 @@ import type { Box3 } from 'three';
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig } from './components/CameraRig';
 import { Floor } from './components/Floor';
-import { Lighting } from './components/Lighting';
+import { SceneLighting } from './components/SceneLighting';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
 import { Model, type ModelController } from './components/Model';
-import { ModelErrorBoundary } from './components/ModelErrorBoundary';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import {
+  DEFAULT_ENVIRONMENT_SOURCES,
+  type EnvironmentSources,
+  isEnvironmentId,
+  pickEnvironmentResolution,
+} from './environments';
 import { dprRange, readDeviceHints } from './internal/device';
 import { progressFromEvent, toViewerError } from './internal/errors';
 import { computeFraming, type Framing } from './internal/framing';
@@ -54,6 +61,12 @@ export interface ViewerProps {
    * Drags are orbiting, not selection. Omit to disable picking entirely.
    */
   onMeshSelect?: (id: string | null) => void;
+  /**
+   * Where HDRI environments are served from: base URLs ending in `/` for `1k` (default
+   * `/hdri/1k/`) and optionally `2k`, which is used for visible environment backgrounds on
+   * large screens.
+   */
+  environmentSources?: Partial<EnvironmentSources>;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
   scene?: Partial<SceneSettings>;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
@@ -98,6 +111,7 @@ export function Viewer({
   highlightedMeshId = null,
   onMeshSelect,
   scene: sceneOverrides,
+  environmentSources,
   decoderPaths,
   enablePan = false,
   playAnimationsOnLoad = true,
@@ -115,6 +129,14 @@ export function Viewer({
   const quality = qualitySettings(qualityFactor, device.coarsePointer, maxDpr);
 
   const scene: SceneSettings = { ...DEFAULT_SCENE, ...sceneOverrides };
+  const sources1k = environmentSources?.['1k'] ?? DEFAULT_ENVIRONMENT_SOURCES['1k'];
+  const sources2k = environmentSources?.['2k'];
+  const sources = useMemo<EnvironmentSources>(
+    () => (sources2k ? { '1k': sources1k, '2k': sources2k } : { '1k': sources1k }),
+    [sources1k, sources2k],
+  );
+  const environmentShown =
+    scene.background.type === 'environment' && isEnvironmentId(scene.lighting);
   const dracoPath = decoderPaths?.draco ?? DEFAULT_DECODER_PATHS.draco;
   const basisPath = decoderPaths?.basis ?? DEFAULT_DECODER_PATHS.basis;
   const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
@@ -127,6 +149,22 @@ export function Viewer({
   );
 
   const container = useRef<HTMLDivElement>(null);
+  // Physical width of the viewer, to decide whether a visible HDRI background deserves 2k.
+  const [physicalWidth, setPhysicalWidth] = useState(0);
+  useEffect(() => {
+    const element = container.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(([entry]) => {
+      if (entry) setPhysicalWidth(Math.round(entry.contentRect.width * device.devicePixelRatio));
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [device.devicePixelRatio]);
+  const resolution = pickEnvironmentResolution({
+    backgroundVisible: environmentShown,
+    physicalWidth,
+    has2k: Boolean(sources['2k']),
+  });
   const [placement, setPlacement] = useState<Placement | null>(null);
   const current = placement?.url === modelUrl ? placement : null;
 
@@ -188,14 +226,15 @@ export function Viewer({
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
       >
         <AdaptiveQuality onChange={setQualityFactor} />
-        <Lighting
-          preset={scene.lighting}
+        <SceneLighting
+          scene={scene}
           stage={stage}
-          shadows={scene.shadows}
           shadowMapSize={quality.shadowMapSize}
+          sources={sources}
+          resolution={resolution}
         />
         {modelUrl && (
-          <ModelErrorBoundary key={modelUrl} onError={handleError}>
+          <ErrorBoundary key={modelUrl} onError={handleError}>
             <Suspense fallback={null}>
               <Model
                 url={modelUrl}
@@ -209,13 +248,14 @@ export function Viewer({
                 onLoaded={handleLoaded}
               />
             </Suspense>
-          </ModelErrorBoundary>
+          </ErrorBoundary>
         )}
         {current && (
           <Floor
             stage={stage}
             color={floorColorFor(scene.background)}
-            visible={scene.floor}
+            // Over a photographic background a coloured disc looks pasted on; keep only the shadow.
+            visible={scene.floor && !environmentShown}
             shadows={scene.shadows}
           />
         )}

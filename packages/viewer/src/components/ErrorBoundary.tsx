@@ -2,6 +2,8 @@ import { Component, type ReactNode } from 'react';
 
 interface Props {
   onError: (error: unknown) => void;
+  /** Rendered instead of the children after an error. Defaults to nothing. */
+  fallback?: ReactNode;
   children: ReactNode;
 }
 
@@ -10,10 +12,10 @@ interface State {
 }
 
 /**
- * Catches model load/parse failures inside the canvas so the rest of the scene keeps rendering.
- * The host shows the message; reset by changing this boundary's `key` (e.g. the model URL).
+ * Catches load/parse failures inside the canvas so the rest of the scene keeps rendering.
+ * Reset it by changing its `key` (e.g. to the URL being loaded).
  */
-export class ModelErrorBoundary extends Component<Props, State> {
+export class ErrorBoundary extends Component<Props, State> {
   override state: State = { failed: false };
 
   static getDerivedStateFromError(): State {
@@ -25,6 +27,6 @@ export class ModelErrorBoundary extends Component<Props, State> {
   }
 
   override render() {
-    return this.state.failed ? null : this.props.children;
+    return this.state.failed ? (this.props.fallback ?? null) : this.props.children;
   }
 }

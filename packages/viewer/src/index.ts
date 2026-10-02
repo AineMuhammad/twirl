@@ -23,3 +23,12 @@ export {
   type SceneBackground,
   type SceneSettings,
 } from './scene';
+export {
+  DEFAULT_ENVIRONMENT_SOURCES,
+  ENVIRONMENT_IDS,
+  ENVIRONMENTS,
+  type EnvironmentId,
+  type EnvironmentResolution,
+  type EnvironmentSources,
+  isEnvironmentId,
+} from './environments';
