@@ -28,6 +28,40 @@ export interface LightingRig {
  * requests and load fast on mobile.
  */
 export const LIGHTING_RIGS: Record<LightingPreset, LightingRig> = {
+  /**
+   * Default. Golden-hour studio: a warm, soft key from the front-left, a warm wrap-around fill
+   * and a cool rim from behind for separation. Flattering for fabrics, woods and paint.
+   */
+  warm: {
+    environmentIntensity: 0.85,
+    environmentColor: '#4a3c30',
+    panels: [
+      {
+        form: 'rect',
+        color: '#ffe6c8',
+        intensity: 3,
+        position: [-1.4, 1.3, 1.4],
+        scale: [3, 2.2, 1],
+      },
+      {
+        form: 'rect',
+        color: '#fff2e4',
+        intensity: 1.6,
+        position: [1.8, 0.7, 1.2],
+        scale: [2.5, 2, 1],
+      },
+      {
+        form: 'rect',
+        color: '#dde8ff',
+        intensity: 1.4,
+        position: [0.6, 1.4, -2.2],
+        scale: [3, 1, 1],
+      },
+      { form: 'circle', color: '#fff8ee', intensity: 1.6, position: [0, 3, 0], scale: [3, 3, 1] },
+    ],
+    key: { color: '#ffe7cc', intensity: 1.2, direction: [-0.7, 1.9, 1] },
+    hemisphere: { sky: '#fff6ea', ground: '#c9b6a0', intensity: 0.3 },
+  },
   studio: {
     environmentIntensity: 0.55,
     environmentColor: '#2a2a2a',
