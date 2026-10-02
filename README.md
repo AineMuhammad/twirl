@@ -8,7 +8,8 @@ settings, pricing and compatibility rules. Shoppers configure the product in an 
 on any website, see a live price, and can share their configuration, download an image or request
 a quote.
 
-> **Status:** early development (Milestone 0: foundation). Nothing user-facing yet beyond the app shell.
+> **Status:** early development. Milestone 1 (viewer core) is done: try it at `/demo`. Product
+> configuration, accounts and the editor come next.
 
 ## Tech stack
 

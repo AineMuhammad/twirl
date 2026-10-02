@@ -4,15 +4,15 @@ This document gives the big picture and is kept up to date as milestones land. D
 reasoning live in the [ADRs](adr/). Sections marked **Planned** describe the intended design from
 the product spec; they become **Implemented** when the code exists and may change along the way.
 
-| Area                       | Status           |
-| -------------------------- | ---------------- |
-| Monorepo, tooling, CI      | Implemented (M0) |
-| Viewer (scene, parts)      | Planned (M1)     |
-| Config, rules, pricing     | Planned (M2)     |
-| Accounts, data, plans      | Planned (M3)     |
-| Uploads, editor, publish   | Planned (M4)     |
-| Embed, share links, export | Planned (M5)     |
-| Leads, events              | Planned (M6)     |
+| Area                                | Status           |
+| ----------------------------------- | ---------------- |
+| Monorepo, tooling, CI               | Implemented (M0) |
+| Viewer (scene, parts, HDRIs), /demo | Implemented (M1) |
+| Config, rules, pricing              | Planned (M2)     |
+| Accounts, data, plans               | Planned (M3)     |
+| Uploads, editor, publish            | Planned (M4)     |
+| Embed, share links, export          | Planned (M5)     |
+| Leads, events                       | Planned (M6)     |
 
 ## System overview
 
