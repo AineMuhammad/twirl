@@ -1,5 +1,5 @@
 import { useFrame, useLoader, useThree } from '@react-three/fiber';
-import { type RefObject, useEffect, useImperativeHandle, useMemo } from 'react';
+import { type RefObject, useEffect, useImperativeHandle, useLayoutEffect, useMemo } from 'react';
 import { AnimationMixer, type Box3 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
@@ -7,9 +7,11 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 import { longestClipDuration, playAllOnce, settledBounds } from '../internal/animation';
 import { createDeferredDisposer, disposeObject3D } from '../internal/dispose';
 import { configureGltfLoader } from '../internal/loaders';
+import { indexNodes } from '../internal/mesh-tree';
 import { describeModel } from '../internal/model-info';
 import { prefersReducedMotion } from '../internal/motion';
-import type { DecoderPaths, ModelInfo } from '../types';
+import { MeshOverrideApplier } from '../internal/overrides';
+import type { DecoderPaths, MeshOverrides, ModelInfo } from '../types';
 
 export interface ModelController {
   replayAnimations: () => void;
@@ -19,6 +21,7 @@ export interface ModelProps {
   url: string;
   decoders: DecoderPaths;
   playAnimationsOnLoad: boolean;
+  meshOverrides: MeshOverrides;
   controllerRef: RefObject<ModelController | null>;
   onProgress: (event: ProgressEvent) => void;
   /** `bounds` is the model's world-space box once its animations have finished. */
@@ -30,6 +33,7 @@ export function Model({
   url,
   decoders,
   playAnimationsOnLoad,
+  meshOverrides,
   controllerRef,
   onProgress,
   onLoaded,
@@ -55,6 +59,12 @@ export function Model({
     return copy;
   }, [gltf.scene]);
   const mixer = useMemo(() => new AnimationMixer(scene), [scene]);
+  const overrides = useMemo(() => new MeshOverrideApplier(indexNodes(scene)), [scene]);
+
+  // Layout effect so the first frame already shows the overrides.
+  useLayoutEffect(() => {
+    overrides.apply(meshOverrides);
+  }, [overrides, meshOverrides]);
 
   useEffect(() => {
     onLoaded(describeModel(scene, clips), settledBounds(scene, clips));
@@ -76,10 +86,12 @@ export function Model({
     () =>
       createDeferredDisposer(() => {
         mixer.uncacheRoot(scene);
+        overrides.dispose(); // frees per-mesh material clones
+
         disposeObject3D(gltf.scene, { closeImageBitmaps: true });
         useLoader.clear(GLTFLoader, url);
       }),
-    [mixer, scene, gltf.scene, url],
+    [mixer, overrides, scene, gltf.scene, url],
   );
   useEffect(() => {
     disposer.cancel();

@@ -48,3 +48,12 @@ export interface ViewerError {
   message: string;
   cause: unknown;
 }
+
+/** Per-node appearance changes, keyed by `MeshTreeNode.id`. Overrides on a group apply to every
+ * mesh under it unless a descendant sets its own. */
+export interface MeshOverride {
+  /** CSS hex color (#rrggbb). Multiplies with any base-color texture (tints it). */
+  color?: string;
+}
+
+export type MeshOverrides = Record<string, MeshOverride>;
