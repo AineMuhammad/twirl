@@ -1,0 +1,211 @@
+import { Canvas } from '@react-three/fiber';
+import {
+  type CSSProperties,
+  type Ref,
+  Suspense,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import type { Box3 } from 'three';
+
+import { AdaptiveQuality } from './components/AdaptiveQuality';
+import { CameraRig } from './components/CameraRig';
+import { Floor } from './components/Floor';
+import { Lighting } from './components/Lighting';
+import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
+import { Model, type ModelController } from './components/Model';
+import { ModelErrorBoundary } from './components/ModelErrorBoundary';
+import { dprRange, readDeviceHints } from './internal/device';
+import { progressFromEvent, toViewerError } from './internal/errors';
+import { computeFraming, type Framing } from './internal/framing';
+import { qualitySettings } from './internal/quality';
+import { type Stage, stageFromBounds } from './internal/stage';
+import { backgroundCss, DEFAULT_SCENE, floorColorFor, type SceneSettings } from './scene';
+import {
+  DEFAULT_DECODER_PATHS,
+  type DecoderPaths,
+  type ModelInfo,
+  type ViewerError,
+} from './types';
+
+/** Imperative controls, via `ref`. */
+export interface ViewerHandle {
+  /** Restart the model's built-in animations from the beginning. No-op if it has none. */
+  replayAnimations: () => void;
+}
+
+export interface ViewerProps {
+  ref?: Ref<ViewerHandle>;
+  /** GLB/glTF URL (http(s) or blob:). `null` renders an empty stage. */
+  modelUrl: string | null;
+  /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
+  scene?: Partial<SceneSettings>;
+  /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
+  decoderPaths?: Partial<DecoderPaths>;
+  /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
+  enablePan?: boolean;
+  /**
+   * Play the model's built-in animations once when it loads, holding the last frame.
+   * Defaults to true. Users who prefer reduced motion see the final pose immediately.
+   */
+  playAnimationsOnLoad?: boolean;
+  onLoad?: (info: ModelInfo) => void;
+  /** Called with a friendly message and the original error (for logging). */
+  onError?: (error: ViewerError) => void;
+  className?: string;
+  style?: CSSProperties;
+}
+
+const CAMERA_FOV = 35;
+const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
+
+const rootStyle: CSSProperties = {
+  position: 'relative',
+  width: '100%',
+  height: '100%',
+  overflow: 'hidden',
+  // Let the canvas own touch gestures instead of the page scrolling or zooming.
+  touchAction: 'none',
+};
+
+interface Placement {
+  url: string;
+  framing: Framing;
+  stage: Stage;
+}
+
+export function Viewer({
+  ref,
+  modelUrl,
+  scene: sceneOverrides,
+  decoderPaths,
+  enablePan = false,
+  playAnimationsOnLoad = true,
+  onLoad,
+  onError,
+  className,
+  style,
+}: ViewerProps) {
+  const device = useMemo(
+    () => readDeviceHints(typeof window === 'undefined' ? undefined : window),
+    [],
+  );
+  const maxDpr = useMemo(() => dprRange(device)[1], [device]);
+  const [qualityFactor, setQualityFactor] = useState(1);
+  const quality = qualitySettings(qualityFactor, device.coarsePointer, maxDpr);
+
+  const scene: SceneSettings = { ...DEFAULT_SCENE, ...sceneOverrides };
+  const dracoPath = decoderPaths?.draco ?? DEFAULT_DECODER_PATHS.draco;
+  const basisPath = decoderPaths?.basis ?? DEFAULT_DECODER_PATHS.basis;
+  const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
+
+  const modelController = useRef<ModelController | null>(null);
+  useImperativeHandle(
+    ref,
+    () => ({ replayAnimations: () => modelController.current?.replayAnimations() }),
+    [],
+  );
+
+  const container = useRef<HTMLDivElement>(null);
+  const [placement, setPlacement] = useState<Placement | null>(null);
+  const current = placement?.url === modelUrl ? placement : null;
+
+  // Overlay state is keyed by URL so a new model starts in "loading" without an extra effect.
+  const [overlay, setOverlay] = useState<{ url: string | null; state: OverlayState }>({
+    url: null,
+    state: { phase: 'idle' },
+  });
+  const overlayState: OverlayState =
+    overlay.url === modelUrl
+      ? overlay.state
+      : modelUrl
+        ? { phase: 'loading', progress: { fraction: null, loadedBytes: 0 } }
+        : { phase: 'idle' };
+
+  const handleProgress = useCallback(
+    (event: ProgressEvent) =>
+      setOverlay({
+        url: modelUrl,
+        state: { phase: 'loading', progress: progressFromEvent(event) },
+      }),
+    [modelUrl],
+  );
+  const handleLoaded = useCallback(
+    (info: ModelInfo, bounds: Box3) => {
+      if (modelUrl) {
+        const rect = container.current?.getBoundingClientRect();
+        const aspect = rect && rect.height > 0 ? rect.width / rect.height : 1;
+        const framing = computeFraming(bounds, { fov: CAMERA_FOV, aspect });
+        setPlacement({ url: modelUrl, framing, stage: stageFromBounds(bounds, framing.radius) });
+      }
+      setOverlay({ url: modelUrl, state: { phase: 'ready' } });
+      onLoad?.(info);
+    },
+    [modelUrl, onLoad],
+  );
+  const handleError = useCallback(
+    (cause: unknown) => {
+      const error = toViewerError(cause);
+      setOverlay({ url: modelUrl, state: { phase: 'error', error } });
+      onError?.(error);
+    },
+    [modelUrl, onError],
+  );
+
+  const stage = current?.stage ?? DEFAULT_STAGE;
+
+  return (
+    <div
+      ref={container}
+      className={className}
+      style={{ ...rootStyle, background: backgroundCss(scene.background), ...style }}
+      data-twirl-viewer=""
+    >
+      <Canvas
+        dpr={quality.dpr}
+        shadows="percentage"
+        camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
+        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
+      >
+        <AdaptiveQuality onChange={setQualityFactor} />
+        <Lighting
+          preset={scene.lighting}
+          stage={stage}
+          shadows={scene.shadows}
+          shadowMapSize={quality.shadowMapSize}
+        />
+        {modelUrl && (
+          <ModelErrorBoundary key={modelUrl} onError={handleError}>
+            <Suspense fallback={null}>
+              <Model
+                url={modelUrl}
+                decoders={decoders}
+                playAnimationsOnLoad={playAnimationsOnLoad}
+                controllerRef={modelController}
+                onProgress={handleProgress}
+                onLoaded={handleLoaded}
+              />
+            </Suspense>
+          </ModelErrorBoundary>
+        )}
+        {current && (
+          <Floor
+            stage={stage}
+            color={floorColorFor(scene.background)}
+            visible={scene.floor}
+            shadows={scene.shadows}
+          />
+        )}
+        <CameraRig
+          framing={current?.framing ?? null}
+          enablePan={enablePan}
+          maxPolarAngle={Math.PI / 2 - 0.05}
+        />
+      </Canvas>
+      <LoadingOverlay state={overlayState} />
+    </div>
+  );
+}
