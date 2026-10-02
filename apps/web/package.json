@@ -5,19 +5,23 @@
   "license": "UNLICENSED",
   "type": "module",
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/copy-decoders.mjs && next dev",
+    "build": "node scripts/copy-decoders.mjs && next build",
     "start": "next start",
     "lint": "eslint .",
     "typecheck": "next typegen && tsc --noEmit"
   },
   "dependencies": {
+    "@react-three/drei": "10.7.9",
+    "@react-three/fiber": "9.8.1",
     "@twirl/config-schema": "workspace:*",
     "@twirl/viewer": "workspace:*",
     "next": "16.3.8",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "0.0.1",
+    "three": "0.186.1",
+    "three-mesh-bvh": "0.8.3",
     "zod": "4.6.5"
   },
   "devDependencies": {
@@ -27,6 +31,7 @@
     "@types/node": "24.19.0",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
+    "@types/three": "0.186.0",
     "eslint": "9.39.5",
     "tailwindcss": "4.3.3",
     "typescript": "6.0.3"
