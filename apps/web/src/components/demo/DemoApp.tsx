@@ -1,22 +1,18 @@
 'use client';
 
-import {
-  DEFAULT_SCENE,
-  type MeshOverrides,
-  type ModelInfo,
-  type SceneSettings,
-  type ViewerError,
-  type ViewerHandle,
-} from '@twirl/viewer';
+import type { MeshOverrides, ModelInfo, ViewerError, ViewerHandle } from '@twirl/viewer';
+import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
 import { useCallback, useRef, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 
+import { CloseIcon, LogoMark, PlayIcon, UploadIcon } from './icons';
 import { LazyViewer } from './LazyViewer';
 import { PartsPanel } from './PartsPanel';
 import { ScenePanel } from './ScenePanel';
 import { Tabs } from './Tabs';
+import { focusRing, glass } from './ui';
 import { useLocalModel } from './useLocalModel';
 
 const NO_OVERRIDES: MeshOverrides = {};
@@ -28,7 +24,9 @@ export function DemoApp() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
   const [tab, setTab] = useState('parts');
+  const [sheetOpen, setSheetOpen] = useState(true);
   const viewer = useRef<ViewerHandle>(null);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const loadModel = useCallback((url: string | null) => {
     setInfo(null);
@@ -37,45 +35,86 @@ export function DemoApp() {
     setModelUrl(url);
   }, []);
   const local = useLocalModel(loadModel);
-  const fileInput = useRef<HTMLInputElement>(null);
 
   const onError = useCallback((error: ViewerError) => {
     console.error('[demo] viewer error', error.kind, error.cause);
   }, []);
 
+  const current = SAMPLE_MODELS.find((m) => m.url === modelUrl);
+  const title = current?.label ?? local.model?.name ?? 'Your model';
+
   return (
     <div
-      className="relative flex h-dvh flex-col bg-neutral-50 text-neutral-900"
+      className="relative h-dvh overflow-hidden text-neutral-900"
+      style={{ background: backgroundCss(scene.background) }}
       {...local.dropHandlers}
     >
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-neutral-200 bg-white px-4">
-        <p className="font-semibold tracking-tight">
-          {APP_NAME} <span className="font-normal text-neutral-500">· Demo</span>
-        </p>
-        <div className="flex items-center gap-2 text-sm">
-          <label className="flex items-center gap-2 text-sm">
-            <span className="sr-only sm:not-sr-only">Model</span>
-            <select
-              className="rounded-md border border-neutral-300 bg-white px-2 py-1.5"
-              value={modelUrl ?? ''}
-              onChange={(e) => loadModel(e.target.value)}
-            >
-              {SAMPLE_MODELS.map((m) => (
-                <option key={m.id} value={m.url}>
-                  {m.label}
-                </option>
-              ))}
-              {local.model && (
-                <option value={local.model.url}>Your file: {local.model.name}</option>
-              )}
-            </select>
-          </label>
+      {/* The 3D stage ends just under the panel's edge, so the product is centred in the visible
+          area (left of the floating panel on desktop, above the bottom sheet on phones) and the
+          canvas edge stays hidden behind the frosted panel. */}
+      <div
+        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 lg:top-0 lg:right-[380px] lg:bottom-0 ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : 'bottom-[124px]'}`}
+      >
+        <LazyViewer
+          ref={viewer}
+          modelUrl={modelUrl}
+          scene={scene}
+          environmentSources={ENVIRONMENT_SOURCES}
+          meshOverrides={overrides}
+          onLoad={setInfo}
+          onError={onError}
+        />
+      </div>
+
+      {/* Top bar */}
+      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-3 lg:right-[412px]">
+        <div
+          className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass}`}
+        >
+          <LogoMark className="text-neutral-900" />
+          <span className="font-semibold tracking-tight">{APP_NAME}</span>
+          <span className="hidden rounded-full bg-neutral-900/[0.06] px-2 py-0.5 text-xs font-medium text-neutral-600 sm:inline">
+            Demo
+          </span>
+        </div>
+
+        <div className="pointer-events-auto flex items-center gap-2">
+          <div
+            role="group"
+            aria-label="Model"
+            className={`flex items-center gap-1 rounded-full p-1 ${glass}`}
+          >
+            {SAMPLE_MODELS.map((m) => (
+              <button
+                key={m.id}
+                type="button"
+                aria-pressed={modelUrl === m.url}
+                onClick={() => loadModel(m.url)}
+                className={`rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+              >
+                {m.label}
+              </button>
+            ))}
+            {local.model && (
+              <button
+                type="button"
+                aria-pressed={modelUrl === local.model.url}
+                title={local.model.name}
+                onClick={() => local.model && loadModel(local.model.url)}
+                className={`max-w-32 truncate rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+              >
+                Your file
+              </button>
+            )}
+          </div>
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
-            className="rounded-md bg-neutral-900 px-3 py-1.5 font-medium text-white hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
+            aria-label="Upload a model"
+            className={`flex items-center gap-2 rounded-full bg-neutral-900 px-3.5 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_rgba(0,0,0,0.5)] transition-colors hover:bg-neutral-700 ${focusRing}`}
           >
-            Upload
+            <UploadIcon />
+            <span className="hidden sm:inline">Upload</span>
           </button>
           <input
             ref={fileInput}
@@ -93,85 +132,97 @@ export function DemoApp() {
         </div>
       </header>
 
-      {/* Phones/tablets: viewer on top, panel below. Desktop (lg): panel as a right sidebar. */}
-      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
-        <main className="relative h-[55svh] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1">
-          {local.error && (
-            <div
-              role="alert"
-              className="absolute inset-x-3 top-3 z-10 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 shadow-sm"
-            >
-              <p className="flex-1">{local.error}</p>
-              <button
-                type="button"
-                onClick={local.dismissError}
-                className="rounded px-1 font-medium hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-red-700"
-                aria-label="Dismiss"
-              >
-                ✕
-              </button>
-            </div>
-          )}
-          <LazyViewer
-            ref={viewer}
-            modelUrl={modelUrl}
-            scene={scene}
-            environmentSources={ENVIRONMENT_SOURCES}
-            meshOverrides={overrides}
-            onLoad={setInfo}
-            onError={onError}
-          />
-          {info && info.animationNames.length > 0 && (
-            <button
-              type="button"
-              onClick={() => viewer.current?.replayAnimations()}
-              className="absolute right-3 bottom-3 rounded-md border border-neutral-300 bg-white/90 px-3 py-1.5 text-sm shadow-sm hover:bg-white focus-visible:outline-2 focus-visible:outline-blue-600"
-            >
-              Replay animation
-            </button>
-          )}
-          {info && (
-            <p className="pointer-events-none absolute bottom-3 left-3 rounded bg-white/80 px-2 py-1 text-xs text-neutral-600">
-              {info.meshCount} meshes · {info.triangleCount.toLocaleString()} triangles
-            </p>
-          )}
-        </main>
-
-        <aside
-          className="flex min-h-0 flex-1 flex-col border-t border-neutral-200 bg-white lg:w-[360px] lg:flex-none lg:border-t-0 lg:border-l"
-          aria-label="Configure"
+      {local.error && (
+        <div
+          role="alert"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-white/90 px-4 py-3 text-sm shadow-[0_12px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 backdrop-blur-xl lg:left-[calc((100%-412px)/2)]"
         >
-          <Tabs
-            active={tab}
-            onChange={setTab}
-            tabs={[
-              {
-                id: 'parts',
-                label: 'Parts',
-                content: (
-                  <PartsPanel
-                    nodes={info?.meshTree ?? []}
-                    overrides={overrides}
-                    selectedId={selectedId}
-                    onSelect={setSelectedId}
-                    onOverridesChange={setOverrides}
-                  />
-                ),
-              },
-              {
-                id: 'scene',
-                label: 'Scene',
-                content: <ScenePanel scene={scene} onChange={setScene} />,
-              },
-            ]}
-          />
-        </aside>
-      </div>
+          <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
+          <p className="flex-1 text-neutral-800">{local.error}</p>
+          <button
+            type="button"
+            onClick={local.dismissError}
+            aria-label="Dismiss"
+            className={`rounded-full p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 ${focusRing}`}
+          >
+            <CloseIcon />
+          </button>
+        </div>
+      )}
+
+      {/* Control panel: floating card on desktop, bottom sheet on phones. */}
+      <aside
+        aria-label="Configure"
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl pb-[env(safe-area-inset-bottom)] transition-[height] duration-300 lg:inset-x-auto lg:top-3 lg:right-3 lg:bottom-3 lg:h-auto lg:w-[392px] lg:rounded-3xl lg:pb-0 ${glass} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
+      >
+        <button
+          type="button"
+          onClick={() => setSheetOpen((open) => !open)}
+          aria-expanded={sheetOpen}
+          aria-label={sheetOpen ? 'Collapse panel' : 'Expand panel'}
+          className={`flex shrink-0 justify-center pt-2 lg:hidden ${focusRing}`}
+        >
+          <span aria-hidden className="h-1.5 w-10 rounded-full bg-neutral-900/15" />
+        </button>
+        <Tabs
+          active={tab}
+          onChange={(id) => {
+            setTab(id);
+            setSheetOpen(true);
+          }}
+          header={
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="truncate text-lg font-semibold tracking-tight">{title}</h1>
+                <p className="text-xs text-neutral-500">
+                  {info
+                    ? `${info.meshCount} parts · ${info.triangleCount.toLocaleString()} triangles`
+                    : 'Loading model…'}
+                </p>
+              </div>
+              {info && info.animationNames.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => viewer.current?.replayAnimations()}
+                  className={`flex shrink-0 items-center gap-1.5 rounded-full bg-neutral-900/[0.06] px-3 py-1.5 text-xs font-medium text-neutral-800 hover:bg-neutral-900/10 ${focusRing}`}
+                >
+                  <PlayIcon width={12} height={12} /> Replay animation
+                </button>
+              )}
+            </div>
+          }
+          tabs={[
+            {
+              id: 'parts',
+              label: 'Parts',
+              content: (
+                <PartsPanel
+                  nodes={info?.meshTree ?? []}
+                  overrides={overrides}
+                  selectedId={selectedId}
+                  onSelect={setSelectedId}
+                  onOverridesChange={setOverrides}
+                />
+              ),
+            },
+            {
+              id: 'scene',
+              label: 'Scene',
+              content: <ScenePanel scene={scene} onChange={setScene} />,
+            },
+          ]}
+        />
+      </aside>
+
       {local.dragging && (
-        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-neutral-900/40 backdrop-blur-sm">
-          <p className="rounded-xl border-2 border-dashed border-white px-8 py-6 text-lg font-medium text-white">
-            Drop your .glb or .gltf to view it
-          </p>
+        <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-neutral-950/30 backdrop-blur-md">
+          <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
+            <UploadIcon width={28} height={28} />
+            <p className="text-lg font-semibold">Drop to view your model</p>
+            <p className="text-sm text-white/80">
+              .glb or .gltf, up to 15 MB. It stays on your device.
+            </p>
+          </div>
         </div>
       )}
     </div>

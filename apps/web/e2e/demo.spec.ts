@@ -24,29 +24,28 @@ test('home links to the demo, which loads the sample with its parts', async ({ p
   await expect(page.locator('canvas')).toBeVisible();
 
   // The sample is Draco-compressed: listing its parts proves the decoders are served.
-  for (const name of ['Chair', 'iron', 'Pillow_01', 'Pillow_02']) {
+  for (const name of ['Chair', 'Iron', 'Pillow 01', 'Pillow 02']) {
     await expect(parts(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
   }
-  await expect(page.getByText(/4 meshes · 35,350 triangles/)).toBeVisible();
+  await expect(page.getByText(/4 parts · 35,350 triangles/)).toBeVisible();
   expect(errors).toEqual([]);
 });
 
 test('parts can be hidden and recolored', async ({ page }) => {
   await page.goto('/demo');
-  const hide = page.getByRole('button', { name: 'Hide Pillow_01' });
-  await hide.click();
-  await expect(page.getByRole('button', { name: 'Show Pillow_01' })).toHaveAttribute(
+  await page.getByRole('button', { name: 'Hide Pillow 01' }).click();
+  await expect(page.getByRole('button', { name: 'Show Pillow 01' })).toHaveAttribute(
     'aria-pressed',
     'false',
   );
 
-  await parts(page).getByRole('button', { name: /^iron/ }).click();
+  await parts(page).getByRole('button', { name: /^Iron/ }).click();
   const swatch = page
-    .getByRole('group', { name: 'Color for iron' })
+    .getByRole('group', { name: 'Color for Iron' })
     .getByRole('button', { name: 'Terracotta' });
   await swatch.click();
   await expect(swatch).toHaveAttribute('aria-pressed', 'true');
-  await page.getByRole('button', { name: 'Original' }).click();
+  await page.getByRole('button', { name: 'Original', exact: true }).click();
   await expect(swatch).toHaveAttribute('aria-pressed', 'false');
 });
 
@@ -80,18 +79,25 @@ test('uploading a local model replaces the sample; bad files are explained', asy
   await page.getByRole('button', { name: 'Dismiss' }).click();
 
   await input.setInputFiles(resolve(SAMPLES, 'jeep_2021.glb'));
-  await expect(parts(page).getByRole('button', { name: /^Body_Exterior/ })).toBeVisible();
-  await expect(page.getByRole('combobox')).toHaveValue(/^blob:/);
+  await expect(parts(page).getByRole('button', { name: /^Body Exterior/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Your file' })).toHaveAttribute(
+    'aria-pressed',
+    'true',
+  );
+  await expect(page.getByRole('heading', { name: 'jeep_2021.glb' })).toBeVisible();
 });
 
 test('layout: panel beside the viewer on desktop, below it on phones', async ({ page }, info) => {
   await page.goto('/demo');
-  const viewer = await page.locator('main').boundingBox();
+  // The stage is the canvas' container.
+  const viewer = await page.locator('canvas').boundingBox();
   const panel = await page.getByRole('complementary', { name: 'Configure' }).boundingBox();
   if (!viewer || !panel) throw new Error('layout not rendered');
+  // The canvas tucks just under the panel's edge (≤ 32px) so its edge is hidden by the glass.
   if (info.project.name === 'mobile') {
-    expect(panel.y).toBeGreaterThanOrEqual(viewer.y + viewer.height - 1);
+    expect(panel.y).toBeGreaterThan(viewer.y + viewer.height - 32);
+    expect(panel.y).toBeGreaterThan(viewer.y + viewer.height / 2);
   } else {
-    expect(panel.x).toBeGreaterThanOrEqual(viewer.x + viewer.width - 1);
+    expect(panel.x).toBeGreaterThan(viewer.x + viewer.width - 32);
   }
 });

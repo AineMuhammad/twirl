@@ -1,149 +1,160 @@
 'use client';
 
-import { ENVIRONMENT_IDS, ENVIRONMENTS, LIGHTING_PRESETS, type SceneSettings } from '@twirl/viewer';
-import type { ReactNode } from 'react';
+import {
+  ENVIRONMENT_IDS,
+  ENVIRONMENTS,
+  LIGHTING_PRESETS,
+  type SceneBackground,
+  type SceneSettings,
+} from '@twirl/viewer/settings';
 
-import { BACKGROUND_PRESETS, PROCEDURAL_LABELS, sameBackground } from '@/lib/scene-presets';
+import {
+  BACKGROUND_PRESETS,
+  LIGHTING_TONES,
+  PROCEDURAL_LABELS,
+  sameBackground,
+} from '@/lib/scene-presets';
+
+import { CheckIcon } from './icons';
+import { focusRing, SectionTitle, Switch } from './ui';
 
 export interface ScenePanelProps {
   scene: SceneSettings;
   onChange: (scene: SceneSettings) => void;
 }
 
-function Section({ title, children }: { title: string; children: ReactNode }) {
-  return (
-    <section className="space-y-2">
-      <h3 className="text-xs font-semibold tracking-wide text-neutral-500 uppercase">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
-function Choice({
+function LightingCard({
+  label,
+  tones,
   pressed,
   onClick,
-  children,
 }: {
+  label: string;
+  tones: [string, string];
   pressed: boolean;
   onClick: () => void;
-  children: ReactNode;
 }) {
   return (
     <button
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={`rounded-md border px-2.5 py-2.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-600 lg:py-1.5 ${pressed ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-300 bg-white hover:border-neutral-500'}`}
+      className={`group flex items-center gap-2.5 rounded-xl p-1.5 pr-3 text-left text-sm transition-colors ${focusRing} ${pressed ? 'bg-neutral-900 text-white' : 'bg-neutral-900/[0.04] text-neutral-800 hover:bg-neutral-900/[0.07]'}`}
     >
-      {children}
+      <span
+        aria-hidden
+        className="size-8 shrink-0 rounded-lg shadow-[inset_0_0_0_1px_rgba(0,0,0,0.08)]"
+        style={{ background: `linear-gradient(135deg, ${tones[0]}, ${tones[1]})` }}
+      />
+      <span className="truncate font-medium">{label}</span>
     </button>
   );
 }
 
-function Switch({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
-}) {
-  return (
-    <button
-      type="button"
-      role="switch"
-      aria-checked={checked}
-      onClick={() => onChange(!checked)}
-      className="flex w-full items-center justify-between rounded-md py-1 text-sm focus-visible:outline-2 focus-visible:outline-blue-600"
-    >
-      {label}
-      <span
-        aria-hidden
-        className={`relative h-5 w-9 rounded-full transition-colors ${checked ? 'bg-neutral-900' : 'bg-neutral-300'}`}
-      >
-        <span
-          className={`absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform ${checked ? 'translate-x-4.5' : 'translate-x-0.5'}`}
-        />
-      </span>
-    </button>
-  );
+function backgroundPaint(bg: SceneBackground) {
+  return bg.type === 'solid' ? bg.color : `linear-gradient(${bg.from}, ${bg.to})`;
 }
 
 export function ScenePanel({ scene, onChange }: ScenePanelProps) {
   const set = (patch: Partial<SceneSettings>) => onChange({ ...scene, ...patch });
-  const customColor =
-    scene.background.type === 'solid' ? scene.background.color : scene.background.to;
+  const customColor = scene.background.type === 'solid' ? scene.background.color : '#ffffff';
+  const isPreset = BACKGROUND_PRESETS.some((p) => sameBackground(p.background, scene.background));
 
   return (
-    <div className="space-y-6 p-4">
-      <Section title="Studio lighting">
+    <div className="space-y-6 px-4 pb-5">
+      <section>
+        <SectionTitle hint="Instant">Studio lighting</SectionTitle>
         <div className="grid grid-cols-2 gap-1.5">
           {LIGHTING_PRESETS.map((preset) => (
-            <Choice
+            <LightingCard
               key={preset}
+              label={PROCEDURAL_LABELS[preset]}
+              tones={LIGHTING_TONES[preset]}
               pressed={scene.lighting === preset}
               onClick={() => set({ lighting: preset })}
-            >
-              {PROCEDURAL_LABELS[preset]}
-            </Choice>
+            />
           ))}
         </div>
-      </Section>
+      </section>
 
-      <Section title="Real-world lighting">
-        <p className="text-xs text-neutral-500">
-          Lighting captured in real places. Only the light changes; the background stays yours.
-        </p>
+      <section>
+        <SectionTitle hint="Light only, your background stays">Real-world lighting</SectionTitle>
         <div className="grid grid-cols-2 gap-1.5">
           {ENVIRONMENT_IDS.map((id) => (
-            <Choice key={id} pressed={scene.lighting === id} onClick={() => set({ lighting: id })}>
-              {ENVIRONMENTS[id].label}
-            </Choice>
+            <LightingCard
+              key={id}
+              label={ENVIRONMENTS[id].label}
+              tones={LIGHTING_TONES[id]}
+              pressed={scene.lighting === id}
+              onClick={() => set({ lighting: id })}
+            />
           ))}
         </div>
-      </Section>
+      </section>
 
-      <Section title="Background">
-        <div
-          className="flex flex-wrap items-center gap-2"
-          role="group"
-          aria-label="Background presets"
-        >
+      <section>
+        <SectionTitle>Background</SectionTitle>
+        <div role="group" aria-label="Background presets" className="flex flex-wrap gap-2.5">
           {BACKGROUND_PRESETS.map((preset) => {
-            const bg = preset.background;
+            const active = sameBackground(scene.background, preset.background);
             return (
               <button
                 key={preset.name}
                 type="button"
                 aria-label={preset.name}
-                aria-pressed={sameBackground(scene.background, bg)}
+                aria-pressed={active}
                 title={preset.name}
-                onClick={() => set({ background: bg })}
-                className={`size-8 rounded-full border border-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${sameBackground(scene.background, bg) ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
-                style={{
-                  background:
-                    bg.type === 'solid' ? bg.color : `linear-gradient(${bg.from}, ${bg.to})`,
-                }}
-              />
+                onClick={() => set({ background: preset.background })}
+                className={`grid size-10 place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform hover:scale-105 ${focusRing} ${active ? 'ring-2 ring-neutral-900 ring-offset-2' : ''}`}
+                style={{ background: backgroundPaint(preset.background) }}
+              >
+                {active && (
+                  <CheckIcon
+                    width={14}
+                    height={14}
+                    className={preset.name === 'Charcoal' ? 'text-white' : 'text-neutral-900'}
+                  />
+                )}
+              </button>
             );
           })}
-          <label className="ml-1 flex items-center gap-2 text-sm">
+          <label
+            title="Custom background"
+            className={`relative grid size-10 cursor-pointer place-items-center rounded-full transition-transform focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-neutral-900 hover:scale-105 ${isPreset ? '' : 'ring-2 ring-neutral-900 ring-offset-2'}`}
+            style={{
+              background: isPreset
+                ? 'conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #6366f1, #d946ef, #f43f5e)'
+                : customColor,
+            }}
+          >
+            <span className="sr-only">Custom background</span>
             <input
               type="color"
               value={customColor}
               onChange={(e) => set({ background: { type: 'solid', color: e.target.value } })}
-              className="h-8 w-10 cursor-pointer rounded border border-neutral-300 bg-white p-0.5"
+              className="absolute inset-0 cursor-pointer opacity-0"
             />
-            Custom
           </label>
         </div>
-      </Section>
+      </section>
 
-      <Section title="Ground">
-        <Switch label="Floor" checked={scene.floor} onChange={(floor) => set({ floor })} />
-        <Switch label="Shadows" checked={scene.shadows} onChange={(shadows) => set({ shadows })} />
-      </Section>
+      <section>
+        <SectionTitle>Ground</SectionTitle>
+        <div className="rounded-2xl bg-neutral-900/[0.03] p-1">
+          <Switch
+            label="Floor"
+            description="A soft ground under the product"
+            checked={scene.floor}
+            onChange={(floor) => set({ floor })}
+          />
+          <Switch
+            label="Shadows"
+            description="Follow the light direction"
+            checked={scene.shadows}
+            onChange={(shadows) => set({ shadows })}
+          />
+        </div>
+      </section>
     </div>
   );
 }

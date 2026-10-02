@@ -4,8 +4,10 @@ import type { MeshOverrides, MeshTreeNode } from '@twirl/viewer';
 import { useId } from 'react';
 
 import { DEMO_SWATCHES, isHidden, patchOverride } from '@/lib/overrides';
+import { prettyPartName } from '@/lib/part-names';
 
-import { ChevronIcon, EyeIcon, EyeOffIcon, ResetIcon } from './icons';
+import { CheckIcon, ChevronIcon, EyeIcon, EyeOffIcon, ResetIcon } from './icons';
+import { focusRing } from './ui';
 
 export interface PartsPanelProps {
   nodes: MeshTreeNode[];
@@ -17,21 +19,23 @@ export interface PartsPanelProps {
 
 /**
  * Every part of the model with show/hide and color controls. Parts are chosen here, not by
- * clicking the model, and nothing is outlined in 3D. Rows are plain buttons, so the whole panel
- * works with Tab/Shift+Tab, Enter and Space.
+ * clicking the model, and nothing is outlined in 3D. Everything is a button or input, so the
+ * panel works fully with the keyboard.
  */
 export function PartsPanel(props: PartsPanelProps) {
   if (props.nodes.length === 0) {
-    return <p className="p-4 text-sm text-neutral-500">Load a model to see its parts.</p>;
+    return <p className="px-5 py-6 text-sm text-neutral-500">Loading parts…</p>;
   }
   return (
-    <ul className="space-y-0.5 p-2" aria-label="Parts">
+    <ul className="space-y-1 px-2 pb-4" aria-label="Parts">
       {props.nodes.map((node) => (
         <PartRow key={node.id} node={node} depth={0} {...props} />
       ))}
     </ul>
   );
 }
+
+const CHECKER = 'repeating-conic-gradient(#e5e5e5 0 25%, #fff 0 50%) 50% / 8px 8px';
 
 function PartRow({
   node,
@@ -42,108 +46,124 @@ function PartRow({
   onOverridesChange,
   nodes,
 }: PartsPanelProps & { node: MeshTreeNode; depth: number }) {
+  const name = prettyPartName(node.name);
   const hidden = isHidden(overrides, node.id);
   const color = overrides[node.id]?.color;
-  const selected = node.id === selectedId;
+  const open = node.id === selectedId;
   const pickerId = useId();
-
   const update = (patch: Parameters<typeof patchOverride>[2]) =>
     onOverridesChange(patchOverride(overrides, node.id, patch));
 
   return (
     <li>
       <div
-        className={`flex items-center gap-1 rounded-md pr-2 ${selected ? 'bg-blue-50 ring-1 ring-blue-200' : 'hover:bg-neutral-100'}`}
-        style={{ paddingLeft: 4 + depth * 16 }}
+        className={`group flex items-center rounded-2xl transition-colors ${open ? 'bg-neutral-900/[0.04]' : 'hover:bg-neutral-900/[0.03]'}`}
+        style={{ paddingLeft: depth * 14 }}
       >
         <button
           type="button"
-          className="rounded p-2.5 text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-blue-600 lg:p-1.5"
-          aria-pressed={!hidden}
-          aria-label={`${hidden ? 'Show' : 'Hide'} ${node.name}`}
-          title={hidden ? 'Show' : 'Hide'}
-          onClick={() => update({ visible: hidden ? undefined : false })}
+          aria-expanded={open}
+          aria-controls={pickerId}
+          title={node.name}
+          onClick={() => onSelect(open ? null : node.id)}
+          className={`flex min-w-0 flex-1 items-center gap-3 rounded-2xl py-2.5 pr-2 pl-3 text-left ${focusRing}`}
         >
-          {hidden ? <EyeOffIcon /> : <EyeIcon />}
+          <span
+            aria-hidden
+            className="size-6 shrink-0 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.12)]"
+            style={{ background: color ?? CHECKER }}
+          />
+          <span className="min-w-0 flex-1">
+            <span
+              className={`block truncate text-sm font-medium ${hidden ? 'text-neutral-400 line-through' : 'text-neutral-900'} ${node.hasName ? '' : 'italic'}`}
+            >
+              {name}
+            </span>
+            <span className="block text-xs text-neutral-500">
+              {color
+                ? (DEMO_SWATCHES.find((s) => s.hex === color)?.name ?? color.toUpperCase())
+                : 'Original'}
+              {' · '}
+              {node.triangleCount.toLocaleString()} triangles
+            </span>
+          </span>
+          <ChevronIcon
+            className={`shrink-0 text-neutral-400 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+          />
         </button>
         <button
           type="button"
-          className="flex min-w-0 flex-1 items-center gap-2 rounded py-2.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-blue-600 lg:py-1.5"
-          aria-expanded={selected}
-          aria-controls={pickerId}
-          onClick={() => onSelect(selected ? null : node.id)}
+          aria-pressed={!hidden}
+          aria-label={`${hidden ? 'Show' : 'Hide'} ${name}`}
+          title={hidden ? 'Show' : 'Hide'}
+          onClick={() => update({ visible: hidden ? undefined : false })}
+          className={`mr-1.5 rounded-full p-2.5 transition-colors ${hidden ? 'text-neutral-900' : 'text-neutral-400 hover:text-neutral-900'} hover:bg-white ${focusRing}`}
         >
-          <ChevronIcon className={`shrink-0 transition-transform ${selected ? 'rotate-90' : ''}`} />
-          <span
-            aria-hidden
-            className="size-4 shrink-0 rounded-full border border-neutral-300"
-            style={{
-              background:
-                color ?? 'repeating-conic-gradient(#e5e5e5 0 25%, #fff 0 50%) 50% / 8px 8px',
-            }}
-          />
-          <span
-            className={`truncate ${hidden ? 'text-neutral-400 line-through' : ''} ${node.hasName ? '' : 'italic'}`}
-          >
-            {node.name}
-          </span>
-          <span className="ml-auto shrink-0 text-xs text-neutral-400">
-            {node.triangleCount.toLocaleString()} ▲
-          </span>
+          {hidden ? <EyeOffIcon width={18} height={18} /> : <EyeIcon width={18} height={18} />}
         </button>
       </div>
 
-      {selected && (
-        <div
-          id={pickerId}
-          className="mt-1 mb-2 space-y-2 px-3"
-          style={{ paddingLeft: 12 + depth * 16 }}
-        >
-          <div
-            role="group"
-            aria-label={`Color for ${node.name}`}
-            className="flex flex-wrap gap-1.5"
-          >
-            {DEMO_SWATCHES.map((swatch) => (
-              <button
-                key={swatch.hex}
-                type="button"
-                aria-label={swatch.name}
-                aria-pressed={color === swatch.hex}
-                title={swatch.name}
-                onClick={() => update({ color: swatch.hex })}
-                className={`size-9 rounded-full border border-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:size-7 ${color === swatch.hex ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
-                style={{ background: swatch.hex }}
-              />
-            ))}
-          </div>
-          <div className="flex items-center gap-3 text-sm">
-            <label className="flex items-center gap-2">
+      {open && (
+        <div id={pickerId} className="px-3 pt-2 pb-3" style={{ paddingLeft: 12 + depth * 14 }}>
+          <div role="group" aria-label={`Color for ${name}`} className="grid grid-cols-7 gap-2">
+            {DEMO_SWATCHES.map((swatch) => {
+              const active = color === swatch.hex;
+              return (
+                <button
+                  key={swatch.hex}
+                  type="button"
+                  aria-label={swatch.name}
+                  aria-pressed={active}
+                  title={swatch.name}
+                  onClick={() => update({ color: swatch.hex })}
+                  className={`relative grid aspect-square place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform hover:scale-110 ${focusRing} ${active ? 'ring-2 ring-neutral-900 ring-offset-2' : ''}`}
+                  style={{ background: swatch.hex }}
+                >
+                  {active && (
+                    <CheckIcon
+                      width={14}
+                      height={14}
+                      className={isLight(swatch.hex) ? 'text-neutral-900' : 'text-white'}
+                    />
+                  )}
+                </button>
+              );
+            })}
+            <label
+              title="Custom color"
+              className="relative grid aspect-square cursor-pointer place-items-center rounded-full transition-transform focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-neutral-900 hover:scale-110"
+              style={{
+                background:
+                  'conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #6366f1, #d946ef, #f43f5e)',
+              }}
+            >
+              <span className="sr-only">Custom color</span>
               <input
                 type="color"
                 value={color ?? '#ffffff'}
                 onChange={(e) => update({ color: e.target.value })}
-                className="h-7 w-9 cursor-pointer rounded border border-neutral-300 bg-white p-0.5"
+                className="absolute inset-0 cursor-pointer opacity-0"
               />
-              Custom
             </label>
+          </div>
+          <div className="mt-3 flex items-center justify-between text-xs text-neutral-500">
+            <span className="truncate">
+              {node.materialNames.length > 0 && `Material: ${node.materialNames.join(', ')}`}
+            </span>
             <button
               type="button"
               disabled={!color}
               onClick={() => update({ color: undefined })}
-              className="ml-auto flex items-center gap-1 rounded px-2 py-1 text-neutral-600 hover:bg-neutral-100 disabled:opacity-40"
+              className={`flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1 font-medium text-neutral-700 hover:bg-white disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
             >
-              <ResetIcon /> Original
+              <ResetIcon width={14} height={14} /> Original
             </button>
           </div>
-          {node.materialNames.length > 0 && (
-            <p className="text-xs text-neutral-500">Material: {node.materialNames.join(', ')}</p>
-          )}
         </div>
       )}
 
       {node.children.length > 0 && (
-        <ul className="space-y-0.5">
+        <ul className="space-y-1">
           {node.children.map((child) => (
             <PartRow
               key={child.id}
@@ -160,4 +180,11 @@ function PartRow({
       )}
     </li>
   );
+}
+
+/** Rough relative luminance check, to pick a readable checkmark color on a swatch. */
+function isLight(hex: string) {
+  const n = Number.parseInt(hex.slice(1), 16);
+  const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+  return 0.299 * r + 0.587 * g + 0.114 * b > 160;
 }
