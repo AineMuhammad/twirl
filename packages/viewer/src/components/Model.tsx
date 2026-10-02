@@ -7,11 +7,13 @@ import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js
 import { longestClipDuration, playAllOnce, settledBounds } from '../internal/animation';
 import { createDeferredDisposer, disposeObject3D } from '../internal/dispose';
 import { configureGltfLoader } from '../internal/loaders';
-import { indexNodes } from '../internal/mesh-tree';
+import { indexNodes, type NodeId } from '../internal/mesh-tree';
 import { describeModel } from '../internal/model-info';
 import { prefersReducedMotion } from '../internal/motion';
 import { MeshOverrideApplier } from '../internal/overrides';
 import type { DecoderPaths, MeshOverrides, ModelInfo } from '../types';
+import { MeshHighlight } from './MeshHighlight';
+import { MeshPicker } from './MeshPicker';
 
 export interface ModelController {
   replayAnimations: () => void;
@@ -22,6 +24,8 @@ export interface ModelProps {
   decoders: DecoderPaths;
   playAnimationsOnLoad: boolean;
   meshOverrides: MeshOverrides;
+  highlightedMeshId: NodeId | null;
+  onMeshSelect: ((id: NodeId | null) => void) | undefined;
   controllerRef: RefObject<ModelController | null>;
   onProgress: (event: ProgressEvent) => void;
   /** `bounds` is the model's world-space box once its animations have finished. */
@@ -34,6 +38,8 @@ export function Model({
   decoders,
   playAnimationsOnLoad,
   meshOverrides,
+  highlightedMeshId,
+  onMeshSelect,
   controllerRef,
   onProgress,
   onLoaded,
@@ -59,7 +65,10 @@ export function Model({
     return copy;
   }, [gltf.scene]);
   const mixer = useMemo(() => new AnimationMixer(scene), [scene]);
-  const overrides = useMemo(() => new MeshOverrideApplier(indexNodes(scene)), [scene]);
+  const index = useMemo(() => indexNodes(scene), [scene]);
+  const idOf = useMemo(() => new Map([...index].map(([id, object]) => [object, id])), [index]);
+  const overrides = useMemo(() => new MeshOverrideApplier(index), [index]);
+  const highlighted = highlightedMeshId ? index.get(highlightedMeshId) : undefined;
 
   // Layout effect so the first frame already shows the overrides.
   useLayoutEffect(() => {
@@ -114,5 +123,11 @@ export function Model({
     mixer.update(delta);
   });
 
-  return <primitive object={scene} />;
+  return (
+    <>
+      <primitive object={scene} />
+      {highlighted && <MeshHighlight target={highlighted} />}
+      {onMeshSelect && <MeshPicker root={scene} idOf={idOf} onSelect={onMeshSelect} />}
+    </>
+  );
 }

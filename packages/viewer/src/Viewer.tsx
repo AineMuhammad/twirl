@@ -47,6 +47,13 @@ export interface ViewerProps {
    * (memoize it); a new object re-applies every override.
    */
   meshOverrides?: MeshOverrides;
+  /** Outline this node (e.g. while hovering it in a mesh tree). */
+  highlightedMeshId?: string | null;
+  /**
+   * Called when the shopper clicks/taps a mesh (`null` when they click empty space).
+   * Drags are orbiting, not selection. Omit to disable picking entirely.
+   */
+  onMeshSelect?: (id: string | null) => void;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
   scene?: Partial<SceneSettings>;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
@@ -88,6 +95,8 @@ export function Viewer({
   ref,
   modelUrl,
   meshOverrides = NO_OVERRIDES,
+  highlightedMeshId = null,
+  onMeshSelect,
   scene: sceneOverrides,
   decoderPaths,
   enablePan = false,
@@ -193,6 +202,8 @@ export function Viewer({
                 decoders={decoders}
                 playAnimationsOnLoad={playAnimationsOnLoad}
                 meshOverrides={meshOverrides}
+                highlightedMeshId={highlightedMeshId}
+                onMeshSelect={onMeshSelect}
                 controllerRef={modelController}
                 onProgress={handleProgress}
                 onLoaded={handleLoaded}
