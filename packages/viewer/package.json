@@ -2,6 +2,7 @@
   "name": "@twirl/viewer",
   "version": "0.0.0",
   "private": true,
+  "license": "UNLICENSED",
   "type": "module",
   "sideEffects": false,
   "exports": {
