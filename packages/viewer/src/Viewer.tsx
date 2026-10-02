@@ -1,9 +1,18 @@
 import { Canvas } from '@react-three/fiber';
-import { type CSSProperties, Suspense, useCallback, useMemo, useState } from 'react';
+import {
+  type CSSProperties,
+  type Ref,
+  Suspense,
+  useCallback,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 
 import { CameraControls } from './components/CameraControls';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
-import { Model } from './components/Model';
+import { Model, type ModelController } from './components/Model';
 import { ModelErrorBoundary } from './components/ModelErrorBoundary';
 import { dprRange, readDeviceHints } from './internal/device';
 import { progressFromEvent, toViewerError } from './internal/errors';
@@ -14,13 +23,25 @@ import {
   type ViewerError,
 } from './types';
 
+/** Imperative controls, via `ref`. */
+export interface ViewerHandle {
+  /** Restart the model's built-in animations from the beginning. No-op if it has none. */
+  replayAnimations: () => void;
+}
+
 export interface ViewerProps {
+  ref?: Ref<ViewerHandle>;
   /** GLB/glTF URL (http(s) or blob:). `null` renders an empty stage. */
   modelUrl: string | null;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
   decoderPaths?: Partial<DecoderPaths>;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
+  /**
+   * Play the model's built-in animations once when it loads, holding the last frame.
+   * Defaults to true. Users who prefer reduced motion see the final pose immediately.
+   */
+  playAnimationsOnLoad?: boolean;
   onLoad?: (info: ModelInfo) => void;
   /** Called with a friendly message and the original error (for logging). */
   onError?: (error: ViewerError) => void;
@@ -38,9 +59,11 @@ const rootStyle: CSSProperties = {
 };
 
 export function Viewer({
+  ref,
   modelUrl,
   decoderPaths,
   enablePan = false,
+  playAnimationsOnLoad = true,
   onLoad,
   onError,
   className,
@@ -53,6 +76,13 @@ export function Viewer({
   const dracoPath = decoderPaths?.draco ?? DEFAULT_DECODER_PATHS.draco;
   const basisPath = decoderPaths?.basis ?? DEFAULT_DECODER_PATHS.basis;
   const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
+
+  const modelController = useRef<ModelController | null>(null);
+  useImperativeHandle(
+    ref,
+    () => ({ replayAnimations: () => modelController.current?.replayAnimations() }),
+    [],
+  );
 
   // Overlay state is keyed by URL so a new model starts in "loading" without an extra effect.
   const [overlay, setOverlay] = useState<{ url: string | null; state: OverlayState }>({
@@ -105,6 +135,8 @@ export function Viewer({
               <Model
                 url={modelUrl}
                 decoders={decoders}
+                playAnimationsOnLoad={playAnimationsOnLoad}
+                controllerRef={modelController}
                 onProgress={handleProgress}
                 onLoaded={handleLoaded}
               />

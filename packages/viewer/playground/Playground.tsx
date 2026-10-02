@@ -1,6 +1,6 @@
 import { type ChangeEvent, type CSSProperties, useCallback, useRef, useState } from 'react';
 
-import { type ModelInfo, Viewer, type ViewerError } from '../src';
+import { type ModelInfo, Viewer, type ViewerError, type ViewerHandle } from '../src';
 
 const SAMPLES = [
   { label: 'Sofa (Draco + WebP, animated)', url: '/samples/sofa.glb' },
@@ -28,6 +28,7 @@ export function Playground() {
   const [mounted, setMounted] = useState(true);
 
   const blobUrl = useRef<string | null>(null);
+  const viewer = useRef<ViewerHandle>(null);
 
   const selectModel = useCallback((url: string | null) => {
     // Free the previous local file once it's replaced.
@@ -71,6 +72,13 @@ export function Playground() {
           Local .glb file
           <input type="file" accept=".glb,.gltf" onChange={onFile} style={{ display: 'block' }} />
         </label>
+        <button
+          type="button"
+          onClick={() => viewer.current?.replayAnimations()}
+          disabled={!info?.animationNames.length}
+        >
+          Replay animation
+        </button>
         <button type="button" onClick={() => setMounted((m) => !m)}>
           {mounted ? 'Unmount viewer' : 'Mount viewer'}
         </button>
@@ -90,7 +98,7 @@ export function Playground() {
         </section>
       </aside>
       <main style={{ flex: 1, minWidth: 280, minHeight: 360 }}>
-        {mounted && <Viewer modelUrl={modelUrl} onLoad={setInfo} onError={onError} />}
+        {mounted && <Viewer ref={viewer} modelUrl={modelUrl} onLoad={setInfo} onError={onError} />}
       </main>
     </div>
   );
