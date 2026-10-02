@@ -2,19 +2,23 @@
 
 import type { ReactNode } from 'react';
 
-/** Shared demo UI primitives. */
+/** Shared demo UI primitives and class recipes. */
 
 export const focusRing =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-neutral-900';
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
 
-/** Frosted floating surface used for the top bar and the control panel. */
+/** Frosted floating surface (top bar, phone sheet). */
 export const glass =
   'bg-white/80 backdrop-blur-xl ring-1 ring-black/[0.06] shadow-[0_12px_48px_-12px_rgba(0,0,0,0.25)]';
 
+/** Rainbow fill for "custom color" swatches. */
+export const RAINBOW =
+  'conic-gradient(from 90deg, #f43f5e, #f59e0b, #84cc16, #06b6d4, #6366f1, #d946ef, #f43f5e)';
+
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="mb-2.5 flex items-baseline justify-between gap-3">
-      <h3 className="text-[13px] font-semibold text-neutral-900">{children}</h3>
+    <div className="mb-3 flex items-baseline justify-between gap-3">
+      <h3 className="text-sm font-semibold text-neutral-900">{children}</h3>
       {hint && <p className="text-xs text-neutral-500">{hint}</p>}
     </div>
   );
@@ -37,7 +41,7 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`flex w-full items-center justify-between gap-4 rounded-xl px-3 py-2.5 text-left hover:bg-black/[0.03] ${focusRing}`}
+      className={`flex w-full items-center justify-between gap-4 rounded-xl px-3 py-3 text-left hover:bg-neutral-900/[0.03] ${focusRing}`}
     >
       <span>
         <span className="block text-sm font-medium text-neutral-900">{label}</span>
@@ -45,12 +49,35 @@ export function Switch({
       </span>
       <span
         aria-hidden
-        className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-neutral-900' : 'bg-neutral-200'}`}
+        className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-brand-600' : 'bg-neutral-200'}`}
       >
         <span
           className={`absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-4' : ''}`}
         />
       </span>
     </button>
+  );
+}
+
+/** Small round check badge shown on selected swatches and tiles. */
+export function CheckBadge({ dark = false }: { dark?: boolean }) {
+  return (
+    <span
+      aria-hidden
+      className={`grid size-5 place-items-center rounded-full ${dark ? 'bg-white text-neutral-900' : 'bg-brand-600 text-white'} shadow-sm`}
+    >
+      <svg
+        width="12"
+        height="12"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="3.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      >
+        <path d="M20 6 9 17l-5-5" />
+      </svg>
+    </span>
   );
 }
