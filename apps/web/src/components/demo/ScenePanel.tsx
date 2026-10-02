@@ -33,7 +33,7 @@ function Choice({
       type="button"
       aria-pressed={pressed}
       onClick={onClick}
-      className={`rounded-md border px-2.5 py-1.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-600 ${pressed ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-300 bg-white hover:border-neutral-500'}`}
+      className={`rounded-md border px-2.5 py-2.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-blue-600 lg:py-1.5 ${pressed ? 'border-neutral-900 bg-neutral-900 text-white' : 'border-neutral-300 bg-white hover:border-neutral-500'}`}
     >
       {children}
     </button>

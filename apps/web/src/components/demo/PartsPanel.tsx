@@ -69,7 +69,7 @@ function PartRow({
       >
         <button
           type="button"
-          className="rounded p-1.5 text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="rounded p-2.5 text-neutral-500 hover:text-neutral-900 focus-visible:outline-2 focus-visible:outline-blue-600 lg:p-1.5"
           aria-pressed={!hidden}
           aria-label={`${hidden ? 'Show' : 'Hide'} ${node.name}`}
           title={hidden ? 'Show' : 'Hide'}
@@ -81,7 +81,7 @@ function PartRow({
         </button>
         <button
           type="button"
-          className="flex min-w-0 flex-1 items-center gap-2 rounded py-1.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-blue-600"
+          className="flex min-w-0 flex-1 items-center gap-2 rounded py-2.5 text-left text-sm focus-visible:outline-2 focus-visible:outline-blue-600 lg:py-1.5"
           aria-expanded={selected}
           aria-controls={pickerId}
           onClick={() => onSelect(selected ? null : node.id)}
@@ -127,7 +127,7 @@ function PartRow({
                 aria-pressed={color === swatch.hex}
                 title={swatch.name}
                 onClick={() => update({ color: swatch.hex })}
-                className={`size-7 rounded-full border border-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 ${color === swatch.hex ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
+                className={`size-9 rounded-full border border-black/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 lg:size-7 ${color === swatch.hex ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
                 style={{ background: swatch.hex }}
               />
             ))}

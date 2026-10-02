@@ -101,8 +101,9 @@ export function DemoApp() {
         </div>
       </header>
 
-      <div className="flex min-h-0 flex-1">
-        <main className="relative min-h-0 flex-1">
+      {/* Phones/tablets: viewer on top, panel below. Desktop (lg): panel as a right sidebar. */}
+      <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+        <main className="relative h-[55svh] shrink-0 lg:h-auto lg:min-h-0 lg:flex-1">
           {local.error && (
             <div
               role="alert"
@@ -147,7 +148,7 @@ export function DemoApp() {
         </main>
 
         <aside
-          className="w-[360px] shrink-0 overflow-y-auto border-l border-neutral-200 bg-white"
+          className="flex min-h-0 flex-1 flex-col border-t border-neutral-200 bg-white lg:w-[360px] lg:flex-none lg:border-t-0 lg:border-l"
           aria-label="Configure"
         >
           <Tabs
