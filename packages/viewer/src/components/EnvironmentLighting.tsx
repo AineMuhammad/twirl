@@ -7,6 +7,7 @@ import { type EnvironmentId, ENVIRONMENTS } from '../environments';
 import { createDeferredDisposer } from '../internal/dispose';
 import { keyIntensityFor, prepareEquirect, sunOf } from '../internal/hdr';
 import type { Stage } from '../internal/stage';
+import { GroundedEnvironment } from './GroundedEnvironment';
 import { KeyLight } from './KeyLight';
 
 export interface EnvironmentLightingProps {
@@ -17,6 +18,8 @@ export interface EnvironmentLightingProps {
   shadowMapSize: number;
   /** Show the panorama behind the model; `null` keeps the CSS background. */
   backgroundBlur: number | null;
+  /** Project the panorama's floor under the model (implies a visible background). */
+  ground: boolean;
 }
 
 /**
@@ -30,6 +33,7 @@ export function EnvironmentLighting({
   shadows,
   shadowMapSize,
   backgroundBlur,
+  ground,
 }: EnvironmentLightingProps) {
   const loaded = useLoader(HDRLoader, url);
   const texture = useMemo(() => prepareEquirect(loaded), [loaded]);
@@ -49,7 +53,7 @@ export function EnvironmentLighting({
     return () => disposer.schedule();
   }, [disposer]);
 
-  const showBackground = backgroundBlur !== null;
+  const showBackground = backgroundBlur !== null && !ground;
 
   return (
     <>
@@ -60,6 +64,7 @@ export function EnvironmentLighting({
         backgroundBlurriness={backgroundBlur ?? 0}
         backgroundIntensity={ENVIRONMENTS[id].intensity}
       />
+      {ground && <GroundedEnvironment map={texture} stage={stage} />}
       <KeyLight
         stage={stage}
         direction={sun.direction}

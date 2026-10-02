@@ -12,9 +12,10 @@ export type SceneBackground =
   /**
    * Show the HDRI itself behind the product. Only applies when `lighting` is an environment;
    * otherwise the default gradient is used. `blur` 0–1 (0 = sharp). Blurring hides the low
-   * resolution of a 1k panorama and reads like depth of field.
+   * resolution of a 1k panorama and reads like depth of field. `ground` projects the
+   * panorama's floor under the model so it stands in the scene (blur doesn't apply then).
    */
-  | { type: 'environment'; blur: number };
+  | { type: 'environment'; blur: number; ground?: boolean };
 
 export const LIGHTING_PRESETS = ['studio', 'soft', 'outdoor', 'dramatic'] as const;
 /** Procedural lighting built in-scene: instant, no download. */

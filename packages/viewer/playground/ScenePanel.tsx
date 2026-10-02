@@ -107,6 +107,16 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
       )}
       {bg.type === 'environment' && (
         <label style={{ display: 'block' }}>
+          <input
+            type="checkbox"
+            checked={bg.ground === true}
+            onChange={(e) => setBackground({ ...bg, ground: e.target.checked })}
+          />{' '}
+          Ground projection
+        </label>
+      )}
+      {bg.type === 'environment' && !bg.ground && (
+        <label style={{ display: 'block' }}>
           Blur {bg.blur.toFixed(2)}
           <input
             type="range"
@@ -116,7 +126,7 @@ export function ScenePanel({ scene, onChange }: ScenePanelProps) {
             value={bg.blur}
             onChange={(e) => {
               setBlur(Number(e.target.value));
-              setBackground({ type: 'environment', blur: Number(e.target.value) });
+              setBackground({ ...bg, blur: Number(e.target.value) });
             }}
             style={{ display: 'block', width: '100%' }}
           />
