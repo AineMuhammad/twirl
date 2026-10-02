@@ -17,6 +17,7 @@ import { LazyViewer } from './LazyViewer';
 import { PartsPanel } from './PartsPanel';
 import { ScenePanel } from './ScenePanel';
 import { Tabs } from './Tabs';
+import { useLocalModel } from './useLocalModel';
 
 const NO_OVERRIDES: MeshOverrides = {};
 
@@ -36,42 +37,88 @@ export function DemoApp() {
     if (id) setTab('parts');
   }, []);
 
-  const loadModel = (url: string | null) => {
+  const loadModel = useCallback((url: string | null) => {
     setInfo(null);
     setOverrides(NO_OVERRIDES);
     setSelectedId(null);
     setHighlightedId(null);
     setModelUrl(url);
-  };
+  }, []);
+  const local = useLocalModel(loadModel);
+  const fileInput = useRef<HTMLInputElement>(null);
 
   const onError = useCallback((error: ViewerError) => {
     console.error('[demo] viewer error', error.kind, error.cause);
   }, []);
 
   return (
-    <div className="flex h-dvh flex-col bg-neutral-50 text-neutral-900">
+    <div
+      className="relative flex h-dvh flex-col bg-neutral-50 text-neutral-900"
+      {...local.dropHandlers}
+    >
       <header className="flex h-14 shrink-0 items-center justify-between gap-4 border-b border-neutral-200 bg-white px-4">
         <p className="font-semibold tracking-tight">
           {APP_NAME} <span className="font-normal text-neutral-500">· Demo</span>
         </p>
-        <label className="flex items-center gap-2 text-sm">
-          <span className="sr-only sm:not-sr-only">Model</span>
-          <select
-            className="rounded-md border border-neutral-300 bg-white px-2 py-1.5"
-            value={modelUrl ?? ''}
-            onChange={(e) => loadModel(e.target.value)}
+        <div className="flex items-center gap-2 text-sm">
+          <label className="flex items-center gap-2 text-sm">
+            <span className="sr-only sm:not-sr-only">Model</span>
+            <select
+              className="rounded-md border border-neutral-300 bg-white px-2 py-1.5"
+              value={modelUrl ?? ''}
+              onChange={(e) => loadModel(e.target.value)}
+            >
+              {SAMPLE_MODELS.map((m) => (
+                <option key={m.id} value={m.url}>
+                  {m.label}
+                </option>
+              ))}
+              {local.model && (
+                <option value={local.model.url}>Your file: {local.model.name}</option>
+              )}
+            </select>
+          </label>
+          <button
+            type="button"
+            onClick={() => fileInput.current?.click()}
+            className="rounded-md bg-neutral-900 px-3 py-1.5 font-medium text-white hover:bg-neutral-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600"
           >
-            {SAMPLE_MODELS.map((m) => (
-              <option key={m.id} value={m.url}>
-                {m.label}
-              </option>
-            ))}
-          </select>
-        </label>
+            Upload
+          </button>
+          <input
+            ref={fileInput}
+            type="file"
+            accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+            className="sr-only"
+            tabIndex={-1}
+            aria-hidden
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              if (file) void local.open(file);
+              e.target.value = ''; // allow picking the same file again
+            }}
+          />
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1">
         <main className="relative min-h-0 flex-1">
+          {local.error && (
+            <div
+              role="alert"
+              className="absolute inset-x-3 top-3 z-10 flex items-start gap-3 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800 shadow-sm"
+            >
+              <p className="flex-1">{local.error}</p>
+              <button
+                type="button"
+                onClick={local.dismissError}
+                className="rounded px-1 font-medium hover:bg-red-100 focus-visible:outline-2 focus-visible:outline-red-700"
+                aria-label="Dismiss"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           <LazyViewer
             ref={viewer}
             modelUrl={modelUrl}
@@ -130,6 +177,13 @@ export function DemoApp() {
           />
         </aside>
       </div>
+      {local.dragging && (
+        <div className="pointer-events-none absolute inset-0 z-20 flex items-center justify-center bg-neutral-900/40 backdrop-blur-sm">
+          <p className="rounded-xl border-2 border-dashed border-white px-8 py-6 text-lg font-medium text-white">
+            Drop your .glb or .gltf to view it
+          </p>
+        </div>
+      )}
     </div>
   );
 }
