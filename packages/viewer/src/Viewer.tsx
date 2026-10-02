@@ -1,4 +1,5 @@
 import { Canvas } from '@react-three/fiber';
+import type { Box3 } from 'three';
 import {
   type CSSProperties,
   type Ref,
@@ -10,12 +11,13 @@ import {
   useState,
 } from 'react';
 
-import { CameraControls } from './components/CameraControls';
+import { CameraRig } from './components/CameraRig';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
 import { Model, type ModelController } from './components/Model';
 import { ModelErrorBoundary } from './components/ModelErrorBoundary';
 import { dprRange, readDeviceHints } from './internal/device';
 import { progressFromEvent, toViewerError } from './internal/errors';
+import { computeFraming, type Framing } from './internal/framing';
 import {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
@@ -48,6 +50,8 @@ export interface ViewerProps {
   className?: string;
   style?: CSSProperties;
 }
+
+const CAMERA_FOV = 35;
 
 const rootStyle: CSSProperties = {
   position: 'relative',
@@ -84,6 +88,9 @@ export function Viewer({
     [],
   );
 
+  const container = useRef<HTMLDivElement>(null);
+  const [framing, setFraming] = useState<{ url: string; framing: Framing } | null>(null);
+
   // Overlay state is keyed by URL so a new model starts in "loading" without an extra effect.
   const [overlay, setOverlay] = useState<{ url: string | null; state: OverlayState }>({
     url: null,
@@ -105,7 +112,12 @@ export function Viewer({
     [modelUrl],
   );
   const handleLoaded = useCallback(
-    (info: ModelInfo) => {
+    (info: ModelInfo, bounds: Box3) => {
+      if (modelUrl) {
+        const rect = container.current?.getBoundingClientRect();
+        const aspect = rect && rect.height > 0 ? rect.width / rect.height : 1;
+        setFraming({ url: modelUrl, framing: computeFraming(bounds, { fov: CAMERA_FOV, aspect }) });
+      }
       setOverlay({ url: modelUrl, state: { phase: 'ready' } });
       onLoad?.(info);
     },
@@ -121,10 +133,15 @@ export function Viewer({
   );
 
   return (
-    <div className={className} style={{ ...rootStyle, ...style }} data-twirl-viewer="">
+    <div
+      ref={container}
+      className={className}
+      style={{ ...rootStyle, ...style }}
+      data-twirl-viewer=""
+    >
       <Canvas
         dpr={dpr}
-        camera={{ fov: 35, near: 0.01, far: 1000, position: [3, 2, 5] }}
+        camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
         gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
       >
         <ambientLight intensity={0.6} />
@@ -143,10 +160,9 @@ export function Viewer({
             </Suspense>
           </ModelErrorBoundary>
         )}
-        <CameraControls
+        <CameraRig
+          framing={framing?.url === modelUrl ? framing.framing : null}
           enablePan={enablePan}
-          minDistance={0.5}
-          maxDistance={20}
           maxPolarAngle={Math.PI / 2 - 0.05}
         />
       </Canvas>
