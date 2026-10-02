@@ -5,5 +5,9 @@
 export const CURRENT_SCHEMA_VERSION = 1;
 
 export function isSupportedSchemaVersion(version: unknown): version is number {
-  return Number.isInteger(version) && (version as number) >= 1 && (version as number) <= CURRENT_SCHEMA_VERSION;
+  return (
+    Number.isInteger(version) &&
+    (version as number) >= 1 &&
+    (version as number) <= CURRENT_SCHEMA_VERSION
+  );
 }
