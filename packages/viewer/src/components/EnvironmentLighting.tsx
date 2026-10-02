@@ -5,7 +5,7 @@ import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 
 import { type EnvironmentId, ENVIRONMENTS } from '../environments';
 import { createDeferredDisposer } from '../internal/dispose';
-import { keyIntensityFor, prepareEquirect, sunOf } from '../internal/hdr';
+import { keyIntensityFor, prepareEquirect, raiseToMinElevation, sunOf } from '../internal/hdr';
 import type { Stage } from '../internal/stage';
 import { GroundedEnvironment } from './GroundedEnvironment';
 import { KeyLight } from './KeyLight';
@@ -23,8 +23,9 @@ export interface EnvironmentLightingProps {
 }
 
 /**
- * Image-based lighting from an HDRI (suspends while it loads). The shadow-casting key light is
- * aimed at the brightest region of the panorama, so shadows match the photographed light.
+ * Image-based lighting from an HDRI (suspends while it loads). The shadow-casting key light
+ * comes from the compass direction of the panorama's brightest region, raised to at least 35°
+ * so shadows stay under the product.
  */
 export function EnvironmentLighting({
   id,
@@ -38,6 +39,7 @@ export function EnvironmentLighting({
   const loaded = useLoader(HDRLoader, url);
   const texture = useMemo(() => prepareEquirect(loaded), [loaded]);
   const sun = useMemo(() => sunOf(texture), [texture]);
+  const keyDirection = useMemo(() => raiseToMinElevation(sun.direction), [sun]);
 
   // Free the panorama (GPU + cache) when switching away; deferred for StrictMode remounts.
   const disposer = useMemo(
@@ -67,7 +69,7 @@ export function EnvironmentLighting({
       {ground && <GroundedEnvironment map={texture} stage={stage} />}
       <KeyLight
         stage={stage}
-        direction={sun.direction}
+        direction={keyDirection}
         color="#ffffff"
         intensity={keyIntensityFor(sun.dominance)}
         shadows={shadows}
