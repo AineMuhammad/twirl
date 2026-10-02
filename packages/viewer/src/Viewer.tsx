@@ -17,6 +17,7 @@ import { CameraRig } from './components/CameraRig';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
 import { SceneLighting } from './components/SceneLighting';
+import { SoftShadow } from './components/SoftShadow';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
 import { Model, type ModelController } from './components/Model';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -92,7 +93,6 @@ export interface ViewerProps {
 }
 
 const CAMERA_FOV = 35;
-const NO_OVERRIDES: MeshOverrides = {};
 
 /**
  * Khronos PBR Neutral tone mapping: designed for product rendering, it keeps base colors true
@@ -106,6 +106,7 @@ const GL: Partial<WebGLRendererParameters> & { toneMapping: number; toneMappingE
     toneMapping: NeutralToneMapping,
     toneMappingExposure: 1,
   };
+const NO_OVERRIDES: MeshOverrides = {};
 const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
 
 const rootStyle: CSSProperties = {
@@ -229,6 +230,14 @@ export function Viewer({
 
   const stage = current?.stage ?? DEFAULT_STAGE;
 
+  // Soft shadows re-render only while the model moves, or once after its shape changes.
+  const [animating, setAnimating] = useState(false);
+  const hiddenSignature = Object.entries(meshOverrides)
+    .filter(([, o]) => o.visible === false)
+    .map(([id]) => id)
+    .sort()
+    .join(',');
+
   const [environmentStatus, setEnvironmentStatus] = useState<EnvironmentStatus>('ready');
   const handleEnvironmentStatus = useCallback(
     (status: EnvironmentStatus) => {
@@ -273,9 +282,17 @@ export function Viewer({
                 controllerRef={modelController}
                 onProgress={handleProgress}
                 onLoaded={handleLoaded}
+                onAnimatingChange={setAnimating}
               />
             </Suspense>
           </ErrorBoundary>
+        )}
+        {current && scene.shadows && (
+          <SoftShadow
+            key={`${current.url}|${hiddenSignature}|${animating}`}
+            stage={stage}
+            live={animating}
+          />
         )}
         {current && (
           <Floor
