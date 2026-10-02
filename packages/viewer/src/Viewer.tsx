@@ -10,7 +10,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import type { Box3 } from 'three';
+import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'three';
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig } from './components/CameraRig';
@@ -93,6 +93,19 @@ export interface ViewerProps {
 
 const CAMERA_FOV = 35;
 const NO_OVERRIDES: MeshOverrides = {};
+
+/**
+ * Khronos PBR Neutral tone mapping: designed for product rendering, it keeps base colors true
+ * (a picked color looks like that color) where ACES darkens and desaturates them.
+ */
+const GL: Partial<WebGLRendererParameters> & { toneMapping: number; toneMappingExposure: number } =
+  {
+    antialias: true,
+    alpha: true,
+    preserveDrawingBuffer: false,
+    toneMapping: NeutralToneMapping,
+    toneMappingExposure: 1,
+  };
 const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
 
 const rootStyle: CSSProperties = {
@@ -236,7 +249,7 @@ export function Viewer({
         dpr={quality.dpr}
         shadows="percentage"
         camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
-        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false }}
+        gl={GL}
       >
         <AdaptiveQuality onChange={setQualityFactor} />
         <SceneLighting
