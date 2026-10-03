@@ -162,7 +162,9 @@ sequenceDiagram
   API-->>M: Status + report
 ```
 
-## Embed flow (Planned, M5)
+## Embed flow (Implemented)
+
+Decisions: [ADR-0011](adr/0011-embed.md).
 
 ```mermaid
 sequenceDiagram
@@ -174,10 +176,10 @@ sequenceDiagram
 
   Page->>JS: script async, div with data-twirl-product
   JS->>Frame: Create iframe for each div
-  Frame->>API: Load published version (config + model URL)
+  Frame->>API: Server-render the live version (config + model URL)
   Frame->>Frame: Render viewer, evaluate rules + price
   Frame-->>JS: postMessage resize / events
-  JS->>JS: Check origin + message shape, then resize the iframe
+  JS->>JS: Check origin, source frame and message shape, then resize the iframe
   JS-->>Page: Forward events (CustomEvent)
 ```
 
