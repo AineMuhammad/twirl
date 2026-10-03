@@ -83,9 +83,9 @@ flowchart TD
   schema -. dev .-> tsconfig
 ```
 
-## Data model (Planned, M3)
+## Data model (Implemented)
 
-Starting point from the spec. The final model will be recorded in an ADR in M3.
+Prisma schema: `apps/web/prisma/schema.prisma`. Decisions: [ADR-0007](adr/0007-data-model.md).
 
 ```mermaid
 erDiagram
@@ -96,36 +96,44 @@ erDiagram
   Workspace ||--o{ Product : owns
   Workspace ||--o{ Asset : owns
   Workspace ||--o{ QuoteRequest : receives
-  Product ||--o{ ProductVersion : "draft / published"
-  ProductVersion }o--|| Asset : "uses model"
+  Workspace |o--o{ ModelRequest : sends
+  Product ||--o{ ProductVersion : versions
+  Product |o--o| ProductVersion : "published version"
+  ProductVersion }o--o| Asset : "uses model"
   ProductVersion ||--o{ SharedConfiguration : "share links"
   ProductVersion ||--o{ QuoteRequest : "quoted from"
   Product ||--o{ Event : tracks
 
   Workspace {
-    string id
     string plan "FREE | STARTER | PRO"
   }
   Membership {
-    string role "OWNER (only role used in v1)"
+    string role "OWNER (only role used in v1) | MEMBER"
+  }
+  Product {
+    string publicId "used in public URLs"
   }
   ProductVersion {
-    json config "Zod-validated, schemaVersion"
+    int number "1, 2, 3… per product"
+    json config "validated ProductConfig"
     string status "DRAFT | PUBLISHED (immutable)"
   }
   Asset {
-    string r2Key
+    string key "R2 object key"
     int size
-    string status
-    json validationReport
+    string status "PENDING | READY | INVALID"
+    json validation
   }
   SharedConfiguration {
     string shortId
     json selections
   }
+  QuoteRequest {
+    int priceTotal "re-priced on the server"
+  }
 ```
 
-`ModelRequest` (modeling-service requests) and Auth.js's `VerificationToken` stand alone.
+Auth.js's `VerificationToken` stands alone.
 
 ## Upload flow (Planned, M4)
 
