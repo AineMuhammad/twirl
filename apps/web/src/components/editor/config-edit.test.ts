@@ -5,6 +5,11 @@ import { describe, expect, it } from 'vitest';
 
 import {
   addColorGroup,
+  addDimensionGroup,
+  addRule,
+  colorOptions,
+  defaultCondition,
+  removeRule,
   addPart,
   addSwatch,
   addVisibilityGroup,
@@ -121,5 +126,42 @@ describe('money', () => {
     expect(parseMoney('abc')).toBeNull();
     expect(parseMoney('1.234')).toBeNull();
     expect(moneyInput(4950)).toBe('49.50');
+  });
+});
+
+describe('sizes and rules', () => {
+  it('adds a valid size option and valid rules of every type', () => {
+    let config = addDimensionGroup(chair(), 'Width', ['seat']);
+    expect(config.groups.at(-1)).toMatchObject({ id: 'width', type: 'dimension', axes: ['x'] });
+    expect(valid(config)).toBe(true);
+    for (const type of ['requires', 'excludes', 'availability'] as const) {
+      config = addRule(config, type);
+      expect(config.rules.at(-1)?.type).toBe(type);
+      expect(valid(config)).toBe(true);
+    }
+    const last = config.rules.at(-1)?.id ?? '';
+    expect(removeRule(config, last).rules.some((r) => r.id === last)).toBe(false);
+  });
+
+  it('starts conditions at the default and lists colour choices', () => {
+    const config = chair();
+    const byId = (id: string) => {
+      const g = config.groups.find((x) => x.id === id);
+      if (!g) throw new Error(id);
+      return g;
+    };
+    expect(defaultCondition(byId('fabric'))).toEqual({ group: 'fabric', equals: 'original' });
+    expect(defaultCondition(byId('pillow-navy'))).toEqual({ group: 'pillow-navy', equals: true });
+    expect(defaultCondition(byId('diameter'))).toEqual({ group: 'diameter', min: 120 });
+    const fabric = byId('fabric');
+    if (fabric.type !== 'color') throw new Error('fabric');
+    const ids = colorOptions(fabric).map((o) => o.id);
+    expect(ids[0]).toBe('original');
+    expect(ids.at(-1)).toBe('custom');
+  });
+
+  it("doesn't add rules without options", () => {
+    const empty = { ...chair(), groups: [], rules: [] };
+    expect(addRule(empty, 'requires')).toBe(empty);
   });
 });

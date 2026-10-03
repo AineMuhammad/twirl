@@ -8,6 +8,7 @@
 export type {
   ColorGroup,
   Condition,
+  ConditionLeaf,
   DimensionGroup,
   OptionGroup,
   ProductConfig,
