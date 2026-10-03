@@ -17,6 +17,7 @@
     },
     "test": {
       "dependsOn": ["transit"],
+      "passThroughEnv": ["DATABASE_URL"],
       "outputs": ["coverage/**"]
     },
     "dev": {
