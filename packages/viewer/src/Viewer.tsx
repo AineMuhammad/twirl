@@ -80,6 +80,11 @@ export interface ViewerProps {
    * devices while the frame rate is healthy.
    */
   effects?: EffectsSetting;
+  /**
+   * Slowly turn the product after a few seconds without interaction, like a turntable.
+   * Defaults to true; disabled for users who prefer reduced motion.
+   */
+  idleRotate?: boolean;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -144,6 +149,7 @@ export function Viewer({
   decoderPaths,
   enablePan = false,
   effects = 'auto',
+  idleRotate = true,
   playAnimationsOnLoad = true,
   onLoad,
   onEnvironmentStatus,
@@ -321,6 +327,7 @@ export function Viewer({
           framing={current?.framing ?? null}
           enablePan={enablePan}
           maxPolarAngle={Math.PI / 2 - 0.05}
+          idleRotate={idleRotate}
         />
       </Canvas>
       <LoadingOverlay state={overlayState} />

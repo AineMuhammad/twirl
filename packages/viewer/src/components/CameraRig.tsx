@@ -15,18 +15,32 @@ export interface CameraRigProps {
   maxPolarAngle: number;
   /** Glide the camera in when a model is framed (skipped for reduced motion). */
   intro?: boolean;
+  /** Slowly orbit the product after a few idle seconds (skipped for reduced motion). */
+  idleRotate?: boolean;
 }
+
+/** Seconds without interaction before the turntable starts. */
+export const IDLE_SECONDS = 4;
 
 /**
  * Orbit, zoom and touch controls, plus camera placement when a model loads.
  * Touch: one finger rotates, pinch zooms, two fingers pan (when enabled).
  */
-export function CameraRig({ framing, enablePan, maxPolarAngle, intro = true }: CameraRigProps) {
+export function CameraRig({
+  framing,
+  enablePan,
+  maxPolarAngle,
+  intro = true,
+  idleRotate = true,
+}: CameraRigProps) {
   // Read the camera from the store when applying, rather than mutating a hook return value.
   const getState = useThree((state) => state.get);
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
   /** Seconds elapsed in the current intro, or null when none is running. */
   const introTime = useRef<number | null>(null);
+  /** Seconds since the last interaction (or since the model was framed). */
+  const idleTime = useRef(0);
+  const interacting = useRef(false);
 
   // Layout effect so the first rendered frame already uses the new framing.
   useLayoutEffect(() => {
@@ -34,6 +48,7 @@ export function CameraRig({ framing, enablePan, maxPolarAngle, intro = true }: C
     const camera = getState().camera as PerspectiveCamera;
     const animate = intro && !prefersReducedMotion();
     introTime.current = animate ? 0 : null;
+    idleTime.current = 0;
     camera.position.fromArray(
       animate ? introPosition(framing.target, framing.position, 0) : framing.position,
     );
@@ -44,18 +59,34 @@ export function CameraRig({ framing, enablePan, maxPolarAngle, intro = true }: C
     controls.current?.update();
   }, [getState, framing, intro]);
 
-  // Any user interaction ends the intro immediately.
+  // Any user interaction ends the intro and the turntable, and restarts the idle timer.
   useEffect(() => {
     const c = controls.current;
     if (!c) return;
-    const stop = () => {
+    const start = () => {
       introTime.current = null;
+      interacting.current = true;
+      idleTime.current = 0;
     };
-    c.addEventListener('start', stop);
-    return () => c.removeEventListener('start', stop);
+    const end = () => {
+      interacting.current = false;
+      idleTime.current = 0;
+    };
+    c.addEventListener('start', start);
+    c.addEventListener('end', end);
+    return () => {
+      c.removeEventListener('start', start);
+      c.removeEventListener('end', end);
+    };
   }, []);
 
   useFrame((_, delta) => {
+    const c = controls.current;
+    if (c) {
+      const canRotate = idleRotate && framing !== null && !prefersReducedMotion();
+      if (!interacting.current && introTime.current === null) idleTime.current += delta;
+      c.autoRotate = canRotate && !interacting.current && idleTime.current >= IDLE_SECONDS;
+    }
     if (introTime.current === null || !framing) return;
     introTime.current = Math.min(INTRO_SECONDS, introTime.current + delta);
     const t = introTime.current / INTRO_SECONDS;
@@ -75,6 +106,8 @@ export function CameraRig({ framing, enablePan, maxPolarAngle, intro = true }: C
       maxDistance={framing?.maxDistance ?? 100}
       maxPolarAngle={maxPolarAngle}
       rotateSpeed={0.8}
+      // Turntable speed when idle: about 80 s per full turn.
+      autoRotateSpeed={0.75}
       zoomSpeed={0.9}
     />
   );
