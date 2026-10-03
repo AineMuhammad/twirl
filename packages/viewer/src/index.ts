@@ -7,6 +7,7 @@ export { Viewer, type ViewerHandle, type ViewerProps } from './Viewer';
 export {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
+  type Deformation,
   type EnvironmentStatus,
   type LoadProgress,
   type MeshOverride,
