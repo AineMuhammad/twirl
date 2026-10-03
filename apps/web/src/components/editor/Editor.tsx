@@ -16,14 +16,32 @@ import { useCallback, useEffect, useMemo, useState, useTransition } from 'react'
 
 import { saveDraftAction } from '@/app/dashboard/products/actions';
 import { LazyViewer } from '@/components/demo/LazyViewer';
-import { ScenePanel } from '@/components/demo/ScenePanel';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
 import type { ConfigIssue } from '@/server/products';
 
 import { meshChoices } from './config-edit';
-import { TextField } from './fields';
+import { MoneyField, SelectField, TextField } from './fields';
+import { LookEditor } from './LookEditor';
 import { OptionsEditor } from './OptionsEditor';
 import { PartsEditor } from './PartsEditor';
+import { RulesEditor } from './RulesEditor';
+
+const CURRENCIES = [
+  'USD',
+  'EUR',
+  'GBP',
+  'CAD',
+  'AUD',
+  'NZD',
+  'CHF',
+  'SEK',
+  'NOK',
+  'DKK',
+  'JPY',
+  'INR',
+  'AED',
+  'SGD',
+].map((code) => ({ value: code, label: code }));
 
 export interface EditorProps {
   productId: string;
@@ -231,6 +249,36 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
                         })
                       }
                     />
+                    <div className="grid grid-cols-2 gap-2">
+                      <SelectField
+                        label="Currency"
+                        value={config.pricing.currency}
+                        options={
+                          CURRENCIES.some((c) => c.value === config.pricing.currency)
+                            ? CURRENCIES
+                            : [
+                                { value: config.pricing.currency, label: config.pricing.currency },
+                                ...CURRENCIES,
+                              ]
+                        }
+                        onChange={(currency) =>
+                          setConfig((c) => ({ ...c, pricing: { ...c.pricing, currency } }))
+                        }
+                      />
+                      <MoneyField
+                        label="Base price"
+                        currency={config.pricing.currency}
+                        value={config.pricing.base}
+                        allowNegative={false}
+                        onChange={(base) =>
+                          setConfig((c) => ({ ...c, pricing: { ...c.pricing, base } }))
+                        }
+                      />
+                    </div>
+                    <p className="text-xs text-ink-faint">
+                      The price of the default configuration. Option prices add to or subtract from
+                      it.
+                    </p>
                   </div>
                 ),
               },
@@ -252,15 +300,14 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
                 content: <OptionsEditor config={config} onChange={setConfig} />,
               },
               {
-                id: 'scene',
-                label: 'Scene',
-                content: (
-                  <ScenePanel
-                    scene={config.scene}
-                    onChange={(scene) => setConfig((c) => ({ ...c, scene }))}
-                    lightingLoading={false}
-                  />
-                ),
+                id: 'rules',
+                label: 'Rules',
+                content: <RulesEditor config={config} onChange={setConfig} />,
+              },
+              {
+                id: 'look',
+                label: 'Look',
+                content: <LookEditor config={config} onChange={setConfig} />,
               },
             ]}
           />
