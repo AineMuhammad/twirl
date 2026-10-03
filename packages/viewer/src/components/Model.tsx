@@ -13,7 +13,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 import { longestClipDuration, playAllOnce, settledBounds } from '../internal/animation';
-import { createDeferredDisposer, disposeObject3D } from '../internal/dispose';
+import { createDeferredDisposer, createUsageCounter, disposeObject3D } from '../internal/dispose';
 import { configureGltfLoader } from '../internal/loaders';
 import { indexNodes, type NodeId } from '../internal/mesh-tree';
 import { describeModel } from '../internal/model-info';
@@ -25,6 +25,9 @@ import { MeshHighlight } from './MeshHighlight';
 import { MeshPicker } from './MeshPicker';
 
 const COLOR_FADE_SECONDS = 0.2;
+
+/** Viewers currently showing each model URL: they share one loaded (cached) copy. */
+const modelUsers = createUsageCounter();
 
 export interface ModelController {
   replayAnimations: () => void;
@@ -120,11 +123,15 @@ export function Model({
   // garbage-collected. They're deliberately not closed: a texture still referenced after
   // unmount would be re-uploaded as 0x0, raising WebGL errors that can stall rendering on real
   // GPUs (switching chair → jeep did). Deferred so StrictMode's dev-only remount keeps them.
+  // The loaded file is shared by every viewer of the same URL (e.g. the editor's preview and the
+  // shopper preview): it's only freed when the last one unmounts. Freeing it earlier made the
+  // other viewer reload the model in a loop.
   const disposer = useMemo(
     () =>
       createDeferredDisposer(() => {
         mixer.uncacheRoot(scene);
         overrides.dispose(); // frees per-mesh material clones
+        if (modelUsers.count(url) > 0) return;
         disposeObject3D(gltf.scene);
         useLoader.clear(GLTFLoader, url);
       }),
@@ -132,8 +139,12 @@ export function Model({
   );
   useEffect(() => {
     disposer.cancel();
-    return () => disposer.schedule();
-  }, [disposer]);
+    modelUsers.acquire(url);
+    return () => {
+      modelUsers.release(url);
+      disposer.schedule();
+    };
+  }, [disposer, url]);
 
   useImperativeHandle(
     controllerRef,
