@@ -6,7 +6,8 @@ import { PLANS } from '@/config/plans';
 import { serverEnv } from '@/env/server';
 import { Plan } from '@/generated/prisma/enums';
 import { requireWorkspace } from '@/server/auth/session';
-import { escapeHtml, sendEmail } from '@/server/email';
+import { sendEmail } from '@/server/email';
+import { renderEmail } from '@/server/email-layout';
 
 export type UpgradeState = { ok?: boolean; error?: string };
 
@@ -29,8 +30,20 @@ export async function requestUpgrade(
     to: admins,
     replyTo: user.email,
     subject: `Upgrade request: ${workspace.name} → ${wanted}`,
-    text: `${user.name ?? user.email} (${user.email}) asked to upgrade "${workspace.name}" from ${PLANS[workspace.plan].label} to ${wanted}.\n\nWorkspace id: ${workspace.id}\nSet the plan in the admin panel. Reply to this email to answer them.`,
-    html: `<p><strong>${escapeHtml(user.name ?? user.email)}</strong> (${escapeHtml(user.email)}) asked to upgrade <strong>${escapeHtml(workspace.name)}</strong> from ${PLANS[workspace.plan].label} to <strong>${wanted}</strong>.</p><p>Workspace id: ${escapeHtml(workspace.id)}<br>Set the plan in the admin panel. Reply to this email to answer them.</p>`,
+    ...renderEmail({
+      preheader: `${user.email} wants ${wanted}.`,
+      heading: `Upgrade request: ${wanted}`,
+      paragraphs: [
+        `${user.name ?? user.email} asked to move “${workspace.name}” from ${PLANS[workspace.plan].label} to ${wanted}.`,
+      ],
+      rows: [
+        ['Requested by', user.email],
+        ['Workspace', workspace.name],
+        ['Current plan', PLANS[workspace.plan].label],
+        ['Workspace id', workspace.id],
+      ],
+      note: 'Set the plan in the admin panel. Reply to this email to answer them.',
+    }),
   });
   if (!sent) return { error: 'We couldn’t send your request. Please try again later.' };
   return { ok: true };

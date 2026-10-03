@@ -6,32 +6,31 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-  /* Semantic UI tokens */
-  --surface: #ffffff;
-  --ink: #171717;
-  --ink-soft: #404040;
-  /* Muted/faint text meets WCAG AA (4.5:1) on white and on tinted panels. */
-  --ink-muted: #616161;
-  --ink-faint: #767676;
-  --line: rgb(0 0 0 / 0.08);
-  --tint: rgb(0 0 0 / 0.045);
-  --tint-strong: rgb(0 0 0 / 0.08);
+  /* Warm & crafted: ink on sand, terracotta accent. Text tokens meet WCAG AA on sand and white. */
+  --background: #f5f0e8;
+  --foreground: #1c1917;
+  --surface: #fffdf9;
+  --ink: #1c1917;
+  --ink-soft: #44403c;
+  --ink-muted: #57534e;
+  --ink-faint: #6f6863;
+  --line: rgb(28 25 23 / 0.1);
+  --tint: rgb(68 50 30 / 0.05);
+  --tint-strong: rgb(68 50 30 / 0.09);
   color-scheme: light;
 }
 
 [data-theme='dark'] {
-  --background: #0b0b0d;
-  --foreground: #ededed;
-  --surface: #121215;
-  --ink: #f4f4f5;
-  --ink-soft: #d4d4d8;
-  --ink-muted: #a1a1aa;
-  --ink-faint: #8e8e96;
-  --line: rgb(255 255 255 / 0.1);
-  --tint: rgb(255 255 255 / 0.06);
-  --tint-strong: rgb(255 255 255 / 0.11);
+  --background: #12100e;
+  --foreground: #f5f0e8;
+  --surface: #1b1916;
+  --ink: #f5f0e8;
+  --ink-soft: #d6cfc4;
+  --ink-muted: #a8a097;
+  --ink-faint: #8f877e;
+  --line: rgb(245 240 232 / 0.1);
+  --tint: rgb(245 240 232 / 0.06);
+  --tint-strong: rgb(245 240 232 / 0.11);
   color-scheme: dark;
 }
 
@@ -56,15 +55,29 @@ body {
   color: var(--foreground);
 }
 
-/* Brand accent (indigo). Use as bg-brand-600, ring-brand-500, text-brand-700, … */
+/* Brand: terracotta (600 is the main accent; white text on 600 meets AA). Success uses moss,
+   by re-tinting Tailwind's emerald scale so existing emerald classes follow the brand. */
 @theme {
-  --color-brand-50: #eef2ff;
-  --color-brand-100: #e0e7ff;
-  --color-brand-200: #c7d2fe;
-  --color-brand-500: #6366f1;
-  --color-brand-600: #4f46e5;
-  --color-brand-700: #4338ca;
-  --color-brand-900: #1e1b4b;
+  --color-brand-50: #fbf1ec;
+  --color-brand-100: #f6e0d5;
+  --color-brand-200: #ecc0aa;
+  --color-brand-300: #e09d7f;
+  --color-brand-500: #d1683f;
+  --color-brand-600: #c2552d;
+  --color-brand-700: #a2441f;
+  --color-brand-800: #7a3418;
+  --color-brand-900: #4a1f10;
+
+  --color-emerald-50: #eef3ee;
+  --color-emerald-100: #dde8de;
+  --color-emerald-200: #bfd3c1;
+  --color-emerald-300: #a3bfa6;
+  --color-emerald-400: #84a688;
+  --color-emerald-500: #658a69;
+  --color-emerald-600: #4d6b50;
+  --color-emerald-700: #3f5942;
+  --color-emerald-800: #314534;
+  --color-emerald-900: #223024;
 }
 
 /* react-colorful, styled to match the demo. */

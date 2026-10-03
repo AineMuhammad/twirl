@@ -80,7 +80,7 @@ export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
       />
       {!hasGroups && <Callout>Add options first.</Callout>}
       {hasGroups && config.rules.length === 0 && (
-        <p className="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-[14px] text-ink-muted">
+        <p className="rounded-xl border border-dashed border-line px-4 py-6 text-center text-[14px] text-ink-muted">
           No rules yet.
         </p>
       )}
@@ -96,7 +96,7 @@ export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
           return (
             <li
               key={rule.id}
-              className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${ruleIssues.length ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
+              className={`overflow-hidden rounded-xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${ruleIssues.length ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
             >
               <div className="flex items-start gap-3 p-4">
                 <span
@@ -207,7 +207,7 @@ export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
                     onChange(next);
                     setOpenId(next.rules.at(-1)?.id ?? null);
                   }}
-                  className={`hover:border-brand-300 flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left transition-colors hover:bg-brand-50/40 dark:hover:bg-brand-500/5 ${focusRing}`}
+                  className={`flex items-center gap-3 rounded-xl border border-line bg-surface p-3 text-left transition-colors hover:border-brand-300 hover:bg-brand-50/40 dark:hover:bg-brand-500/5 ${focusRing}`}
                 >
                   <span
                     aria-hidden

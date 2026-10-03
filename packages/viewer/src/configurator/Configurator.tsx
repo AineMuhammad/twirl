@@ -131,7 +131,7 @@ const LAYOUTS: Record<
   },
   fullscreen: {
     stage: 'lg:inset-0',
-    panel: `lg:top-20 lg:right-5 lg:bottom-5 lg:left-auto lg:h-auto lg:w-[380px] lg:rounded-3xl ${glass}`,
+    panel: `lg:top-20 lg:right-5 lg:bottom-5 lg:left-auto lg:h-auto lg:w-[380px] lg:rounded-xl ${glass}`,
     top: 'lg:right-[420px]',
   },
 };
@@ -349,7 +349,7 @@ export function Configurator({
 
       <aside
         aria-label="Configure"
-        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:pb-0 ${layout.panel} ${sheetOpen ? 'h-[50svh]' : onRequestQuote ? 'h-[264px]' : 'h-[212px]'}`}
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-2xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:pb-0 ${layout.panel} ${sheetOpen ? 'h-[50svh]' : onRequestQuote ? 'h-[264px]' : 'h-[212px]'}`}
       >
         <button
           type="button"
@@ -419,7 +419,7 @@ export function Configurator({
                 ) : (
                   <div className="space-y-2 px-5 py-2" aria-busy>
                     {[0, 1, 2].map((i) => (
-                      <div key={i} className="h-16 animate-pulse rounded-2xl bg-tint" />
+                      <div key={i} className="h-16 animate-pulse rounded-xl bg-tint" />
                     ))}
                   </div>
                 ),
@@ -499,7 +499,7 @@ function Notices({ notices, onDismiss }: { notices: Correction[]; onDismiss: () 
   return (
     <div role="status" aria-live="polite" className="px-5">
       {notices.length > 0 && (
-        <div className="mb-3 flex items-start gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-[14px] text-ink ring-1 ring-brand-200 dark:bg-brand-500/15 dark:ring-brand-500/30">
+        <div className="mb-3 flex items-start gap-3 rounded-xl bg-brand-50 px-4 py-3 text-[14px] text-ink ring-1 ring-brand-200 dark:bg-brand-500/15 dark:ring-brand-500/30">
           <ul className="flex-1 space-y-1">
             {[...new Set(notices.map((n) => n.message))].map((message) => (
               <li key={message}>{message}</li>
@@ -598,7 +598,7 @@ function ShareButton({
               role="dialog"
               aria-modal="true"
               aria-labelledby="twirl-share-title"
-              className="relative w-full max-w-sm rounded-2xl bg-surface p-5 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
+              className="relative w-full max-w-sm rounded-xl bg-surface p-5 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
             >
               <div className="flex items-start justify-between gap-3">
                 <h2 id="twirl-share-title" className="text-[16px] font-semibold">
@@ -771,7 +771,7 @@ function QuoteButton({
               role="dialog"
               aria-modal="true"
               aria-labelledby={`${id}-title`}
-              className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-surface p-6 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
+              className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-xl bg-surface p-6 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
             >
               <div className="flex items-start justify-between gap-3">
                 <div>

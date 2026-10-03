@@ -64,14 +64,14 @@ const LAYOUTS: { value: Layout; label: string; blurb: string; diagram: ReactNode
 ];
 
 const ACCENTS = [
-  '#4f46e5',
-  '#0f766e',
-  '#be123c',
-  '#c2410c',
-  '#1d4ed8',
-  '#7c3aed',
-  '#171717',
-  '#a16207',
+  '#c2552d',
+  '#1c1917',
+  '#4d6b50',
+  '#8a5a2b',
+  '#2f4858',
+  '#9a3b55',
+  '#b08d57',
+  '#3d5a80',
 ];
 
 const FONTS = [

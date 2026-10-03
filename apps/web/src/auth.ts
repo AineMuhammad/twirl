@@ -6,7 +6,10 @@ import type { Provider } from 'next-auth/providers';
 import Google from 'next-auth/providers/google';
 import Resend from 'next-auth/providers/resend';
 
+import { APP_NAME } from '@/config/app';
 import { serverEnv } from '@/env/server';
+import { sendEmail } from '@/server/email';
+import { renderEmail } from '@/server/email-layout';
 import { db } from '@/server/db';
 import { ensureWorkspace } from '@/server/auth/workspace';
 
@@ -36,7 +39,31 @@ function providers(): Provider[] {
       }),
     );
   }
-  if (resendKey && emailFrom) list.push(Resend({ apiKey: resendKey, from: emailFrom }));
+  if (resendKey && emailFrom) {
+    list.push(
+      Resend({
+        apiKey: resendKey,
+        from: emailFrom,
+        // Our own branded email instead of Auth.js's default.
+        async sendVerificationRequest({ identifier, url }) {
+          const sent = await sendEmail({
+            to: [identifier],
+            subject: `Sign in to ${APP_NAME}`,
+            ...renderEmail({
+              preheader: `Your sign-in link for ${APP_NAME}.`,
+              heading: `Sign in to ${APP_NAME}`,
+              paragraphs: [
+                'Click the button below to sign in. The link works once and expires in 24 hours.',
+              ],
+              button: { label: `Sign in to ${APP_NAME}`, url },
+              note: 'If you didn’t ask for this, you can ignore this email.',
+            }),
+          });
+          if (!sent) throw new Error('Could not send the sign-in email.');
+        },
+      }),
+    );
+  }
   return list;
 }
 

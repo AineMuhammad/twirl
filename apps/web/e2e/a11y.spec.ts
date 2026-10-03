@@ -3,7 +3,16 @@ import { expect, test } from '@playwright/test';
 
 // Automated accessibility checks (WCAG 2.1 A/AA) on the public pages. They catch missing
 // labels, contrast problems and invalid ARIA; they don't replace manual keyboard testing.
-const PAGES = ['/', '/pricing', '/signin', '/request-model', '/embed/doesNotExist1', '/demo'];
+const PAGES = [
+  '/',
+  '/pricing',
+  '/about',
+  '/contact',
+  '/signin',
+  '/request-model',
+  '/embed/doesNotExist1',
+  '/demo',
+];
 
 for (const path of PAGES) {
   test(`no detectable accessibility violations on ${path}`, async ({ page }) => {

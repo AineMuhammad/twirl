@@ -579,7 +579,7 @@ export function ChipToggle({
       disabled={disabled}
       title={title}
       onClick={onClick}
-      className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${selected ? 'text-brand-800 border-brand-500 bg-brand-50 dark:bg-brand-500/15 dark:text-brand-100' : 'border-line bg-surface text-ink-soft hover:border-ink-faint/60 hover:text-ink'} ${focusRing}`}
+      className={`inline-flex h-9 items-center gap-1.5 rounded-full border px-3.5 text-[14px] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-45 ${selected ? 'border-brand-500 bg-brand-50 text-brand-800 dark:bg-brand-500/15 dark:text-brand-100' : 'border-line bg-surface text-ink-soft hover:border-ink-faint/60 hover:text-ink'} ${focusRing}`}
     >
       {selected && (
         <svg

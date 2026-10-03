@@ -16,13 +16,13 @@ export default async function ModelRequestsPage() {
         </p>
       </div>
       {requests.length === 0 ? (
-        <p className="rounded-2xl border-2 border-dashed border-line px-6 py-10 text-center text-[15px] text-ink-muted">
+        <p className="rounded-xl border-2 border-dashed border-line px-6 py-10 text-center text-[15px] text-ink-muted">
           No requests yet.
         </p>
       ) : (
         <ul className="space-y-3">
           {requests.map((r) => (
-            <li key={r.id} className="rounded-2xl bg-surface p-5 ring-1 ring-line">
+            <li key={r.id} className="rounded-xl bg-surface p-5 ring-1 ring-line">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div className="min-w-0">
                   <p className="text-[16px] font-semibold text-ink">
