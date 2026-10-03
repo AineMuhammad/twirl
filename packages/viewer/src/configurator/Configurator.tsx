@@ -15,6 +15,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
   useEffect,
+  useId,
   useMemo,
   useRef,
   useState,
@@ -80,6 +81,24 @@ export interface ConfiguratorProps {
   imageDownload?: { watermark?: string };
   /** Show a disabled "View in your room" button marked as coming soon. */
   arComingSoon?: boolean;
+  /**
+   * Sends a quote request for the current design. When set, a "Get a quote" button appears.
+   * Reject with an Error whose message is safe to show.
+   */
+  onRequestQuote?: (evaluation: Evaluation, contact: QuoteContact) => Promise<void>;
+  /** Called after a shopper action succeeds (for analytics). */
+  onAction?: (action: ConfiguratorAction) => void;
+}
+
+export type ConfiguratorAction = 'share' | 'image_download' | 'quote_request';
+
+/** What a shopper fills in when asking for a quote. `website` is a hidden spam trap. */
+export interface QuoteContact {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+  website: string;
 }
 
 const NO_OVERRIDES: MeshOverrides = {};
@@ -144,10 +163,32 @@ export function Configurator({
   onLoad,
   onEvaluationChange,
   initialSelections,
-  onShare,
   imageDownload,
   arComingSoon = false,
+  onRequestQuote: requestQuote,
+  onShare: share,
+  onAction,
 }: ConfiguratorProps) {
+  // Report successful actions without the controls needing to know about analytics.
+  const onShare = useMemo(
+    () =>
+      share &&
+      (async (evaluation: Evaluation) => {
+        const url = await share(evaluation);
+        onAction?.('share');
+        return url;
+      }),
+    [share, onAction],
+  );
+  const onRequestQuote = useMemo(
+    () =>
+      requestQuote &&
+      (async (evaluation: Evaluation, contact: QuoteContact) => {
+        await requestQuote(evaluation, contact);
+        onAction?.('quote_request');
+      }),
+    [requestQuote, onAction],
+  );
   const viewer = useRef<ViewerHandle>(null);
   const [loaded, setLoaded] = useState<{ url: string | null; info: ModelInfo } | null>(null);
   const info = loaded?.url === modelUrl ? loaded.info : null;
@@ -219,7 +260,7 @@ export function Configurator({
     >
       {/* Stage. Phones: above the bottom sheet. */}
       <div
-        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 ${layout.stage} ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : 'bottom-[188px]'}`}
+        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 ${layout.stage} ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : onRequestQuote ? 'bottom-[240px]' : 'bottom-[188px]'}`}
         onPointerDown={() => setHintVisible(false)}
         onWheel={() => setHintVisible(false)}
       >
@@ -267,6 +308,7 @@ export function Configurator({
               <DownloadImageButton
                 viewer={viewer}
                 filename={heading}
+                onDone={() => onAction?.('image_download')}
                 {...(imageDownload.watermark && { watermark: imageDownload.watermark })}
               />
             )}
@@ -307,7 +349,7 @@ export function Configurator({
 
       <aside
         aria-label="Configure"
-        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:pb-0 ${layout.panel} ${sheetOpen ? 'h-[50svh]' : 'h-[212px]'}`}
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:pb-0 ${layout.panel} ${sheetOpen ? 'h-[50svh]' : onRequestQuote ? 'h-[264px]' : 'h-[212px]'}`}
       >
         <button
           type="button"
@@ -386,23 +428,32 @@ export function Configurator({
           ]}
         />
         {config && current && (
-          <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-3">
-            <PriceSummary evaluation={current} />
-            <div className="flex items-center gap-1">
-              {onShare && <ShareButton evaluation={current} onShare={onShare} />}
-              <button
-                type="button"
-                disabled={changes === 0}
-                onClick={() => {
-                  setEvaluation(evaluate(config, {}));
-                  setNotices([]);
-                }}
-                title={changes === 0 ? 'Original design' : `${changes} changed`}
-                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
-              >
-                <ResetIcon width={14} height={14} /> Reset
-              </button>
+          <footer className="shrink-0 space-y-3 border-t border-line px-5 py-3">
+            <div className="flex items-center justify-between gap-3">
+              <PriceSummary evaluation={current} />
+              <div className="flex items-center gap-1">
+                {onShare && <ShareButton evaluation={current} onShare={onShare} />}
+                <button
+                  type="button"
+                  disabled={changes === 0}
+                  onClick={() => {
+                    setEvaluation(evaluate(config, {}));
+                    setNotices([]);
+                  }}
+                  title={changes === 0 ? 'Original design' : `${changes} changed`}
+                  className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+                >
+                  <ResetIcon width={14} height={14} /> Reset
+                </button>
+              </div>
             </div>
+            {onRequestQuote && (
+              <QuoteButton
+                evaluation={current}
+                productName={heading}
+                onRequestQuote={onRequestQuote}
+              />
+            )}
           </footer>
         )}
       </aside>
@@ -604,10 +655,12 @@ function DownloadImageButton({
   viewer,
   filename,
   watermark,
+  onDone,
 }: {
   viewer: React.RefObject<ViewerHandle | null>;
   filename: string;
   watermark?: string;
+  onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -622,6 +675,7 @@ function DownloadImageButton({
       link.href = url;
       link.download = `${filename.replace(/[^\w\- ]+/g, '').trim() || 'design'}.png`;
       link.click();
+      onDone();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       setFailed(true);
@@ -640,5 +694,205 @@ function DownloadImageButton({
     >
       <DownloadIcon width={18} height={18} />
     </button>
+  );
+}
+
+const fieldClass =
+  'h-10 w-full rounded-lg border border-line bg-surface px-3 text-[15px] text-ink outline-none placeholder:text-ink-faint focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20';
+
+/** "Get a quote": a short contact form for the current design, shown above everything. */
+function QuoteButton({
+  evaluation,
+  productName,
+  onRequestQuote,
+}: {
+  evaluation: Evaluation;
+  productName: string;
+  onRequestQuote: (evaluation: Evaluation, contact: QuoteContact) => Promise<void>;
+}) {
+  const id = useId();
+  const [open, setOpen] = useState(false);
+  const [phase, setPhase] = useState<'form' | 'sending' | 'sent'>('form');
+  const [error, setError] = useState<string | null>(null);
+  const [contact, setContact] = useState<QuoteContact>({
+    name: '',
+    email: '',
+    phone: '',
+    message: '',
+    website: '',
+  });
+  const set = (key: keyof QuoteContact) => (e: { target: { value: string } }) =>
+    setContact((c) => ({ ...c, [key]: e.target.value }));
+  const close = () => {
+    setOpen(false);
+    if (phase === 'sent') setPhase('form');
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setOpen(false);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const submit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    setPhase('sending');
+    setError(null);
+    try {
+      await onRequestQuote(evaluation, contact);
+      setPhase('sent');
+    } catch (e) {
+      setPhase('form');
+      setError(e instanceof Error ? e.message : 'Could not send your request. Please try again.');
+    }
+  };
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`h-11 w-full rounded-xl bg-brand-600 text-[15px] font-semibold text-white shadow-sm hover:bg-brand-700 ${focusRing}`}
+      >
+        Get a quote
+      </button>
+      {open &&
+        createPortal(
+          <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/30 p-4 sm:items-center">
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              onClick={close}
+              className="absolute inset-0 cursor-default"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby={`${id}-title`}
+              className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-2xl bg-surface p-6 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 id={`${id}-title`} className="text-[18px] font-semibold">
+                    {phase === 'sent' ? 'Request sent' : 'Get a quote'}
+                  </h2>
+                  <p className="mt-0.5 text-[14px] text-ink-muted">
+                    {productName} · {formatPrice(evaluation.price.total, evaluation.price.currency)}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close"
+                  className={`-mt-1 -mr-1 rounded-full p-1.5 text-ink-muted hover:bg-tint hover:text-ink ${focusRing}`}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+
+              {phase === 'sent' ? (
+                <>
+                  <p className="mt-4 text-[15px] text-ink-soft">
+                    Thanks, {contact.name.split(' ')[0]}. We&apos;ve sent your design and
+                    you&apos;ll hear back soon at {contact.email}.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={close}
+                    className={`mt-6 h-11 w-full rounded-xl bg-ink text-[15px] font-medium text-surface ${focusRing}`}
+                  >
+                    Done
+                  </button>
+                </>
+              ) : (
+                <form onSubmit={(e) => void submit(e)} className="mt-5 space-y-4" noValidate>
+                  <div className="space-y-1.5">
+                    <label htmlFor={`${id}-name`} className="text-[14px] font-medium">
+                      Name
+                    </label>
+                    <input
+                      id={`${id}-name`}
+                      required
+                      autoComplete="name"
+                      maxLength={100}
+                      value={contact.name}
+                      onChange={set('name')}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor={`${id}-email`} className="text-[14px] font-medium">
+                      Email
+                    </label>
+                    <input
+                      id={`${id}-email`}
+                      type="email"
+                      required
+                      autoComplete="email"
+                      maxLength={254}
+                      value={contact.email}
+                      onChange={set('email')}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor={`${id}-phone`} className="text-[14px] font-medium">
+                      Phone <span className="font-normal text-ink-muted">(optional)</span>
+                    </label>
+                    <input
+                      id={`${id}-phone`}
+                      type="tel"
+                      autoComplete="tel"
+                      maxLength={40}
+                      value={contact.phone}
+                      onChange={set('phone')}
+                      className={fieldClass}
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor={`${id}-message`} className="text-[14px] font-medium">
+                      Message <span className="font-normal text-ink-muted">(optional)</span>
+                    </label>
+                    <textarea
+                      id={`${id}-message`}
+                      rows={3}
+                      maxLength={2000}
+                      value={contact.message}
+                      onChange={set('message')}
+                      className={`${fieldClass} h-auto resize-y py-2`}
+                    />
+                  </div>
+                  {/* Spam trap: invisible to people, filled in by bots. */}
+                  <div aria-hidden className="absolute -left-[9999px] h-0 w-0 overflow-hidden">
+                    <label htmlFor={`${id}-website`}>Website</label>
+                    <input
+                      id={`${id}-website`}
+                      tabIndex={-1}
+                      autoComplete="off"
+                      value={contact.website}
+                      onChange={set('website')}
+                    />
+                  </div>
+                  {error && (
+                    <p role="alert" className="text-[14px] text-red-600 dark:text-red-400">
+                      {error}
+                    </p>
+                  )}
+                  <button
+                    type="submit"
+                    disabled={phase === 'sending'}
+                    className={`h-11 w-full rounded-xl bg-brand-600 text-[15px] font-semibold text-white hover:bg-brand-700 disabled:opacity-60 ${focusRing}`}
+                  >
+                    {phase === 'sending' ? 'Sending…' : 'Send request'}
+                  </button>
+                </form>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   );
 }

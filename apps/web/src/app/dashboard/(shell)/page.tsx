@@ -4,6 +4,7 @@ import { PLANS } from '@/config/plans';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
+import { eventCounts } from '@/server/events';
 import { listProducts } from '@/server/products';
 import { storageEnabled } from '@/server/storage/r2';
 import { DeleteModelButton } from '@/components/dashboard/DeleteModelButton';
@@ -11,6 +12,8 @@ import { ModelReportDetails } from '@/components/dashboard/ModelReportDetails';
 import { ModelUploader } from '@/components/dashboard/ModelUploader';
 
 const RECENT_PENDING_MS = 60 * 60 * 1000;
+
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
 function formatBytes(bytes: number) {
   return bytes >= 1024 * 1024
@@ -39,6 +42,11 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  const stats = await eventCounts(
+    db(),
+    workspace.id,
+    products.map((p) => p.id),
+  );
   const firstName = user.name?.split(' ')[0];
   const readyModels = models.filter((m) => m.status === 'READY');
   const usage = Math.min(100, (published / plan.maxPublishedProducts) * 100);
@@ -147,6 +155,13 @@ export default async function DashboardPage() {
                               : 'Draft · not live'}
                           </span>
                         </div>
+                        {product.publishedVersion && (
+                          <p className="mt-2 text-[13px] text-ink-soft">
+                            {plural(stats.get(product.id)?.visitors ?? 0, 'visitor')} ·{' '}
+                            {plural(stats.get(product.id)?.quote_request ?? 0, 'quote')}{' '}
+                            <span className="text-ink-faint">(30 days)</span>
+                          </p>
+                        )}
                         <p className="mt-1 text-[13px] text-ink-muted">
                           Last edited{' '}
                           {product.updatedAt.toLocaleDateString('en-US', { dateStyle: 'medium' })}

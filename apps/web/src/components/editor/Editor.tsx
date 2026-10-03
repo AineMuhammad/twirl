@@ -25,6 +25,7 @@ import {
 } from '@/app/dashboard/products/actions';
 import { LazyViewer } from '@/components/demo/LazyViewer';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
+import type { EventCounts } from '@/server/events';
 import type { ConfigIssue } from '@/server/products';
 
 import { meshChoices } from './config-edit';
@@ -52,6 +53,8 @@ export interface EditorProps {
   productId: string;
   /** Short id used in public URLs (embed, share links). */
   publicId: string;
+  /** Shopper activity over the last 30 days, or null without data. */
+  stats: EventCounts | null;
   initialConfig: ProductConfig;
   modelUrl: string;
   /** Published versions, newest first. */
@@ -172,6 +175,7 @@ function describePath(config: ProductConfig, path: string): string {
 export function Editor({
   productId,
   publicId,
+  stats,
   initialConfig,
   modelUrl,
   versions,
@@ -544,6 +548,32 @@ export function Editor({
             {section === 'product' && (
               <div className="space-y-6 p-6">
                 <SectionHeader title="Product" description="Name, description and price." />
+                {live && stats && (
+                  <section
+                    aria-label="Activity in the last 30 days"
+                    className="rounded-xl bg-tint p-4"
+                  >
+                    <p className="text-[13px] font-medium text-ink-muted">Last 30 days</p>
+                    <dl className="mt-2 grid grid-cols-3 gap-3 sm:grid-cols-5">
+                      {(
+                        [
+                          ['Visitors', stats.visitors],
+                          ['Changes', stats.option_change],
+                          ['Shares', stats.share],
+                          ['Downloads', stats.image_download],
+                          ['Quotes', stats.quote_request],
+                        ] as const
+                      ).map(([label, value]) => (
+                        <div key={label}>
+                          <dt className="text-[12px] text-ink-muted">{label}</dt>
+                          <dd className="text-[20px] font-semibold text-ink tabular-nums">
+                            {value}
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  </section>
+                )}
                 <TextField
                   label="Product name"
                   value={config.product.name}

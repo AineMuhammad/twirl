@@ -8,3 +8,4 @@ export {
   type RulesResult,
   type Violation,
 } from './rules';
+export { describeSelections, type SelectionLine } from './describe';

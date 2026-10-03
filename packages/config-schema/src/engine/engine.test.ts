@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { type ProductConfigInput, productConfigSchema } from '../config';
 import { jeepConfig, loungeChairConfig } from '../samples';
 import { defaultSelections } from '../selections';
-import { evaluate, formatPrice, testCondition } from '.';
+import { describeSelections, evaluate, formatPrice, testCondition } from '.';
 
 const chair = productConfigSchema.parse(loungeChairConfig);
 const jeep = productConfigSchema.parse(jeepConfig);
@@ -191,5 +191,26 @@ describe('formatPrice', () => {
     expect(formatPrice(89900, 'USD')).toBe('$899.00');
     expect(formatPrice(-8000, 'USD')).toBe('-$80.00');
     expect(formatPrice(1500, 'JPY')).toBe('¥1,500');
+  });
+});
+
+describe('describeSelections', () => {
+  it('puts a configuration into words', () => {
+    const config = chair;
+    const lines = describeSelections(config, {
+      fabric: { custom: '#12ab34' },
+      'frame-finish': 'brass',
+      'pillow-diamond': false,
+      'pillow-navy': true,
+      diameter: 130,
+    });
+    expect(lines.map((l) => `${l.label}: ${l.value}`)).toEqual([
+      'Seat fabric: Custom colour #12ab34',
+      'Frame finish: Brushed brass',
+      'Diamond cushion: Not included',
+      'Navy cushion: Included',
+      'Diameter: 130 cm',
+    ]);
+    expect(describeSelections(config, {})[0]?.value).toBe('Lagoon weave');
   });
 });

@@ -3,6 +3,8 @@ import type { ReactNode } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { requireWorkspace } from '@/server/auth/session';
+import { db } from '@/server/db';
+import { countNewQuotes } from '@/server/quotes';
 
 import { signOutAction } from '../actions';
 
@@ -13,6 +15,7 @@ const focusRing =
 export default async function DashboardShellLayout({ children }: { children: ReactNode }) {
   const { user, workspace } = await requireWorkspace();
   const initials = (user.name ?? user.email).trim().slice(0, 1).toUpperCase();
+  const newQuotes = await countNewQuotes(db(), workspace.id);
   return (
     <div className="min-h-dvh bg-tint text-[15px]">
       <header className="sticky top-0 z-20 border-b border-line bg-surface/90 backdrop-blur">
@@ -25,9 +28,29 @@ export default async function DashboardShellLayout({ children }: { children: Rea
               {APP_NAME}
               <span className="text-brand-600 italic">.</span>
             </Link>
-            <span className="hidden truncate rounded-full bg-tint-strong px-3 py-1 text-[13px] font-medium text-ink-soft sm:inline">
+            <span className="hidden truncate rounded-full bg-tint-strong px-3 py-1 text-[13px] font-medium text-ink-soft lg:inline">
               {workspace.name}
             </span>
+            <nav aria-label="Dashboard" className="flex items-center gap-1">
+              <Link
+                href="/dashboard"
+                className={`flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink ${focusRing}`}
+              >
+                Products
+              </Link>
+              <Link
+                href="/dashboard/quotes"
+                className={`flex h-9 items-center gap-1.5 rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink ${focusRing}`}
+              >
+                Quotes
+                {newQuotes > 0 && (
+                  <span className="rounded-full bg-brand-600 px-1.5 text-[12px] font-semibold text-white tabular-nums">
+                    {newQuotes}
+                    <span className="sr-only"> new</span>
+                  </span>
+                )}
+              </Link>
+            </nav>
           </div>
           <div className="flex items-center gap-2">
             {user.isAdmin && (
