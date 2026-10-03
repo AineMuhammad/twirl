@@ -46,8 +46,12 @@ bodies, and model bytes shouldn't flow through our servers anyway.
 
 - Abandoned uploads leave `PENDING` rows, and possibly orphaned objects. The dashboard hides
   ones older than an hour. A scheduled clean-up can come later.
-- Model contents (parsing, mesh count, triangle and texture report) are validated in the next
-  step (`feature/model-validation`). Until then, "Ready" only means the bytes arrived as
-  declared.
+- Model contents are validated by a dependency-free glTF inspector, run in the browser before
+  upload and again on the server.
+  - **Errors** (the upload is rejected and its file deleted): not glTF 2.0, unreadable, no meshes,
+    external `.bin` or texture files, or required extensions the viewer can't display.
+  - **Warnings:** more than 500k triangles, textures over 4096 px, unnamed meshes.
+  - **The report** (mesh, triangle, material, animation and texture counts, with texture sizes
+    and formats) is stored on the asset.
 - Preview deployments use their own URLs. Add those origins to the PUT rule, or test uploads on
   production and localhost only.

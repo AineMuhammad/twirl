@@ -4,6 +4,7 @@ import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
 import { storageEnabled } from '@/server/storage/r2';
 import { DeleteModelButton } from '@/components/dashboard/DeleteModelButton';
+import { ModelReportDetails } from '@/components/dashboard/ModelReportDetails';
 import { ModelUploader } from '@/components/dashboard/ModelUploader';
 
 const RECENT_PENDING_MS = 60 * 60 * 1000;
@@ -83,12 +84,13 @@ export default async function DashboardPage() {
         {models.length > 0 && (
           <ul className="mt-4 divide-y divide-line" aria-label="Uploaded models">
             {models.map((model) => (
-              <li key={model.id} className="flex items-center gap-4 py-3">
+              <li key={model.id} className="flex items-start gap-4 py-3">
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-medium text-ink">{model.filename}</p>
                   <p className="text-xs text-ink-muted">
                     {formatBytes(model.size)} · {model.createdAt.toLocaleDateString('en-US')}
                   </p>
+                  <ModelReportDetails validation={model.validation} />
                 </div>
                 <StatusBadge status={model.status} />
                 <DeleteModelButton id={model.id} filename={model.filename} />

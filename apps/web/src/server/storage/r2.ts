@@ -2,6 +2,7 @@ import 'server-only';
 
 import {
   DeleteObjectCommand,
+  GetObjectCommand,
   HeadObjectCommand,
   NotFound,
   PutObjectCommand,
@@ -71,6 +72,14 @@ export async function headObject(key: string) {
     if (error instanceof NotFound || (error as { name?: string }).name === 'NotFound') return null;
     throw error;
   }
+}
+
+/** The whole object's bytes (models are at most 15 MB). */
+export async function getObjectBytes(key: string): Promise<Uint8Array> {
+  const { client, bucket } = r2();
+  const object = await client.send(new GetObjectCommand({ Bucket: bucket, Key: key }));
+  if (!object.Body) throw new Error(`Empty object body for ${key}`);
+  return object.Body.transformToByteArray();
 }
 
 export async function deleteObject(key: string) {
