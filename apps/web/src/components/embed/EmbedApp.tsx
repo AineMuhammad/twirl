@@ -88,6 +88,8 @@ export function EmbedApp({
       viewerProps={VIEWER_PROPS}
       onEvaluationChange={onEvaluationChange}
       onShare={onShare}
+      imageDownload={watermark ? { watermark: `Made with ${APP_NAME}` } : {}}
+      arComingSoon
       {...(initialSelections && { initialSelections })}
     >
       {watermark && (
