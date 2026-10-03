@@ -1,154 +1,204 @@
 'use client';
 
-import { humanizeName, type ProductConfig } from '@twirl/config-schema/engine';
+import type { ProductConfig } from '@twirl/config-schema/engine';
+
+import type { ConfigIssue } from '@/server/products';
 
 import {
-  addPart,
-  assignMesh,
   type MeshChoice,
+  partForMesh,
   removePart,
   renamePart,
-  unassignMesh,
+  setAllCustomisable,
+  setMeshCustomisable,
 } from './config-edit';
-import { IconButton, inputClass } from './fields';
-import { PlusIcon, TrashIcon, XIcon } from './icons';
+import { AlertIcon } from './icons';
+import { Badge, Button, Callout, controlClass, InfoTip, SectionHeader } from './ui';
 
 export interface PartsEditorProps {
   config: ProductConfig;
-  /** The model's meshes, or null while it loads. */
+  /** The model's pieces, or null while it loads. */
   meshes: MeshChoice[] | null;
+  issues: ConfigIssue[];
   onChange: (config: ProductConfig) => void;
-  /** Highlight a part in the preview while hovering it here. */
-  onHover: (partId: string | null) => void;
+  /** Highlight a node in the preview while hovering its row. */
+  onHighlight: (nodeId: string | null) => void;
 }
 
 /**
- * Parts are what shoppers configure: named groups of meshes. Each mesh belongs to at most one
- * part; meshes in no part can't be changed by shoppers.
+ * Step 2: choose which pieces of the model shoppers can customise, and name them. Every piece of
+ * the 3D file is listed once; ticked pieces become parts that options can target.
  */
-export function PartsEditor({ config, meshes, onChange, onHover }: PartsEditorProps) {
+export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: PartsEditorProps) {
+  const header = (
+    <SectionHeader
+      title="Customisable parts"
+      description="Tick the pieces of your model that shoppers can customise and give each a name they'll understand. Unticked pieces always look exactly as in your file."
+    />
+  );
   if (!meshes) {
     return (
-      <div className="space-y-2 p-5" aria-busy>
-        {[0, 1, 2].map((i) => (
-          <div key={i} className="h-20 animate-pulse rounded-xl bg-tint" />
-        ))}
+      <div className="space-y-5 p-6">
+        {header}
+        <div className="space-y-2" aria-busy aria-label="Loading your model">
+          {[0, 1, 2, 3].map((i) => (
+            <div key={i} className="h-16 animate-pulse rounded-xl bg-tint" />
+          ))}
+        </div>
       </div>
     );
   }
-  const labelOf = new Map(meshes.map((m) => [m.ref, m.label]));
-  const assigned = new Set(config.parts.flatMap((p) => p.meshes));
-  const unassigned = meshes.filter((m) => !assigned.has(m.ref));
+
+  const known = new Set(meshes.map((m) => m.ref));
+  const selectedCount = meshes.filter((m) => partForMesh(config, m.ref)).length;
+  // Parts pointing at pieces the model doesn't have (e.g. after a re-export).
+  const orphaned = config.parts.filter((p) => p.meshes.every((m) => !known.has(m)));
 
   return (
-    <div className="space-y-6 p-5">
-      <p className="text-xs text-ink-muted">
-        Group your model&apos;s meshes into parts with friendly names. Options then target parts.
-      </p>
+    <div className="space-y-5 p-6">
+      {header}
 
-      <ul className="space-y-3" aria-label="Parts">
-        {config.parts.map((part) => (
-          <li
-            key={part.id}
-            onMouseEnter={() => onHover(part.id)}
-            onMouseLeave={() => onHover(null)}
-            className="rounded-xl border border-line bg-surface p-3"
+      <div className="flex items-center justify-between gap-3 rounded-xl bg-tint px-4 py-3">
+        <p className="text-[14px] text-ink">
+          <span className="font-semibold tabular-nums">{selectedCount}</span> of{' '}
+          <span className="tabular-nums">{meshes.length}</span> pieces customisable
+        </p>
+        <div className="flex gap-2">
+          <Button
+            size="sm"
+            disabled={selectedCount === meshes.length}
+            onClick={() => onChange(setAllCustomisable(config, meshes, true))}
           >
-            <div className="flex items-center gap-2">
+            Select all
+          </Button>
+          <Button
+            size="sm"
+            variant="ghost"
+            disabled={selectedCount === 0}
+            title="Untick every piece. Options that only used them are removed too."
+            onClick={() => onChange(setAllCustomisable(config, meshes, false))}
+          >
+            Clear all
+          </Button>
+        </div>
+      </div>
+
+      <div className="flex items-center gap-2 text-[13px] text-ink-muted">
+        Hover a row to see that piece highlighted in the preview.
+        <InfoTip label="About pieces">
+          Pieces are the separate objects inside your 3D file, listed under the names your 3D tool
+          gave them. Pieces with the same name are listed once and change together.
+        </InfoTip>
+      </div>
+
+      <ul
+        className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+        aria-label="Pieces of your model"
+      >
+        {meshes.map((mesh, index) => {
+          const part = partForMesh(config, mesh.ref);
+          const partIndex = part ? config.parts.indexOf(part) : -1;
+          const partIssues = issues.filter((i) => i.path.startsWith(`parts.${partIndex}`));
+          const usedBy = part
+            ? config.groups.filter((g) =>
+                g.type === 'dimension'
+                  ? g.behaviors.some((b) => b.part === part.id)
+                  : g.parts.includes(part.id),
+              )
+            : [];
+          const checkboxId = `piece-${index}`;
+          return (
+            <li
+              key={mesh.ref}
+              onMouseEnter={() => onHighlight(mesh.nodeId)}
+              onMouseLeave={() => onHighlight(null)}
+              className={`flex items-start gap-3 px-4 py-3 transition-colors hover:bg-brand-50/40 dark:hover:bg-brand-500/5 ${part ? '' : 'bg-tint/30'}`}
+            >
               <input
-                aria-label="Part name"
-                className={inputClass}
-                value={part.label}
-                maxLength={80}
-                onChange={(e) => onChange(renamePart(config, part.id, e.target.value))}
-                onFocus={() => onHover(part.id)}
-                onBlur={() => onHover(null)}
-              />
-              <IconButton
-                label={`Remove part ${part.label}`}
-                tone="danger"
-                onClick={() => onChange(removePart(config, part.id))}
-              >
-                <TrashIcon />
-              </IconButton>
-            </div>
-            <ul className="mt-2 flex flex-wrap gap-1.5" aria-label={`Meshes in ${part.label}`}>
-              {part.meshes.map((ref) => {
-                const missing = !labelOf.has(ref);
-                return (
-                  <li
-                    key={ref}
-                    className={`flex items-center gap-1 rounded-full py-0.5 pr-0.5 pl-2.5 text-xs ${missing ? 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300' : 'bg-tint-strong text-ink-soft'}`}
-                    title={missing ? 'This mesh is not in the model' : ref}
-                  >
-                    {missing ? `${ref} (missing)` : (labelOf.get(ref) ?? ref)}
-                    <button
-                      type="button"
-                      aria-label={`Remove ${labelOf.get(ref) ?? ref} from ${part.label}`}
-                      onClick={() => onChange(unassignMesh(config, ref))}
-                      className="grid size-5 place-items-center rounded-full hover:bg-surface"
-                    >
-                      <XIcon width={10} height={10} />
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-            {meshes.length > part.meshes.length && (
-              <select
-                aria-label={`Add a mesh to ${part.label}`}
-                className={`${inputClass} mt-2 text-xs`}
-                value=""
+                id={checkboxId}
+                type="checkbox"
+                checked={Boolean(part)}
                 onChange={(e) =>
-                  e.target.value && onChange(assignMesh(config, part.id, e.target.value))
+                  onChange(setMeshCustomisable(config, mesh, e.target.checked, index))
                 }
-              >
-                <option value="">Add a mesh…</option>
-                {meshes
-                  .filter((m) => !part.meshes.includes(m.ref))
-                  .map((m) => {
-                    const owner = config.parts.find((p) => p.meshes.includes(m.ref));
-                    return (
-                      <option key={m.ref} value={m.ref}>
-                        {m.label}
-                        {owner ? ` (move from ${owner.label})` : ''}
-                      </option>
-                    );
-                  })}
-              </select>
-            )}
-          </li>
-        ))}
+                className="mt-3 size-[18px] shrink-0 cursor-pointer accent-brand-600"
+                aria-describedby={`${checkboxId}-file`}
+              />
+              <div className="min-w-0 flex-1">
+                {part ? (
+                  <input
+                    aria-label={`Name shoppers see for ${mesh.label}`}
+                    className={`${controlClass} font-medium ${part.label.trim() ? '' : 'border-red-400'}`}
+                    value={part.label}
+                    maxLength={80}
+                    placeholder="Name this part"
+                    onChange={(e) => onChange(renamePart(config, part.id, e.target.value))}
+                    onFocus={() => onHighlight(mesh.nodeId)}
+                    onBlur={() => onHighlight(null)}
+                  />
+                ) : (
+                  <label
+                    htmlFor={checkboxId}
+                    className="flex h-10 cursor-pointer items-center text-[15px] text-ink-muted"
+                  >
+                    Not customisable
+                  </label>
+                )}
+                <p id={`${checkboxId}-file`} className="mt-1 text-[13px] text-ink-muted">
+                  In your file:{' '}
+                  <span className={mesh.hasName ? 'text-ink-soft' : 'italic'}>
+                    {mesh.hasName ? mesh.label : 'unnamed piece'}
+                  </span>
+                </p>
+                {part && (
+                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                    {usedBy.length === 0 ? (
+                      <span className="text-[13px] text-ink-faint">Not in any option yet</span>
+                    ) : (
+                      <>
+                        <span className="text-[13px] text-ink-muted">Used in</span>
+                        {usedBy.map((g) => (
+                          <Badge key={g.id}>{g.label}</Badge>
+                        ))}
+                      </>
+                    )}
+                  </div>
+                )}
+                {partIssues.map((issue) => (
+                  <p
+                    key={issue.message}
+                    className="mt-1.5 text-[13px] text-red-600 dark:text-red-400"
+                  >
+                    {issue.message}
+                  </p>
+                ))}
+              </div>
+            </li>
+          );
+        })}
       </ul>
 
-      {unassigned.length > 0 && (
-        <section aria-labelledby="unassigned">
-          <h3 id="unassigned" className="text-xs font-semibold text-ink">
-            Meshes not in any part ({unassigned.length})
-          </h3>
+      {orphaned.length > 0 && (
+        <Callout tone="warning">
+          <p className="flex items-center gap-2 font-medium">
+            <AlertIcon /> {orphaned.length} part{orphaned.length === 1 ? '' : 's'} no longer match
+            your model
+          </p>
           <ul className="mt-2 space-y-1.5">
-            {unassigned.map((mesh) => (
-              <li key={mesh.ref} className="flex items-center gap-2 text-sm">
-                <span
-                  className={`min-w-0 flex-1 truncate ${mesh.hasName ? 'text-ink-soft' : 'text-ink-muted italic'}`}
+            {orphaned.map((part) => (
+              <li key={part.id} className="flex items-center justify-between gap-3">
+                <span>{part.label}</span>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => onChange(removePart(config, part.id))}
                 >
-                  {mesh.label}
-                </span>
-                <button
-                  type="button"
-                  onClick={() =>
-                    onChange(
-                      addPart(config, humanizeName(mesh.label).slice(0, 80) || 'Part', [mesh.ref]),
-                    )
-                  }
-                  className="flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-brand-700 hover:bg-brand-50 dark:text-brand-200 dark:hover:bg-brand-500/15"
-                >
-                  <PlusIcon width={12} height={12} /> New part
-                </button>
+                  Remove part
+                </Button>
               </li>
             ))}
           </ul>
-        </section>
+        </Callout>
       )}
     </div>
   );
