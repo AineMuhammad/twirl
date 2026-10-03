@@ -22,6 +22,20 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               Admin
             </span>
           </div>
+          <nav aria-label="Admin" className="flex items-center gap-1">
+            <Link
+              href="/admin"
+              className="flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink"
+            >
+              Workspaces
+            </Link>
+            <Link
+              href="/admin/model-requests"
+              className="flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink"
+            >
+              Model requests
+            </Link>
+          </nav>
           <div className="flex items-center gap-4 text-[14px]">
             <span className="hidden text-ink-muted sm:inline">{user.email}</span>
             <Link href="/dashboard" className="font-medium text-ink-soft hover:text-ink">

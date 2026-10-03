@@ -16,3 +16,14 @@ test('the pricing page lists every plan and asks visitors to sign in to upgrade'
     '/signin?callbackUrl=%2Fpricing',
   );
 });
+
+test('the model request form is reachable from pricing and admins only can list requests', async ({
+  page,
+}) => {
+  await page.goto('/pricing');
+  await page.getByRole('link', { name: 'We can make one' }).click();
+  await expect(page.getByRole('heading', { name: 'Need a 3D model?' })).toBeVisible();
+  await expect(page.getByLabel('What do you need?')).toBeVisible();
+  await page.goto('/admin/model-requests');
+  await expect(page).toHaveURL(/\/signin/);
+});
