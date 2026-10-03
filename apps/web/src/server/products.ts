@@ -45,13 +45,19 @@ export function validateConfig(
   };
 }
 
-const asJson = (config: ProductConfig) => config as unknown as Prisma.InputJsonObject;
+export const asJson = (config: ProductConfig) => config as unknown as Prisma.InputJsonObject;
 
 export function listProducts(db: PrismaClient, workspaceId: string) {
   return db.product.findMany({
     where: { workspaceId, archivedAt: null },
     orderBy: { updatedAt: 'desc' },
-    select: { id: true, name: true, updatedAt: true, publishedVersionId: true },
+    select: {
+      id: true,
+      name: true,
+      updatedAt: true,
+      publishedVersionId: true,
+      publishedVersion: { select: { number: true } },
+    },
   });
 }
 
