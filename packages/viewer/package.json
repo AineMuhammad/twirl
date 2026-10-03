@@ -7,7 +7,8 @@
   "sideEffects": false,
   "exports": {
     ".": "./src/index.ts",
-    "./settings": "./src/settings.ts"
+    "./settings": "./src/settings.ts",
+    "./ui": "./src/ui.ts"
   },
   "scripts": {
     "playground": "vite --config playground/vite.config.ts",
@@ -19,6 +20,7 @@
     "@react-three/postprocessing": "3.1.3",
     "@twirl/config-schema": "workspace:*",
     "postprocessing": "6.39.5",
+    "react-colorful": "5.8.1",
     "three-mesh-bvh": "0.8.3"
   },
   "devDependencies": {

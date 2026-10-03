@@ -208,9 +208,6 @@ importers:
       react:
         specifier: 19.3.0
         version: 19.3.0
-      react-colorful:
-        specifier: 5.8.1
-        version: 5.8.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-dom:
         specifier: 19.3.0
         version: 19.3.0(react@19.3.0)
@@ -342,6 +339,9 @@ importers:
       postprocessing:
         specifier: 6.39.5
         version: 6.39.5(three@0.186.1)
+      react-colorful:
+        specifier: 5.8.1
+        version: 5.8.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       three-mesh-bvh:
         specifier: 0.8.3
         version: 0.8.3(three@0.186.1)

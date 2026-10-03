@@ -49,7 +49,12 @@ export function Tabs({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 space-y-3 px-5 pt-2 pb-3 lg:space-y-4 lg:pt-5 lg:pb-4">
         {header}
-        <div role="tablist" className="grid grid-flow-col gap-1 rounded-full bg-tint-strong p-1">
+        {/* A single tab needs no tab bar. */}
+        <div
+          role="tablist"
+          hidden={tabs.length < 2}
+          className="grid grid-flow-col gap-1 rounded-full bg-tint-strong p-1"
+        >
           {tabs.map((tab, i) => {
             const selected = tab.id === active;
             return (
