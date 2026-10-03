@@ -12,6 +12,7 @@ export {
 export { OptionsPanel, type OptionsPanelProps } from './configurator/OptionsPanel';
 export {
   colorFor,
+  deformationsForSelections,
   nodeIdsByMesh,
   overridesForSelections,
   partNodeIds,

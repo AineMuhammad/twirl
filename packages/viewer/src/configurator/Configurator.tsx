@@ -21,12 +21,12 @@ import {
 
 import type { CameraView } from '../camera-views';
 import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '../scene';
-import type { MeshOverrides, ModelInfo } from '../types';
+import type { Deformation, MeshOverrides, ModelInfo } from '../types';
 import { CloseIcon, PlayIcon, ResetIcon } from '../ui/icons';
 import { type Tab, Tabs } from '../ui/Tabs';
 import { focusRing, glass } from '../ui/ui';
 import type { ViewerHandle, ViewerProps } from '../Viewer';
-import { overridesForSelections } from './config-overrides';
+import { deformationsForSelections, overridesForSelections } from './config-overrides';
 import { OptionsPanel } from './OptionsPanel';
 import { accentVars, titleFontClass } from './theme';
 
@@ -42,7 +42,7 @@ export interface ConfiguratorProps {
   /** Extra viewer props (environment sources, decoder paths, effects…). */
   viewerProps?: Omit<
     ViewerProps,
-    'ref' | 'modelUrl' | 'meshOverrides' | 'scene' | 'onLoad' | 'initialView'
+    'ref' | 'modelUrl' | 'meshOverrides' | 'deformations' | 'scene' | 'onLoad' | 'initialView'
   >;
   /** Overrides `config.scene` (e.g. a demo's scene controls). */
   scene?: SceneSettings;
@@ -64,6 +64,7 @@ export interface ConfiguratorProps {
 }
 
 const NO_OVERRIDES: MeshOverrides = {};
+const NO_DEFORMATIONS: Deformation[] = [];
 const NOTICE_SECONDS = 6;
 const VIEW_BUTTONS: { view: CameraView; label: string }[] = [
   { view: 'front', label: 'Front' },
@@ -160,6 +161,15 @@ export function Configurator({
     [config, current, info],
   );
 
+  // Sizes apply once the model is loaded (they wrap nodes the mesh tree was built from).
+  const deformations = useMemo(
+    () =>
+      config && current && info
+        ? deformationsForSelections(config, current.selections, info.meshTree)
+        : NO_DEFORMATIONS,
+    [config, current, info],
+  );
+
   const change = (group: string, value: SelectionValue) => {
     if (!config || !current) return;
     const next = evaluate(config, { ...current.selections, [group]: value }, group);
@@ -194,6 +204,7 @@ export function Configurator({
           modelUrl={modelUrl}
           scene={scene}
           meshOverrides={meshOverrides}
+          deformations={deformations}
           {...(presentation && { initialView: presentation.camera.initialView })}
           onLoad={(next) => {
             setLoaded({ url: modelUrl, info: next });

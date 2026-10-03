@@ -71,6 +71,13 @@ test('options update the price, rules correct conflicts, custom colours work', a
 
   await page.getByRole('button', { name: 'Reset' }).click();
   await expect(total(page)).toHaveText('$987.00');
+
+  // Large sizes need the brass frame: the slider switches it automatically.
+  await page.getByRole('slider', { name: 'Diameter' }).fill('140');
+  await expect(page.getByRole('status')).toContainText('Sizes of 135 cm and up');
+  await expect(options(page).getByRole('button', { name: /^Frame finish/ })).toContainText(
+    'Brushed brass',
+  );
 });
 
 test('scene tab is keyboard reachable and switches lighting', async ({ page }) => {

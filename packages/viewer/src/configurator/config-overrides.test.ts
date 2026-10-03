@@ -2,7 +2,11 @@ import { parseProductConfig, type ProductConfig } from '@twirl/config-schema';
 import { describe, expect, it } from 'vitest';
 
 import type { MeshTreeNode } from '../types';
-import { nodeIdsByMesh, overridesForSelections } from './config-overrides';
+import {
+  deformationsForSelections,
+  nodeIdsByMesh,
+  overridesForSelections,
+} from './config-overrides';
 
 const node = (id: string, name: string, children: MeshTreeNode[] = [], hasName = true) =>
   ({
@@ -72,5 +76,21 @@ describe('overridesForSelections', () => {
     expect(
       overridesForSelections(config(), { 'legs-color': 'original', cushion: true }, tree),
     ).toEqual({});
+  });
+});
+
+describe('deformationsForSelections', () => {
+  it('scales the chosen axes by value / nativeSize for each behaviour', async () => {
+    const { loungeChairConfig } = await import('@twirl/config-schema/samples');
+    const parsed = parseProductConfig(loungeChairConfig);
+    if (!parsed.success) throw parsed.error;
+    const chairTree = ['iron', 'Chair', 'Pillow_01', 'Pillow_02'].map((n, i) => node(`${i}`, n));
+    const result = deformationsForSelections(parsed.data, { diameter: 132 }, chairTree);
+    expect(result).toEqual([
+      { nodeIds: ['0'], mode: 'stretch', scale: [1.1, 1, 1.1] },
+      { nodeIds: ['1'], mode: 'stretch', scale: [1.1, 1, 1.1] },
+      { nodeIds: ['2'], mode: 'anchor', scale: [1.1, 1, 1.1] },
+      { nodeIds: ['3'], mode: 'anchor', scale: [1.1, 1, 1.1] },
+    ]);
   });
 });
