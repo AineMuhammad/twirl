@@ -142,7 +142,9 @@ export default async function DashboardPage() {
                           <span
                             className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${product.publishedVersionId ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-amber-50 text-amber-800 dark:bg-amber-500/15 dark:text-amber-200'}`}
                           >
-                            {product.publishedVersionId ? 'Live' : 'Draft · not live'}
+                            {product.publishedVersion
+                              ? `Live · v${product.publishedVersion.number}`
+                              : 'Draft · not live'}
                           </span>
                         </div>
                         <p className="mt-1 text-[13px] text-ink-muted">

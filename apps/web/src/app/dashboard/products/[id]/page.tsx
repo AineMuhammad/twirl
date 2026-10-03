@@ -7,6 +7,7 @@ import { Editor } from '@/components/editor/Editor';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { getProductForEditor, validateConfig } from '@/server/products';
+import { listVersions } from '@/server/versions';
 import { publicUrl } from '@/server/storage/r2';
 
 export const metadata: Metadata = { title: `Edit product · ${APP_NAME}` };
@@ -38,7 +39,25 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       </main>
     );
   }
+  const versions = await listVersions(db(), workspace.id, product.id);
+  const liveVersion = versions.find((v) => v.live);
+  const liveConfig = liveVersion ? validateConfig(liveVersion.config) : null;
   return (
-    <Editor productId={product.id} initialConfig={parsed.config} modelUrl={publicUrl(asset.key)} />
+    <Editor
+      productId={product.id}
+      initialConfig={parsed.config}
+      modelUrl={publicUrl(asset.key)}
+      versions={versions.map((v) => ({
+        id: v.id,
+        number: v.number,
+        publishedAt: (v.publishedAt ?? new Date()).toISOString(),
+        live: v.live,
+      }))}
+      live={
+        liveVersion && liveConfig?.ok
+          ? { number: liveVersion.number, configJson: JSON.stringify(liveConfig.config) }
+          : null
+      }
+    />
   );
 }
