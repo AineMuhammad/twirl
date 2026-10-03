@@ -15,17 +15,14 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
-        // Everything except the embed refuses to be framed (clickjacking protection).
+        // Everything except the embed refuses to be framed (clickjacking protection). The embed
+        // sends no framing restriction, so any page can show it: `frame-ancestors *` would
+        // still block pages without a web origin, such as a local test file.
         source: '/((?!embed/).*)',
         headers: [
           { key: 'X-Frame-Options', value: 'DENY' },
           { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
         ],
-      },
-      {
-        // The embed is meant to be framed by merchants' sites.
-        source: '/embed/:path*',
-        headers: [{ key: 'Content-Security-Policy', value: 'frame-ancestors *' }],
       },
       {
         // embed.js is loaded by other sites; let browsers cache it briefly.

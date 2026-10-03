@@ -12,7 +12,7 @@ test('only the embed can be framed; embed.js is served', async ({ request }) => 
 
   const embed = await request.get('/embed/doesNotExist1');
   expect(embed.headers()['x-frame-options']).toBeUndefined();
-  expect(embed.headers()['content-security-policy']).toContain('frame-ancestors *');
+  expect(embed.headers()['content-security-policy'] ?? '').not.toContain('frame-ancestors');
 
   const script = await request.get('/embed.js');
   expect(script.ok()).toBe(true);

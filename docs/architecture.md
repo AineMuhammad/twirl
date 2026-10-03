@@ -183,4 +183,4 @@ sequenceDiagram
   JS-->>Page: Forward events (CustomEvent)
 ```
 
-`/embed/*` may be framed by any site. Every other route sends headers that forbid framing.
+`/embed/*` may be framed by any page (it sends no framing restriction). Every other route sends headers that forbid framing.

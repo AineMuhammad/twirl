@@ -20,7 +20,8 @@ Merchants put configurators on any website, so the embed has to:
    product isn't available". The public loader selects only what shoppers see (config, model key
    and the plan's watermark flag).
 3. **Framing headers:**
-   - `/embed/*` sends `frame-ancestors *`.
+   - `/embed/*` sends no framing restriction. `frame-ancestors *` would still block pages
+     without a web origin, such as a local test file.
    - Every other route sends `X-Frame-Options: DENY` and `frame-ancestors 'none'`.
 4. **postMessage protocol** (`src/lib/embed-protocol.ts`):
    - Messages: `ready`, `resize` (preferred height) and `change` (selections and price).
