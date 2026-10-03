@@ -1,44 +1,25 @@
+import Link from 'next/link';
+
 import { PLANS } from '@/config/plans';
+import { listWorkspaces } from '@/server/admin';
 import { requireAdmin } from '@/server/auth/session';
 import { db } from '@/server/db';
 
 import { PlanSelect } from './PlanSelect';
 
-const PAGE_SIZE = 50;
-
-export default async function AdminPage({
+export default async function WorkspacesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string }>;
+  searchParams: Promise<{ q?: string; page?: string }>;
 }) {
-  await requireAdmin();
-  const q = (await searchParams).q?.trim().slice(0, 100) ?? '';
-  const workspaces = await db().workspace.findMany({
-    where: q
-      ? {
-          OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            {
-              memberships: {
-                some: { user: { email: { contains: q, mode: 'insensitive' } } },
-              },
-            },
-          ],
-        }
-      : {},
-    orderBy: { createdAt: 'desc' },
-    take: PAGE_SIZE,
-    include: {
-      memberships: {
-        where: { role: 'OWNER' },
-        take: 1,
-        include: { user: { select: { email: true } } },
-      },
-      _count: {
-        select: { products: { where: { publishedVersionId: { not: null }, archivedAt: null } } },
-      },
-    },
+  await requireAdmin('/admin/workspaces');
+  const params = await searchParams;
+  const { items, total, page, pages, q } = await listWorkspaces(db(), {
+    ...(params.q && { q: params.q }),
+    page: Number(params.page) || 1,
   });
+  const pageHref = (n: number) =>
+    `/admin/workspaces?${new URLSearchParams({ ...(q && { q }), page: String(n) })}`;
 
   return (
     <div className="space-y-6">
@@ -46,8 +27,8 @@ export default async function AdminPage({
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Workspaces</h1>
           <p className="mt-1 text-[14px] text-ink-muted">
-            Set plans by hand (no billing yet). Newest first
-            {workspaces.length === PAGE_SIZE ? `, first ${PAGE_SIZE} shown` : ''}.
+            {total} workspace{total === 1 ? '' : 's'}
+            {q ? ` matching “${q}”` : ''}. Set plans by hand (no billing yet).
           </p>
         </div>
         <form className="flex gap-2" role="search">
@@ -79,7 +60,7 @@ export default async function AdminPage({
                 Owner
               </th>
               <th scope="col" className="px-4 py-3 font-medium">
-                Published
+                Live
               </th>
               <th scope="col" className="px-4 py-3 font-medium">
                 Created
@@ -90,22 +71,29 @@ export default async function AdminPage({
             </tr>
           </thead>
           <tbody className="divide-y divide-line">
-            {workspaces.map((w) => (
+            {items.map((w) => (
               <tr key={w.id}>
-                <td className="px-4 py-3 font-medium text-ink">{w.name}</td>
+                <td className="px-4 py-3 font-medium">
+                  <Link
+                    href={`/admin/workspaces/${w.id}`}
+                    className="text-ink hover:text-brand-700 hover:underline dark:hover:text-brand-200"
+                  >
+                    {w.name}
+                  </Link>
+                </td>
                 <td className="px-4 py-3 text-ink-soft">{w.memberships[0]?.user.email ?? '—'}</td>
                 <td className="px-4 py-3 text-ink-soft tabular-nums">
                   {w._count.products} / {PLANS[w.plan].maxPublishedProducts}
                 </td>
                 <td className="px-4 py-3 text-ink-muted">
-                  {w.createdAt.toLocaleDateString('en-US')}
+                  {w.createdAt.toLocaleDateString('en-US', { dateStyle: 'medium' })}
                 </td>
                 <td className="px-4 py-3">
                   <PlanSelect workspaceId={w.id} workspaceName={w.name} plan={w.plan} />
                 </td>
               </tr>
             ))}
-            {workspaces.length === 0 && (
+            {items.length === 0 && (
               <tr>
                 <td colSpan={5} className="px-4 py-8 text-center text-ink-muted">
                   No workspaces found.
@@ -115,6 +103,34 @@ export default async function AdminPage({
           </tbody>
         </table>
       </div>
+
+      {pages > 1 && (
+        <nav aria-label="Pages" className="flex items-center justify-between text-[14px]">
+          {page > 1 ? (
+            <Link
+              href={pageHref(page - 1)}
+              className="rounded-lg border border-line bg-surface px-3 py-1.5 font-medium text-ink-soft hover:bg-tint"
+            >
+              ← Newer
+            </Link>
+          ) : (
+            <span />
+          )}
+          <span className="text-ink-muted">
+            Page {page} of {pages}
+          </span>
+          {page < pages ? (
+            <Link
+              href={pageHref(page + 1)}
+              className="rounded-lg border border-line bg-surface px-3 py-1.5 font-medium text-ink-soft hover:bg-tint"
+            >
+              Older →
+            </Link>
+          ) : (
+            <span />
+          )}
+        </nav>
+      )}
     </div>
   );
 }

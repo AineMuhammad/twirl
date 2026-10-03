@@ -18,3 +18,10 @@ test('admin pages require sign-in', async ({ page }) => {
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/signin\?callbackUrl=%2Fadmin$/);
 });
+
+test('admin pages all require sign-in', async ({ page }) => {
+  for (const path of ['/admin/workspaces', '/admin/workspaces/someId', '/admin/model-requests']) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/signin/);
+  }
+});

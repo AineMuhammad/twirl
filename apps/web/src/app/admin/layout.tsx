@@ -27,6 +27,12 @@ export default async function AdminLayout({ children }: { children: ReactNode })
               href="/admin"
               className="flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink"
             >
+              Overview
+            </Link>
+            <Link
+              href="/admin/workspaces"
+              className="flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-tint hover:text-ink"
+            >
               Workspaces
             </Link>
             <Link
