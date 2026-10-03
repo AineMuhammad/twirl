@@ -31,7 +31,7 @@ describe('productConfigSchema: samples', () => {
     expect(config.presentation).toEqual({
       layout: 'sidebar',
       theme: { accent: '#4f46e5', font: 'geist' },
-      camera: { initialView: 'threeQuarter' },
+      camera: { initialView: 'threeQuarter', frontAzimuth: 0 },
     });
     const parsedFabric = config.groups[0];
     if (parsedFabric?.type !== 'color') throw new Error('fixture');

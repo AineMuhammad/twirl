@@ -100,3 +100,26 @@ export const MoonIcon = (p: IconProps) => (
     <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" />
   </Icon>
 );
+
+export const ShareIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <circle cx="18" cy="5" r="3" />
+    <circle cx="6" cy="12" r="3" />
+    <circle cx="18" cy="19" r="3" />
+    <path d="m8.6 13.5 6.8 4M15.4 6.5l-6.8 4" />
+  </Icon>
+);
+
+export const DownloadIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M12 3v12M7 10l5 5 5-5M5 21h14" />
+  </Icon>
+);
+
+/** A cube in a frame: "view in your room" (AR). */
+export const CubeArIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M3 7V5a2 2 0 0 1 2-2h2M17 3h2a2 2 0 0 1 2 2v2M21 17v2a2 2 0 0 1-2 2h-2M7 21H5a2 2 0 0 1-2-2v-2" />
+    <path d="m12 7 4.5 2.5v5L12 17l-4.5-2.5v-5L12 7zM12 12l4.5-2.5M12 12v5M12 12 7.5 9.5" />
+  </Icon>
+);

@@ -16,6 +16,8 @@ import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'thr
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig, type CameraRigController } from './components/CameraRig';
+import { type CaptureOptions, Capturer, type CapturerController } from './components/Capturer';
+import { paintBackground, paintWatermark } from './internal/capture';
 import { Cyclorama } from './components/Cyclorama';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
@@ -55,6 +57,13 @@ export interface ViewerHandle {
   replayAnimations: () => void;
   /** Glide the camera to a preset view of the current model. */
   setView: (view: CameraView) => void;
+  /** The camera's current angle around the model in degrees (0 = +Z), or null before load. */
+  getCameraAzimuth: () => number | null;
+  /**
+   * A high-resolution PNG of the current view, with the scene's backdrop behind it and an
+   * optional watermark. Null before a model is shown.
+   */
+  captureImage: (options?: CaptureOptions & { watermark?: string }) => Promise<Blob | null>;
 }
 
 export interface ViewerProps {
@@ -96,6 +105,8 @@ export interface ViewerProps {
   idleRotate?: boolean;
   /** Camera view the model opens on (after the intro). Defaults to the automatic framing. */
   initialView?: CameraView;
+  /** Where the model's front faces (degrees, 0 = +Z); preset views are measured from it. */
+  frontAzimuth?: number;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -162,6 +173,7 @@ export function Viewer({
   decoderPaths,
   enablePan = false,
   initialView,
+  frontAzimuth = 0,
   effects = 'auto',
   idleRotate = true,
   playAnimationsOnLoad = true,
@@ -192,11 +204,30 @@ export function Viewer({
 
   const modelController = useRef<ModelController | null>(null);
   const rigController = useRef<CameraRigController | null>(null);
+  const capturerRef = useRef<CapturerController | null>(null);
+  // What a capture needs from render-time state (the handle is created once).
+  const captureState = useRef({ hasModel: false, background: DEFAULT_SCENE.background });
   useImperativeHandle(
     ref,
     () => ({
       replayAnimations: () => modelController.current?.replayAnimations(),
       setView: (view) => rigController.current?.goTo(view),
+      getCameraAzimuth: () => rigController.current?.azimuth() ?? null,
+      captureImage: async ({ watermark, ...options } = {}) => {
+        const capturer = capturerRef.current;
+        const { hasModel, background } = captureState.current;
+        if (!capturer || !hasModel) return null;
+        const render = capturer.capture(options);
+        const out = document.createElement('canvas');
+        out.width = render.width;
+        out.height = render.height;
+        const ctx = out.getContext('2d');
+        if (!ctx) return null;
+        paintBackground(ctx, background, out.width, out.height);
+        ctx.drawImage(render, 0, 0);
+        if (watermark) paintWatermark(ctx, watermark, out.width, out.height);
+        return new Promise<Blob | null>((resolve) => out.toBlob(resolve, 'image/png'));
+      },
     }),
     [],
   );
@@ -219,6 +250,9 @@ export function Viewer({
   });
   const [placement, setPlacement] = useState<Placement | null>(null);
   const current = placement?.url === modelUrl ? placement : null;
+  useLayoutEffect(() => {
+    captureState.current = { hasModel: current !== null, background: scene.background };
+  });
 
   // Overlay state is keyed by URL so a new model starts in "loading" without an extra effect.
   const [overlay, setOverlay] = useState<{ url: string | null; state: OverlayState }>({
@@ -302,6 +336,7 @@ export function Viewer({
         gl={GL}
       >
         <AdaptiveQuality onChange={setQualityFactor} />
+        <Capturer controllerRef={capturerRef} />
         <SceneLighting
           scene={scene}
           stage={stage}
@@ -359,6 +394,7 @@ export function Viewer({
           maxPolarAngle={Math.PI / 2 - 0.05}
           idleRotate={idleRotate}
           initialView={initialView}
+          frontAzimuth={frontAzimuth}
           controllerRef={rigController}
         />
       </Canvas>

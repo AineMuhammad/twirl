@@ -40,6 +40,7 @@ import {
   TagIcon,
   XIcon,
 } from './icons';
+import { EmbedDialog } from './EmbedDialog';
 import { LookEditor } from './LookEditor';
 import { OptionsEditor } from './OptionsEditor';
 import { PartsEditor } from './PartsEditor';
@@ -49,6 +50,8 @@ import { Button, focusRing, MoneyField, SectionHeader, SelectField, TextField } 
 
 export interface EditorProps {
   productId: string;
+  /** Short id used in public URLs (embed, share links). */
+  publicId: string;
   initialConfig: ProductConfig;
   modelUrl: string;
   /** Published versions, newest first. */
@@ -166,7 +169,14 @@ function describePath(config: ProductConfig, path: string): string {
  * full shopper preview on demand. Edits stay local until saved; the config is validated as you go
  * and again on the server.
  */
-export function Editor({ productId, initialConfig, modelUrl, versions, live }: EditorProps) {
+export function Editor({
+  productId,
+  publicId,
+  initialConfig,
+  modelUrl,
+  versions,
+  live,
+}: EditorProps) {
   const [config, setConfig] = useState(initialConfig);
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialConfig));
   const [info, setInfo] = useState<ModelInfo | null>(null);
@@ -178,6 +188,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
   const [saving, startSaving] = useTransition();
@@ -317,6 +328,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
         setProblemsOpen(false);
         setConfirmPublish(false);
         setHistoryOpen(false);
+        setEmbedOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -422,6 +434,13 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
         )}
         <Button onClick={() => setPreviewing(true)} title="See what shoppers see">
           <EyeIcon /> <span className="hidden md:inline">Try as a shopper</span>
+        </Button>
+        <Button
+          onClick={() => setEmbedOpen(true)}
+          disabled={!live}
+          title={live ? 'Get the code for your website' : 'Publish first'}
+        >
+          Embed
         </Button>
         <Button onClick={() => setHistoryOpen(true)} title="Published versions">
           <span className="hidden md:inline">Versions</span>
@@ -594,7 +613,20 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
             {section === 'rules' && (
               <RulesEditor config={config} issues={issues} onChange={setConfig} />
             )}
-            {section === 'look' && <LookEditor config={config} onChange={setConfig} />}
+            {section === 'look' && (
+              <LookEditor
+                config={config}
+                onChange={(next) => {
+                  const turned =
+                    next.presentation.camera.frontAzimuth !==
+                    config.presentation.camera.frontAzimuth;
+                  setConfig(next);
+                  // Show the new front once the preview has the new setting.
+                  if (turned) setTimeout(() => viewer.current?.setView('front'), 60);
+                }}
+                onCaptureFront={() => viewer.current?.getCameraAzimuth() ?? null}
+              />
+            )}
           </div>
         </aside>
 
@@ -609,6 +641,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
             deformations={deformations}
             highlightedMeshId={highlighted}
             initialView={previewConfig.presentation.camera.initialView}
+            frontAzimuth={previewConfig.presentation.camera.frontAzimuth}
             onLoad={setInfo}
           />
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
@@ -643,6 +676,8 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
           <CheckIcon size={15} /> {notice}
         </div>
       )}
+
+      {embedOpen && <EmbedDialog publicId={publicId} onClose={() => setEmbedOpen(false)} />}
 
       {historyOpen && (
         <VersionsDrawer

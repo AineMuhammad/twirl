@@ -187,7 +187,16 @@ export const presentationSchema = z.object({
       logoUrl: z.url().optional(),
     })
     .prefault({}),
-  camera: z.object({ initialView: z.enum(CAMERA_VIEWS).default('threeQuarter') }).prefault({}),
+  camera: z
+    .object({
+      initialView: z.enum(CAMERA_VIEWS).default('threeQuarter'),
+      /**
+       * Where the model's front faces, as a camera angle in degrees around it (0 = glTF's +Z).
+       * Preset views are measured from it, for models not exported facing +Z.
+       */
+      frontAzimuth: z.number().min(-180).max(180).default(0),
+    })
+    .prefault({}),
 });
 
 // ── Product config ──────────────────────────────────────────────────────────────────────────
