@@ -1,3 +1,7 @@
+import { ENVIRONMENT_IDS, type EnvironmentId } from '@twirl/config-schema/constants';
+
+export { ENVIRONMENT_IDS, type EnvironmentId };
+
 /**
  * HDRI environments (Poly Haven, CC0). Files are served by the host app, not the viewer:
  * `<base>/<id>_<resolution>.hdr`. See apps/web/public/hdri/README.md.
@@ -14,10 +18,7 @@ export const ENVIRONMENTS = {
   potsdamer_platz: { label: 'City street', intensity: 1 },
   kloofendal_48d_partly_cloudy_puresky: { label: 'Open sky', intensity: 0.8 },
   venice_sunset: { label: 'Sunset', intensity: 1 },
-} as const satisfies Record<string, { label: string; intensity: number }>;
-
-export type EnvironmentId = keyof typeof ENVIRONMENTS;
-export const ENVIRONMENT_IDS = Object.keys(ENVIRONMENTS) as EnvironmentId[];
+} as const satisfies Record<EnvironmentId, { label: string; intensity: number }>;
 
 export type EnvironmentResolution = '1k' | '2k';
 
