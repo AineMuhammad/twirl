@@ -7,6 +7,7 @@
 export {
   Configurator,
   type ConfiguratorLayout,
+  type ConfiguratorAction,
   type ConfiguratorProps,
   type QuoteContact,
 } from './configurator/Configurator';

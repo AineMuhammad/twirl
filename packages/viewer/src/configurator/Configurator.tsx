@@ -86,7 +86,11 @@ export interface ConfiguratorProps {
    * Reject with an Error whose message is safe to show.
    */
   onRequestQuote?: (evaluation: Evaluation, contact: QuoteContact) => Promise<void>;
+  /** Called after a shopper action succeeds (for analytics). */
+  onAction?: (action: ConfiguratorAction) => void;
 }
+
+export type ConfiguratorAction = 'share' | 'image_download' | 'quote_request';
 
 /** What a shopper fills in when asking for a quote. `website` is a hidden spam trap. */
 export interface QuoteContact {
@@ -159,11 +163,32 @@ export function Configurator({
   onLoad,
   onEvaluationChange,
   initialSelections,
-  onShare,
   imageDownload,
   arComingSoon = false,
-  onRequestQuote,
+  onRequestQuote: requestQuote,
+  onShare: share,
+  onAction,
 }: ConfiguratorProps) {
+  // Report successful actions without the controls needing to know about analytics.
+  const onShare = useMemo(
+    () =>
+      share &&
+      (async (evaluation: Evaluation) => {
+        const url = await share(evaluation);
+        onAction?.('share');
+        return url;
+      }),
+    [share, onAction],
+  );
+  const onRequestQuote = useMemo(
+    () =>
+      requestQuote &&
+      (async (evaluation: Evaluation, contact: QuoteContact) => {
+        await requestQuote(evaluation, contact);
+        onAction?.('quote_request');
+      }),
+    [requestQuote, onAction],
+  );
   const viewer = useRef<ViewerHandle>(null);
   const [loaded, setLoaded] = useState<{ url: string | null; info: ModelInfo } | null>(null);
   const info = loaded?.url === modelUrl ? loaded.info : null;
@@ -283,6 +308,7 @@ export function Configurator({
               <DownloadImageButton
                 viewer={viewer}
                 filename={heading}
+                onDone={() => onAction?.('image_download')}
                 {...(imageDownload.watermark && { watermark: imageDownload.watermark })}
               />
             )}
@@ -629,10 +655,12 @@ function DownloadImageButton({
   viewer,
   filename,
   watermark,
+  onDone,
 }: {
   viewer: React.RefObject<ViewerHandle | null>;
   filename: string;
   watermark?: string;
+  onDone: () => void;
 }) {
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
@@ -647,6 +675,7 @@ function DownloadImageButton({
       link.href = url;
       link.download = `${filename.replace(/[^\w\- ]+/g, '').trim() || 'design'}.png`;
       link.click();
+      onDone();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     } catch {
       setFailed(true);

@@ -42,3 +42,13 @@ test('quote requests reject other sites and need sign-in to read', async ({ page
   await page.goto('/dashboard/quotes');
   await expect(page).toHaveURL(/\/signin/);
 });
+
+test('events reject other sites and malformed batches', async ({ request }) => {
+  const crossSite = await request.post('/api/events', {
+    headers: { origin: 'https://evil.example' },
+    data: '{}',
+  });
+  expect(crossSite.status()).toBe(403);
+  const garbage = await request.post('/api/events', { data: 'not json' });
+  expect([204, 400]).toContain(garbage.status());
+});
