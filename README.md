@@ -33,6 +33,8 @@ a quote.
 - **Node.js 24** (see `.nvmrc`; with nvm run `nvm use`)
 - **pnpm 12**: the exact version is pinned in `package.json`. Run `corepack enable` once and pnpm
   picks it up automatically.
+- **Docker or Podman**, for the local Postgres database (`compose.yaml`). Only needed for features
+  that use the database; the demo works without it.
 
 ### Setup
 
@@ -40,9 +42,24 @@ a quote.
 git clone https://github.com/AineMuhammad/twirl.git
 cd twirl
 pnpm install                                # also installs the git hooks
-cp .env.example apps/web/.env.local         # optional for now: nothing is required yet
+cp .env.example apps/web/.env.local         # then uncomment the local DATABASE_URL lines
+docker compose up -d                        # local Postgres on port 5433
+pnpm --filter @twirl/web db:deploy          # apply migrations
 pnpm dev                                    # http://localhost:3000
 ```
+
+### Database
+
+Prisma schema and migrations live in `apps/web/prisma/`. After changing the schema, create a
+migration against your local database:
+
+```bash
+pnpm --filter @twirl/web db:migrate --name describe-the-change
+```
+
+`pnpm install` regenerates the Prisma client (into `apps/web/src/generated/`, not committed).
+Database integration tests (`*.integration.test.ts`) run when `DATABASE_URL` is set and are
+skipped otherwise. CI runs them against a Postgres service.
 
 ### Scripts
 

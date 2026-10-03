@@ -9,7 +9,9 @@ export function parseEnv<T extends z.ZodType>(
   source: Record<string, unknown>,
   label: string,
 ) {
-  const result = schema.safeParse(source);
+  // `NAME=` with no value means unset, so a template env file with blanks still validates.
+  const present = Object.fromEntries(Object.entries(source).filter(([, value]) => value !== ''));
+  const result = schema.safeParse(present);
   if (!result.success) {
     const problems = result.error.issues
       .map((issue) => `  - ${issue.path.join('.') || '(root)'}: ${issue.message}`)

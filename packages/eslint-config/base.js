@@ -26,6 +26,7 @@ export const ignores = {
     '**/.next/**',
     '**/.turbo/**',
     '**/coverage/**',
+    '**/src/generated/**',
     '**/playwright-report/**',
     '**/test-results/**',
     '**/next-env.d.ts',
