@@ -163,8 +163,14 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
         <SectionTitle>Ground</SectionTitle>
         <div className="rounded-2xl border border-neutral-200/80 bg-white p-1">
           <Switch
+            label="Studio cyclorama"
+            description="A curved photo-studio backdrop in 3D"
+            checked={scene.cyclorama}
+            onChange={(cyclorama) => set({ cyclorama })}
+          />
+          <Switch
             label="Floor"
-            description="A soft ground under the product"
+            description="A soft ground disc (when the cyclorama is off)"
             checked={scene.floor}
             onChange={(floor) => set({ floor })}
           />

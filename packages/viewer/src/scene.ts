@@ -26,6 +26,11 @@ export interface SceneSettings {
   lighting: LightingPreset | EnvironmentId;
   floor: boolean;
   shadows: boolean;
+  /**
+   * Surround the product with a 3D studio cove (floor curving into a wall) painted in the
+   * backdrop's colours, instead of a flat CSS backdrop.
+   */
+  cyclorama: boolean;
 }
 
 const DEFAULT_BACKGROUND: SceneBackground = { type: 'radial', inner: '#fffaf3', outer: '#eadbc8' };
@@ -36,6 +41,7 @@ export const DEFAULT_SCENE: SceneSettings = {
   // Seamless studio look: the product sits on the backdrop with a soft contact shadow.
   floor: false,
   shadows: true,
+  cyclorama: true,
 };
 
 /** The CSS `background` for the viewer container (the canvas itself is transparent). */

@@ -15,6 +15,7 @@ import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'thr
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
 import { CameraRig } from './components/CameraRig';
+import { Cyclorama } from './components/Cyclorama';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
 import { SceneLighting } from './components/SceneLighting';
@@ -30,6 +31,7 @@ import {
 import { dprRange, readDeviceHints } from './internal/device';
 import { effectsEnabled, type EffectsSetting } from './internal/effects';
 import { progressFromEvent, toViewerError } from './internal/errors';
+import { cycloramaColor } from './internal/cyclorama';
 import { floorColorFor } from './internal/floor-color';
 import { computeFraming, type Framing } from './internal/framing';
 import { qualitySettings } from './internal/quality';
@@ -303,6 +305,9 @@ export function Viewer({
             </Suspense>
           </ErrorBoundary>
         )}
+        {current && scene.cyclorama && (
+          <Cyclorama stage={stage} color={cycloramaColor(scene.background)} />
+        )}
         {current && scene.shadows && (
           <SoftShadow
             key={`${current.url}|${hiddenSignature}|${animating}`}
@@ -310,7 +315,8 @@ export function Viewer({
             live={animating}
           />
         )}
-        {current && (
+        {current && !scene.cyclorama && (
+          // The cyclorama is the floor (and shadow catcher) when it's on.
           <Floor
             stage={stage}
             color={floorColorFor(scene.background)}
