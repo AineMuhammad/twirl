@@ -3,14 +3,13 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { APP_NAME } from '@/config/app';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { getQuote, setQuoteStatus } from '@/server/quotes';
 
 import { setQuoteStatusAction } from '../actions';
 
-export const metadata: Metadata = { title: `Quote · ${APP_NAME}` };
+export const metadata: Metadata = { title: 'Quote' };
 
 const buttonClass =
   'inline-flex h-10 items-center rounded-lg px-4 text-[14px] font-medium focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';

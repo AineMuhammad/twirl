@@ -9,7 +9,7 @@ import { databaseEnabled, db } from '@/server/db';
 import { UpgradeButton } from './UpgradeButton';
 
 export const metadata: Metadata = {
-  title: `Pricing · ${APP_NAME}`,
+  title: 'Pricing',
   description: `Plans for ${APP_NAME} 3D product configurators.`,
 };
 

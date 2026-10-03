@@ -7,7 +7,7 @@ import { getCurrentUser } from '@/server/auth/session';
 import { RequestModelForm } from './RequestModelForm';
 
 export const metadata: Metadata = {
-  title: `Get a 3D model made · ${APP_NAME}`,
+  title: 'Get a 3D model made',
   description: 'Don’t have a 3D model of your product? We can make one for you.',
 };
 
