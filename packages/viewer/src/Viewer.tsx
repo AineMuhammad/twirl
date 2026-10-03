@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import {
   type CSSProperties,
   type Ref,
+  lazy,
   Suspense,
   useCallback,
   useEffect,
@@ -27,6 +28,7 @@ import {
   pickEnvironmentResolution,
 } from './environments';
 import { dprRange, readDeviceHints } from './internal/device';
+import { effectsEnabled, type EffectsSetting } from './internal/effects';
 import { progressFromEvent, toViewerError } from './internal/errors';
 import { floorColorFor } from './internal/floor-color';
 import { computeFraming, type Framing } from './internal/framing';
@@ -73,6 +75,11 @@ export interface ViewerProps {
   scene?: Partial<SceneSettings>;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
   decoderPaths?: Partial<DecoderPaths>;
+  /**
+   * Post-processing (ambient occlusion, bloom). 'auto' (default) enables it on mouse/trackpad
+   * devices while the frame rate is healthy.
+   */
+  effects?: EffectsSetting;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -93,6 +100,8 @@ export interface ViewerProps {
 }
 
 const CAMERA_FOV = 35;
+// Post-processing is a separate chunk, fetched only when enabled.
+const Effects = lazy(() => import('./components/Effects'));
 
 /**
  * Khronos PBR Neutral tone mapping: designed for product rendering, it keeps base colors true
@@ -134,6 +143,7 @@ export function Viewer({
   environmentSources,
   decoderPaths,
   enablePan = false,
+  effects = 'auto',
   playAnimationsOnLoad = true,
   onLoad,
   onEnvironmentStatus,
@@ -301,6 +311,11 @@ export function Viewer({
             visible={scene.floor}
             shadows={scene.shadows}
           />
+        )}
+        {current && effectsEnabled(effects, device.coarsePointer, qualityFactor) && (
+          <Suspense fallback={null}>
+            <Effects stage={stage} />
+          </Suspense>
         )}
         <CameraRig
           framing={current?.framing ?? null}

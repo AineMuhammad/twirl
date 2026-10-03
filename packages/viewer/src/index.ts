@@ -33,3 +33,4 @@ export {
   type EnvironmentSources,
   isEnvironmentId,
 } from './environments';
+export type { EffectsSetting } from './internal/effects';
