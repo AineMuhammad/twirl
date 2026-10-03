@@ -1,0 +1,7 @@
+{
+  "extends": "@twirl/tsconfig/react-library.json",
+  "compilerOptions": {
+    "types": ["node", "vite/client"]
+  },
+  "include": ["src", "playground", "*.ts"]
+}

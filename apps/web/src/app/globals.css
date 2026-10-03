@@ -1,0 +1,93 @@
+@import 'tailwindcss';
+/* The configurator UI lives in the viewer package. */
+@source '../../../../packages/viewer/src';
+
+/* Theme: light by default; dark via data-theme="dark" on <html> (set before paint, see layout). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  /* Semantic UI tokens */
+  --surface: #ffffff;
+  --ink: #171717;
+  --ink-soft: #404040;
+  --ink-muted: #737373;
+  --ink-faint: #a3a3a3;
+  --line: rgb(0 0 0 / 0.08);
+  --tint: rgb(0 0 0 / 0.045);
+  --tint-strong: rgb(0 0 0 / 0.08);
+  color-scheme: light;
+}
+
+[data-theme='dark'] {
+  --background: #0b0b0d;
+  --foreground: #ededed;
+  --surface: #121215;
+  --ink: #f4f4f5;
+  --ink-soft: #d4d4d8;
+  --ink-muted: #a1a1aa;
+  --ink-faint: #71717a;
+  --line: rgb(255 255 255 / 0.1);
+  --tint: rgb(255 255 255 / 0.06);
+  --tint-strong: rgb(255 255 255 / 0.11);
+  color-scheme: dark;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-instrument-serif);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-tint: var(--tint);
+  --color-tint-strong: var(--tint-strong);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* Brand accent (indigo). Use as bg-brand-600, ring-brand-500, text-brand-700, … */
+@theme {
+  --color-brand-50: #eef2ff;
+  --color-brand-100: #e0e7ff;
+  --color-brand-200: #c7d2fe;
+  --color-brand-500: #6366f1;
+  --color-brand-600: #4f46e5;
+  --color-brand-700: #4338ca;
+  --color-brand-900: #1e1b4b;
+}
+
+/* react-colorful, styled to match the demo. */
+.twirl-color-picker .react-colorful {
+  width: 100%;
+  height: 168px;
+  gap: 12px;
+}
+.twirl-color-picker .react-colorful__saturation {
+  border-radius: 14px;
+  border-bottom: none;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.06);
+}
+.twirl-color-picker .react-colorful__hue {
+  height: 12px;
+  border-radius: 999px;
+}
+.twirl-color-picker .react-colorful__pointer {
+  width: 22px;
+  height: 22px;
+  border-width: 3px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 0.3);
+}
+.twirl-color-picker .react-colorful__interactive:focus .react-colorful__pointer {
+  transform: translate(-50%, -50%) scale(1.15);
+  box-shadow: 0 0 0 3px var(--color-brand-500);
+}
