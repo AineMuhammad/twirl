@@ -1,15 +1,13 @@
-import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { requireWorkspace } from '@/server/auth/session';
 
-import { signOutAction } from './actions';
+import { signOutAction } from '../actions';
 
-export const metadata: Metadata = { title: `Dashboard · ${APP_NAME}` };
-
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
+/** Dashboard pages with the top bar (the product editor uses the full screen instead). */
+export default async function DashboardShellLayout({ children }: { children: ReactNode }) {
   const { user, workspace } = await requireWorkspace();
   return (
     <div className="min-h-dvh bg-tint">

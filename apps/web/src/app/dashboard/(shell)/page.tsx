@@ -1,7 +1,10 @@
+import Link from 'next/link';
+
 import { PLANS } from '@/config/plans';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
+import { listProducts } from '@/server/products';
 import { storageEnabled } from '@/server/storage/r2';
 import { DeleteModelButton } from '@/components/dashboard/DeleteModelButton';
 import { ModelReportDetails } from '@/components/dashboard/ModelReportDetails';
@@ -18,8 +21,9 @@ function formatBytes(bytes: number) {
 export default async function DashboardPage() {
   const { user, workspace } = await requireWorkspace();
   const plan = PLANS[workspace.plan];
-  const [published, models] = await Promise.all([
+  const [published, products, models] = await Promise.all([
     countPublishedProducts(db(), workspace.id),
+    listProducts(db(), workspace.id),
     // Abandoned uploads stay PENDING; only show recent ones.
     db().asset.findMany({
       where: {
@@ -71,12 +75,48 @@ export default async function DashboardPage() {
             : 'No watermark on this plan.'}
         </p>
       </section>
+      <section className="rounded-3xl bg-surface p-8 ring-1 ring-line" aria-labelledby="products">
+        <h2 id="products" className="text-base font-semibold text-ink">
+          Products
+        </h2>
+        {products.length === 0 ? (
+          <p className="mt-1 text-sm text-ink-muted">
+            Upload a model below, then choose “Create product” to build its configurator.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-line">
+            {products.map((product) => (
+              <li key={product.id}>
+                <Link
+                  href={`/dashboard/products/${product.id}`}
+                  className="flex items-center gap-4 rounded-lg py-3 hover:bg-tint"
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-ink">
+                      {product.name}
+                    </span>
+                    <span className="block text-xs text-ink-muted">
+                      Edited {product.updatedAt.toLocaleDateString('en-US')}
+                    </span>
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-medium ${product.publishedVersionId ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300' : 'bg-tint-strong text-ink-soft'}`}
+                  >
+                    {product.publishedVersionId ? 'Published' : 'Draft'}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       <section className="rounded-3xl bg-surface p-8 ring-1 ring-line" aria-labelledby="models">
         <h2 id="models" className="text-base font-semibold text-ink">
           Models
         </h2>
         <p className="mt-1 text-sm text-ink-muted">
-          Upload your product&apos;s 3D model. Building a configurator from it comes next.
+          Upload your product&apos;s 3D model, then create a product from it.
         </p>
         <div className="mt-5">
           <ModelUploader enabled={storageEnabled} />
@@ -93,6 +133,14 @@ export default async function DashboardPage() {
                   <ModelReportDetails validation={model.validation} />
                 </div>
                 <StatusBadge status={model.status} />
+                {model.status === 'READY' && (
+                  <Link
+                    href={`/dashboard/products/new?model=${model.id}`}
+                    className="rounded-lg bg-brand-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-brand-700"
+                  >
+                    Create product
+                  </Link>
+                )}
                 <DeleteModelButton id={model.id} filename={model.filename} />
               </li>
             ))}
