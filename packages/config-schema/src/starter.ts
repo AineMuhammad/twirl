@@ -44,6 +44,8 @@ export function starterConfig(options: {
   name: string;
   meshTree: readonly StarterMeshNode[];
   currency?: string;
+  /** Add a colour and a show/hide option per part (default). Off: parts only, no options. */
+  withOptions?: boolean;
 }): ProductConfig {
   const parts: ProductConfigInput['parts'] = [];
   const groups: ProductConfigInput['groups'] = [];
@@ -62,6 +64,7 @@ export function starterConfig(options: {
     usedIds.add(id);
 
     parts.push({ id, label, meshes: [mesh.hasName ? mesh.name : `#${mesh.id}`] });
+    if (options.withOptions === false) return;
     groups.push({
       type: 'color',
       id: `${id}-color`,

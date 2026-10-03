@@ -127,10 +127,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
   return (
     <div>
       <div className="space-y-8 p-6">
-        <SectionHeader
-          title="Appearance"
-          description="Match the configurator to your brand. Use “Try as a shopper” to see the result."
-        />
+        <SectionHeader title="Appearance" description="Match the configurator to your brand." />
 
         <Subsection title="Layout">
           <div role="radiogroup" aria-label="Layout" className="grid grid-cols-3 gap-2">
@@ -153,7 +150,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
           </div>
         </Subsection>
 
-        <Subsection title="Brand colour" help="Used for buttons, selected choices and highlights.">
+        <Subsection title="Brand colour">
           <div
             className="flex flex-wrap items-center gap-2"
             role="radiogroup"
@@ -178,7 +175,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
               );
             })}
           </div>
-          <Field label="Or any colour">
+          <Field label="Custom">
             {() => (
               <ColorInput
                 label="Brand colour"
@@ -189,7 +186,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
           </Field>
         </Subsection>
 
-        <Subsection title="Heading font">
+        <Subsection title="Font">
           <div role="radiogroup" aria-label="Heading font" className="grid grid-cols-2 gap-2">
             {FONTS.map((f) => (
               <Tile
@@ -207,8 +204,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
 
         <Subsection title="Logo">
           <TextField
-            label="Logo image link"
-            hint="Optional. A link to your logo (starting with https://). Shown above the product name."
+            label="Logo URL (optional)"
             placeholder="https://yourstore.com/logo.svg"
             maxLength={500}
             value={logoUrl}
@@ -220,7 +216,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
           />
         </Subsection>
 
-        <Subsection title="First view" help="The angle shoppers see when the product loads.">
+        <Subsection title="Starting view">
           <Segmented
             label="First camera view"
             value={presentation.camera.initialView}
@@ -233,9 +229,7 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
       <div className="border-t border-line pt-2">
         <div className="px-6 pt-4">
           <h3 className="text-[13px] font-semibold tracking-wide text-ink-soft uppercase">Scene</h3>
-          <p className="mt-1 text-[14px] text-ink-muted">
-            Lighting and backdrop around the product.
-          </p>
+          <p className="mt-1 text-[14px] text-ink-muted">Lighting and background.</p>
         </div>
         <ScenePanel
           scene={config.scene}

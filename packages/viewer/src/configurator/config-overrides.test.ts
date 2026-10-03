@@ -72,6 +72,13 @@ describe('overridesForSelections', () => {
     ).toEqual({ '0/0': { color: '#112233' }, '0/1': { color: '#112233' } });
   });
 
+  it('always hides meshes removed from the product', () => {
+    const c = { ...config(), hiddenMeshes: ['#1'] };
+    expect(overridesForSelections(c, { 'legs-color': 'original', cushion: true }, tree)).toEqual({
+      '1': { visible: false },
+    });
+  });
+
   it('leaves the original finish untouched', () => {
     expect(
       overridesForSelections(config(), { 'legs-color': 'original', cushion: true }, tree),

@@ -23,11 +23,13 @@ import {
   removePart,
   removeSwatch,
   colorGroupOf,
-  setAllCustomisable,
+  isPartCustomisable,
+  setAllShown,
+  setMeshShown,
+  setPartCustomisable,
   setPartColorable,
   setPartHideable,
   visibilityGroupOf,
-  setMeshCustomisable,
   uniqueId,
   unassignMesh,
 } from './config-edit';
@@ -173,30 +175,43 @@ describe('sizes and rules', () => {
   });
 });
 
-describe('customisable meshes', () => {
+describe('shown and hidden meshes', () => {
   const mesh = (ref: string, hasName = true) => ({ ref, label: ref, hasName, nodeId: ref });
 
-  it('turns meshes into parts and back, once each', () => {
-    let config: ProductConfig = { ...chair(), parts: [], groups: [], rules: [] };
-    config = setMeshCustomisable(config, mesh('Pillow_01'), true);
-    config = setMeshCustomisable(config, mesh('Pillow_01'), true);
-    expect(config.parts).toEqual([{ id: 'pillow-01', label: 'Pillow 01', meshes: ['Pillow_01'] }]);
-    expect(setMeshCustomisable(config, mesh('Pillow_01'), false).parts).toEqual([]);
+  it('hides a mesh from the product and shows it again as a part', () => {
+    let config = setMeshShown(chair(), mesh('Pillow_02'), false);
+    expect(config.hiddenMeshes).toEqual(['Pillow_02']);
+    expect(config.parts.some((p) => p.meshes.includes('Pillow_02'))).toBe(false);
+    expect(config.groups.some((g) => g.id === 'pillow-navy')).toBe(false);
+    expect(valid(config)).toBe(true);
+    config = setMeshShown(config, mesh('Pillow_02'), true);
+    config = setMeshShown(config, mesh('Pillow_02'), true);
+    expect(config.hiddenMeshes).toEqual([]);
+    expect(config.parts.filter((p) => p.meshes.includes('Pillow_02'))).toHaveLength(1);
   });
 
-  it('selects all or none, and removes options left without parts', () => {
+  it('hides or shows everything at once', () => {
     const meshes = ['iron', 'Chair', 'Pillow_01', 'Pillow_02', '#4'].map((r) =>
       mesh(r, r[0] !== '#'),
     );
-    const all = setAllCustomisable(chair(), meshes, true);
-    expect(all.parts.map((p) => p.meshes[0]).sort()).toEqual(
-      ['#4', 'Chair', 'Pillow_01', 'Pillow_02', 'iron'].sort(),
-    );
-    expect(all.parts.find((p) => p.meshes[0] === '#4')?.label).toBe('Part 5');
-    const none = setAllCustomisable(all, meshes, false);
+    const none = setAllShown(chair(), meshes, false);
     expect(none.parts).toEqual([]);
     expect(none.groups).toEqual([]);
-    expect(none.rules).toEqual([]);
+    expect(none.hiddenMeshes).toHaveLength(5);
+    expect(valid(none)).toBe(true);
+    const all = setAllShown(none, meshes, true);
+    expect(all.hiddenMeshes).toEqual([]);
+    expect(all.parts.find((p) => p.meshes[0] === '#4')?.label).toBe('Part 5');
+  });
+});
+
+describe('customisable parts', () => {
+  it('starts with a colour option offering only the original finish, and turns off cleanly', () => {
+    let config = setPartCustomisable(chair(), 'seat', false);
+    expect(isPartCustomisable(config, 'seat')).toBe(false);
+    config = setPartCustomisable(config, 'seat', true);
+    expect(colorGroupOf(config, 'seat')).toMatchObject({ swatches: [], default: null });
+    expect(valid(config)).toBe(true);
   });
 });
 
