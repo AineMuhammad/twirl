@@ -13,6 +13,8 @@ import { ModelUploader } from '@/components/dashboard/ModelUploader';
 
 const RECENT_PENDING_MS = 60 * 60 * 1000;
 
+const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
+
 function formatBytes(bytes: number) {
   return bytes >= 1024 * 1024
     ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
@@ -155,8 +157,8 @@ export default async function DashboardPage() {
                         </div>
                         {product.publishedVersion && (
                           <p className="mt-2 text-[13px] text-ink-soft">
-                            {stats.get(product.id)?.visitors ?? 0} visitors ·{' '}
-                            {stats.get(product.id)?.quote_request ?? 0} quotes{' '}
+                            {plural(stats.get(product.id)?.visitors ?? 0, 'visitor')} ·{' '}
+                            {plural(stats.get(product.id)?.quote_request ?? 0, 'quote')}{' '}
                             <span className="text-ink-faint">(30 days)</span>
                           </p>
                         )}
