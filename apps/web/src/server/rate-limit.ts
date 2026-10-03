@@ -19,6 +19,7 @@ const LIMITS = {
   share: { requests: 20, window: '10 m' },
   events: { requests: 60, window: '1 m' },
   model: { requests: 3, window: '1 h' },
+  contact: { requests: 5, window: '1 h' },
 } as const;
 
 export type LimitKind = keyof typeof LIMITS;
@@ -46,6 +47,7 @@ function limiterFor(kind: LimitKind): Ratelimit | null {
       share: make('share'),
       events: make('events'),
       model: make('model'),
+      contact: make('contact'),
     };
   })();
   return limiters[kind];
