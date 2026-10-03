@@ -1,7 +1,7 @@
 'use client';
 
 import type { Evaluation, ProductConfig } from '@twirl/config-schema/engine';
-import { Configurator } from '@twirl/viewer/ui';
+import { Configurator, type QuoteContact } from '@twirl/viewer/ui';
 import { useCallback, useEffect } from 'react';
 
 import { LazyViewer } from '@/components/demo/LazyViewer';
@@ -31,6 +31,33 @@ async function shareDesign(publicId: string, versionId: string, evaluation: Eval
     throw new Error(body?.error ?? 'Could not create a link. Please try again.');
   }
   return `${window.location.origin}/c/${body.shortId}`;
+}
+
+/** Sends a quote request; the server re-prices the design itself. */
+async function requestQuote(
+  publicId: string,
+  versionId: string,
+  evaluation: Evaluation,
+  contact: QuoteContact,
+) {
+  const response = await fetch('/api/quotes', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      publicId,
+      versionId,
+      selections: evaluation.selections,
+      name: contact.name,
+      email: contact.email,
+      ...(contact.phone && { phone: contact.phone }),
+      ...(contact.message && { message: contact.message }),
+      ...(contact.website && { website: contact.website }),
+    }),
+  });
+  if (!response.ok) {
+    const body = (await response.json().catch(() => null)) as { error?: string } | null;
+    throw new Error(body?.error ?? 'Could not send your request. Please try again.');
+  }
 }
 
 export function EmbedApp({
@@ -80,6 +107,12 @@ export function EmbedApp({
     [publicId, versionId],
   );
 
+  const onRequestQuote = useCallback(
+    (evaluation: Evaluation, contact: QuoteContact) =>
+      requestQuote(publicId, versionId, evaluation, contact),
+    [publicId, versionId],
+  );
+
   return (
     <Configurator
       config={config}
@@ -88,6 +121,7 @@ export function EmbedApp({
       viewerProps={VIEWER_PROPS}
       onEvaluationChange={onEvaluationChange}
       onShare={onShare}
+      onRequestQuote={onRequestQuote}
       imageDownload={watermark ? { watermark: `Made with ${APP_NAME}` } : {}}
       arComingSoon
       {...(initialSelections && { initialSelections })}

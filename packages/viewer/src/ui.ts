@@ -8,6 +8,7 @@ export {
   Configurator,
   type ConfiguratorLayout,
   type ConfiguratorProps,
+  type QuoteContact,
 } from './configurator/Configurator';
 export { OptionsPanel, type OptionsPanelProps } from './configurator/OptionsPanel';
 export {
