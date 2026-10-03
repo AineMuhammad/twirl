@@ -45,8 +45,8 @@ export function colorFor(config: ProductConfig, groupId: string, value: unknown)
 }
 
 /**
- * The viewer's mesh overrides for (rule-corrected) selections: colour groups paint their parts,
- * hidden visibility groups hide theirs. Dimension groups don't change appearance yet.
+ * The viewer's mesh overrides for (rule-corrected) selections: hidden meshes stay hidden, colour
+ * groups paint their parts, and switched-off visibility groups hide theirs. Dimension groups don't change appearance yet.
  */
 export function overridesForSelections(
   config: ProductConfig,
@@ -55,6 +55,11 @@ export function overridesForSelections(
 ): MeshOverrides {
   const nodes = partNodeIds(config, meshTree);
   const overrides: MeshOverrides = {};
+  // Pieces the merchant removed from the product are never shown.
+  const byMesh = nodeIdsByMesh(meshTree);
+  for (const mesh of config.hiddenMeshes) {
+    for (const id of byMesh.get(mesh) ?? []) overrides[id] = { visible: false };
+  }
   const patch = (partIds: readonly string[], value: { color?: string; visible?: boolean }) => {
     for (const id of partIds.flatMap((p) => nodes.get(p) ?? [])) {
       overrides[id] = { ...overrides[id], ...value };
