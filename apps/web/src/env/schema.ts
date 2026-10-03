@@ -8,6 +8,19 @@ import { z } from 'zod';
  */
 export const serverSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
+  /**
+   * Pooled Postgres connection string (Neon). Optional until sign-in lands; features that need
+   * the database fail with a clear error without it.
+   */
+  DATABASE_URL: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'Use a postgresql:// connection string.')
+    .optional(),
+  /** Direct (non-pooled) connection string, used only by Prisma migrations. */
+  DATABASE_URL_UNPOOLED: z
+    .string()
+    .regex(/^postgres(ql)?:\/\//, 'Use a postgresql:// connection string.')
+    .optional(),
 });
 
 /**
