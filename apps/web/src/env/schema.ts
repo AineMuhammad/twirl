@@ -18,6 +18,8 @@ const DEPLOYED_REQUIRED = [
   'R2_SECRET_ACCESS_KEY',
   'R2_BUCKET',
   'R2_PUBLIC_URL',
+  'KV_REST_API_URL',
+  'KV_REST_API_TOKEN',
 ] as const;
 
 export const serverSchema = z
@@ -55,6 +57,9 @@ export const serverSchema = z
       .url()
       .transform((url) => url.replace(/\/+$/, ''))
       .optional(),
+    /** Upstash Redis REST API (added by Vercel's Redis integration) for rate limiting. */
+    KV_REST_API_URL: z.url().optional(),
+    KV_REST_API_TOKEN: z.string().optional(),
     /** Set by Vercel ('production' | 'preview' | 'development'). */
     VERCEL_ENV: z.string().optional(),
   })
