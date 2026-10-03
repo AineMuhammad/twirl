@@ -16,16 +16,38 @@ function post(message: EmbedMessage) {
   if (window.parent !== window) window.parent.postMessage(message, '*');
 }
 
+/** Saves the design and returns its link (on this site, which serves /c/…). */
+async function shareDesign(publicId: string, versionId: string, evaluation: Evaluation) {
+  const response = await fetch('/api/share', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ publicId, versionId, selections: evaluation.selections }),
+  });
+  const body = (await response.json().catch(() => null)) as {
+    shortId?: string;
+    error?: string;
+  } | null;
+  if (!response.ok || !body?.shortId) {
+    throw new Error(body?.error ?? 'Could not create a link. Please try again.');
+  }
+  return `${window.location.origin}/c/${body.shortId}`;
+}
+
 export function EmbedApp({
   publicId,
+  versionId,
   config,
   modelUrl,
   watermark,
+  initialSelections,
 }: {
   publicId: string;
+  versionId: string;
   config: ProductConfig;
   modelUrl: string;
   watermark: boolean;
+  /** Choices to start from (share links). */
+  initialSelections?: Record<string, unknown>;
 }) {
   useEffect(() => {
     post({ source: EMBED_SOURCE, type: 'ready', productId: publicId });
@@ -53,6 +75,11 @@ export function EmbedApp({
     [publicId],
   );
 
+  const onShare = useCallback(
+    (evaluation: Evaluation) => shareDesign(publicId, versionId, evaluation),
+    [publicId, versionId],
+  );
+
   return (
     <Configurator
       config={config}
@@ -60,6 +87,8 @@ export function EmbedApp({
       Viewer={LazyViewer}
       viewerProps={VIEWER_PROPS}
       onEvaluationChange={onEvaluationChange}
+      onShare={onShare}
+      {...(initialSelections && { initialSelections })}
     >
       {watermark && (
         <a

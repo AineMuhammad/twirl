@@ -36,6 +36,7 @@ export default async function EmbedPage({ params }: Params) {
   return (
     <EmbedApp
       publicId={product.publicId}
+      versionId={product.versionId}
       config={product.config}
       modelUrl={publicUrl(product.modelKey)}
       watermark={product.watermark}

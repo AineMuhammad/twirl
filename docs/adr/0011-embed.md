@@ -33,6 +33,14 @@ Merchants put configurators on any website, so the embed has to:
 5. **Sizing:** the embed asks for a height from its width (landscape on desktop, portrait on
    phones, 480–900 px). A merchant can fix the height with `data-height`.
 6. **Watermark:** Free-plan embeds show a small "Made with Twirl" link.
+7. **Share links** (`/c/[shortId]`):
+   - The Share button saves the shopper's choices against the published version they're
+     looking at (`SharedConfiguration`).
+   - The server validates the request (size limit, published version of a live product) and
+     stores the rule-corrected choices.
+   - Links keep showing that version after later publishes, and stop working if the product is
+     archived.
+   - `POST /api/share` accepts same-origin requests only. Rate limiting comes in M6.
 
 ## Consequences
 
