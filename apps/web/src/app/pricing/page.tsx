@@ -137,6 +137,15 @@ export default async function PricingPage() {
             );
           })}
         </ul>
+        <p className="mt-10 text-center text-[15px] text-ink-muted">
+          Don&apos;t have a 3D model of your product?{' '}
+          <Link
+            href="/request-model"
+            className="font-medium text-brand-700 hover:underline dark:text-brand-200"
+          >
+            We can make one
+          </Link>
+        </p>
       </main>
     </div>
   );
