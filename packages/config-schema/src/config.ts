@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
-import { CAMERA_VIEWS, DEFAULT_SCENE, sceneSchema } from './look';
+import { CAMERA_VIEWS, DEFAULT_SCENE } from './constants';
+import { sceneSchema } from './look';
 import { currencySchema, hexColorSchema, idSchema, labelSchema, moneySchema } from './primitives';
 
 // ── Parts ───────────────────────────────────────────────────────────────────────────────────
