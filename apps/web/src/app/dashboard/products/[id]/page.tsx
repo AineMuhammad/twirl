@@ -1,0 +1,41 @@
+import type { Metadata } from 'next';
+import Link from 'next/link';
+import { notFound } from 'next/navigation';
+
+import { APP_NAME } from '@/config/app';
+import { Editor } from '@/components/editor/Editor';
+import { requireWorkspace } from '@/server/auth/session';
+import { db } from '@/server/db';
+import { getProductForEditor, validateConfig } from '@/server/products';
+import { publicUrl } from '@/server/storage/r2';
+
+export const metadata: Metadata = { title: `Edit product · ${APP_NAME}` };
+
+export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
+  const { workspace } = await requireWorkspace();
+  const found = await getProductForEditor(db(), workspace.id, (await params).id);
+  if (!found) notFound();
+  const { product, draft } = found;
+  const parsed = validateConfig(draft.config);
+  const asset = draft.modelAsset;
+
+  if (!parsed.ok || !asset) {
+    console.error('[editor] unusable draft', product.id, parsed.ok ? 'no model' : parsed.issues);
+    return (
+      <main className="grid min-h-dvh place-items-center bg-tint p-6 text-center">
+        <div>
+          <h1 className="text-lg font-semibold text-ink">This product can&apos;t be opened</h1>
+          <p className="mt-1 text-sm text-ink-muted">
+            Its saved configuration or model is missing. Please contact support.
+          </p>
+          <Link href="/dashboard" className="mt-4 inline-block text-sm font-medium text-brand-600">
+            Back to dashboard
+          </Link>
+        </div>
+      </main>
+    );
+  }
+  return (
+    <Editor productId={product.id} initialConfig={parsed.config} modelUrl={publicUrl(asset.key)} />
+  );
+}
