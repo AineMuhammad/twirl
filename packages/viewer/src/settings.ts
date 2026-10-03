@@ -22,3 +22,4 @@ export {
   type SceneBackground,
   type SceneSettings,
 } from './scene';
+export { CAMERA_VIEWS, type CameraView } from './camera-views';

@@ -36,3 +36,12 @@ export const LIGHTING_TONES: Record<LightingPreset | EnvironmentId, [string, str
 export function sameBackground(a: SceneBackground, b: SceneBackground) {
   return JSON.stringify(a) === JSON.stringify(b);
 }
+
+/** Default backdrop per UI theme (the demo swaps them when the theme changes). */
+export const BACKDROP_FOR_THEME: Record<'light' | 'dark', SceneBackground> = {
+  light: BACKGROUND_PRESETS[0]?.background ?? { type: 'solid', color: '#ffffff' },
+  dark: BACKGROUND_PRESETS.find((p) => p.name === 'Charcoal')?.background ?? {
+    type: 'solid',
+    color: '#18191c',
+  },
+};

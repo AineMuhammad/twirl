@@ -1,5 +1,5 @@
 import type { BufferAttribute, Material, Mesh, MeshStandardMaterial, Texture } from 'three';
-import { SRGBColorSpace } from 'three';
+import { Color, SRGBColorSpace } from 'three';
 
 /**
  * Recoloring textured materials.
@@ -54,23 +54,28 @@ export function readPixels(texture: Texture): PixelSource | null {
 }
 
 /**
- * Mean linear luminance of `texture` over the texels `mesh` maps to (sampled at its vertex UVs,
- * including the texture's offset/repeat/rotation). Falls back to the whole image, then to 0.5.
+ * Mean linear colour of `texture` over the texels `mesh` maps to (sampled at its vertex UVs,
+ * including the texture's offset/repeat/rotation). Falls back to the whole image, then to grey.
  */
-export function meanLuminanceForMesh(mesh: Mesh, texture: Texture, pixels = readPixels(texture)) {
-  if (!pixels) return 0.5;
-  const linear = texture.colorSpace === SRGBColorSpace;
-  const lum = (x: number, y: number) => {
+export function meanColorForMesh(
+  mesh: Mesh,
+  texture: Texture,
+  pixels = readPixels(texture),
+): Color {
+  if (!pixels) return new Color(0.5, 0.5, 0.5);
+  const toLinear = texture.colorSpace === SRGBColorSpace ? srgbToLinear : (c: number) => c / 255;
+  const sum = [0, 0, 0];
+  let count = 0;
+  const add = (x: number, y: number) => {
     const i = (y * pixels.width + x) * 4;
-    const [r, g, b] = [pixels.data[i] ?? 0, pixels.data[i + 1] ?? 0, pixels.data[i + 2] ?? 0];
-    const f = linear ? srgbToLinear : (c: number) => c / 255;
-    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+    sum[0] = (sum[0] ?? 0) + toLinear(pixels.data[i] ?? 0);
+    sum[1] = (sum[1] ?? 0) + toLinear(pixels.data[i + 1] ?? 0);
+    sum[2] = (sum[2] ?? 0) + toLinear(pixels.data[i + 2] ?? 0);
+    count += 1;
   };
 
   const uvName = texture.channel === 0 ? 'uv' : `uv${texture.channel}`;
   const uv = mesh.geometry.getAttribute(uvName) as BufferAttribute | undefined;
-  let sum = 0;
-  let count = 0;
   if (uv && uv.count > 0) {
     texture.updateMatrix();
     const e = texture.matrix.elements;
@@ -85,21 +90,23 @@ export function meanLuminanceForMesh(mesh: Mesh, texture: Texture, pixels = read
       v -= Math.floor(v);
       // glTF textures have flipY = false: v = 0 is the top row of the image.
       const y = texture.flipY ? 1 - v : v;
-      sum += lum(
+      add(
         Math.min(pixels.width - 1, Math.floor(u * pixels.width)),
         Math.min(pixels.height - 1, Math.floor(y * pixels.height)),
       );
-      count += 1;
     }
   } else {
-    for (let y = 0; y < pixels.height; y += 4) {
-      for (let x = 0; x < pixels.width; x += 4) {
-        sum += lum(x, y);
-        count += 1;
-      }
-    }
+    for (let y = 0; y < pixels.height; y += 4) for (let x = 0; x < pixels.width; x += 4) add(x, y);
   }
-  return count > 0 ? sum / count : 0.5;
+  if (count === 0) return new Color(0.5, 0.5, 0.5);
+  return new Color((sum[0] ?? 0) / count, (sum[1] ?? 0) / count, (sum[2] ?? 0) / count);
+}
+
+const luminance = (c: Color) => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b;
+
+/** Mean linear luminance of `texture` over the texels `mesh` maps to (see meanColorForMesh). */
+export function meanLuminanceForMesh(mesh: Mesh, texture: Texture, pixels = readPixels(texture)) {
+  return pixels ? luminance(meanColorForMesh(mesh, texture, pixels)) : 0.5;
 }
 
 /** Replaces three's map_fragment for tinted materials: texture detail without its hue. */
@@ -128,7 +135,12 @@ export function prepareForTint(material: Material, mesh: Mesh) {
     m.needsUpdate = true;
   }
   if (m.map) {
-    const mean = { value: meanLuminanceForMesh(mesh, m.map) };
+    const average = meanColorForMesh(mesh, m.map);
+    const mean = { value: Math.max(luminance(average), 1e-4) };
+    // Start from the texture's average colour, so a fade into the chosen colour begins from
+    // what the part looked like rather than flashing grey.
+    // (The detail term averages to 1 over the part, so `color = average` reproduces it.)
+    m.color.multiply(average);
     m.onBeforeCompile = (shader) => {
       shader.uniforms.twirlMapMean = mean;
       shader.fragmentShader = `uniform float twirlMapMean;\n${shader.fragmentShader.replace(

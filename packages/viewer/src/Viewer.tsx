@@ -2,6 +2,7 @@ import { Canvas } from '@react-three/fiber';
 import {
   type CSSProperties,
   type Ref,
+  lazy,
   Suspense,
   useCallback,
   useEffect,
@@ -13,7 +14,8 @@ import {
 import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'three';
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
-import { CameraRig } from './components/CameraRig';
+import { CameraRig, type CameraRigController } from './components/CameraRig';
+import { Cyclorama } from './components/Cyclorama';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
 import { SceneLighting } from './components/SceneLighting';
@@ -27,8 +29,11 @@ import {
   pickEnvironmentResolution,
 } from './environments';
 import { dprRange, readDeviceHints } from './internal/device';
+import { effectsEnabled, type EffectsSetting } from './internal/effects';
 import { progressFromEvent, toViewerError } from './internal/errors';
+import { cycloramaColor } from './internal/cyclorama';
 import { floorColorFor } from './internal/floor-color';
+import type { CameraView } from './internal/views';
 import { computeFraming, type Framing } from './internal/framing';
 import { qualitySettings } from './internal/quality';
 import { type Stage, stageFromBounds } from './internal/stage';
@@ -46,6 +51,8 @@ import {
 export interface ViewerHandle {
   /** Restart the model's built-in animations from the beginning. No-op if it has none. */
   replayAnimations: () => void;
+  /** Glide the camera to a preset view of the current model. */
+  setView: (view: CameraView) => void;
 }
 
 export interface ViewerProps {
@@ -73,6 +80,16 @@ export interface ViewerProps {
   scene?: Partial<SceneSettings>;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
   decoderPaths?: Partial<DecoderPaths>;
+  /**
+   * Post-processing (ambient occlusion, bloom). 'auto' (default) enables it on mouse/trackpad
+   * devices while the frame rate is healthy.
+   */
+  effects?: EffectsSetting;
+  /**
+   * Slowly turn the product after a few seconds without interaction, like a turntable.
+   * Defaults to true; disabled for users who prefer reduced motion.
+   */
+  idleRotate?: boolean;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -93,6 +110,8 @@ export interface ViewerProps {
 }
 
 const CAMERA_FOV = 35;
+// Post-processing is a separate chunk, fetched only when enabled.
+const Effects = lazy(() => import('./components/Effects'));
 
 /**
  * Khronos PBR Neutral tone mapping: designed for product rendering, it keeps base colors true
@@ -134,6 +153,8 @@ export function Viewer({
   environmentSources,
   decoderPaths,
   enablePan = false,
+  effects = 'auto',
+  idleRotate = true,
   playAnimationsOnLoad = true,
   onLoad,
   onEnvironmentStatus,
@@ -161,9 +182,13 @@ export function Viewer({
   const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
 
   const modelController = useRef<ModelController | null>(null);
+  const rigController = useRef<CameraRigController | null>(null);
   useImperativeHandle(
     ref,
-    () => ({ replayAnimations: () => modelController.current?.replayAnimations() }),
+    () => ({
+      replayAnimations: () => modelController.current?.replayAnimations(),
+      setView: (view) => rigController.current?.goTo(view),
+    }),
     [],
   );
 
@@ -287,6 +312,9 @@ export function Viewer({
             </Suspense>
           </ErrorBoundary>
         )}
+        {current && scene.cyclorama && (
+          <Cyclorama stage={stage} color={cycloramaColor(scene.background)} />
+        )}
         {current && scene.shadows && (
           <SoftShadow
             key={`${current.url}|${hiddenSignature}|${animating}`}
@@ -294,7 +322,8 @@ export function Viewer({
             live={animating}
           />
         )}
-        {current && (
+        {current && !scene.cyclorama && (
+          // The cyclorama is the floor (and shadow catcher) when it's on.
           <Floor
             stage={stage}
             color={floorColorFor(scene.background)}
@@ -302,10 +331,17 @@ export function Viewer({
             shadows={scene.shadows}
           />
         )}
+        {current && effectsEnabled(effects, device.coarsePointer, qualityFactor) && (
+          <Suspense fallback={null}>
+            <Effects stage={stage} />
+          </Suspense>
+        )}
         <CameraRig
           framing={current?.framing ?? null}
           enablePan={enablePan}
           maxPolarAngle={Math.PI / 2 - 0.05}
+          idleRotate={idleRotate}
+          controllerRef={rigController}
         />
       </Canvas>
       <LoadingOverlay state={overlayState} />

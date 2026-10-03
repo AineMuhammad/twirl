@@ -45,11 +45,11 @@ function LightingTile({
       aria-pressed={pressed}
       aria-busy={loading}
       onClick={onClick}
-      className={`group relative aspect-[5/3] overflow-hidden rounded-2xl text-left transition-shadow ${focusRing} ${pressed ? 'ring-2 ring-brand-600 ring-offset-2' : 'ring-1 ring-black/[0.06] hover:ring-black/20'}`}
+      className={`group relative aspect-[5/3] overflow-hidden rounded-2xl text-left transition-shadow ${focusRing} ${pressed ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : 'ring-1 ring-line hover:ring-ink-faint/50'}`}
       style={{ background: `radial-gradient(120% 90% at 25% 15%, ${tones[0]}, ${tones[1]})` }}
     >
       <span className="absolute inset-x-2 bottom-2 flex items-center justify-between">
-        <span className="rounded-full bg-white/85 px-2.5 py-1 text-xs font-medium text-neutral-900 backdrop-blur">
+        <span className="rounded-full bg-surface/85 px-2.5 py-1 text-xs font-medium text-ink backdrop-blur">
           {label}
         </span>
         {pressed &&
@@ -122,7 +122,7 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
                   set({ background: preset.background });
                   setCustomOpen(false);
                 }}
-                className={`grid size-11 place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform hover:scale-105 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2' : ''}`}
+                className={`grid size-11 place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform hover:scale-105 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : ''}`}
                 style={{ background: backgroundCss(preset.background) }}
               >
                 {active && <CheckBadge />}
@@ -136,7 +136,7 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
             aria-pressed={!isPreset}
             title="Custom background"
             onClick={() => setCustomOpen((v) => !v)}
-            className={`grid size-11 place-items-center rounded-full transition-transform hover:scale-105 ${focusRing} ${!isPreset || customOpen ? 'ring-2 ring-brand-600 ring-offset-2' : ''}`}
+            className={`grid size-11 place-items-center rounded-full transition-transform hover:scale-105 ${focusRing} ${!isPreset || customOpen ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : ''}`}
             style={{ background: isPreset ? RAINBOW : customColor }}
           >
             {isPreset && (
@@ -161,10 +161,16 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
 
       <section>
         <SectionTitle>Ground</SectionTitle>
-        <div className="rounded-2xl border border-neutral-200/80 bg-white p-1">
+        <div className="rounded-2xl border border-line bg-surface p-1">
+          <Switch
+            label="Studio cyclorama"
+            description="A curved photo-studio backdrop in 3D"
+            checked={scene.cyclorama}
+            onChange={(cyclorama) => set({ cyclorama })}
+          />
           <Switch
             label="Floor"
-            description="A soft ground under the product"
+            description="A soft ground disc (when the cyclorama is off)"
             checked={scene.floor}
             onChange={(floor) => set({ floor })}
           />

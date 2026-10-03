@@ -49,10 +49,7 @@ export function Tabs({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="shrink-0 space-y-3 px-5 pt-2 pb-3 lg:space-y-4 lg:pt-5 lg:pb-4">
         {header}
-        <div
-          role="tablist"
-          className="grid grid-flow-col gap-1 rounded-full bg-neutral-900/[0.06] p-1"
-        >
+        <div role="tablist" className="grid grid-flow-col gap-1 rounded-full bg-tint-strong p-1">
           {tabs.map((tab, i) => {
             const selected = tab.id === active;
             return (
@@ -69,7 +66,7 @@ export function Tabs({
                 tabIndex={selected ? 0 : -1}
                 onClick={() => onChange(tab.id)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${focusRing} ${selected ? 'bg-white text-neutral-900 shadow-[0_1px_3px_rgba(0,0,0,0.12)]' : 'text-neutral-500 hover:text-neutral-900'}`}
+                className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${focusRing} ${selected ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/12' : 'text-ink-muted hover:text-ink'}`}
               >
                 {tab.label}
               </button>

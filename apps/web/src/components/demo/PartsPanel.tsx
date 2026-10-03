@@ -28,7 +28,7 @@ export function PartsPanel(props: PartsPanelProps) {
     return (
       <div className="space-y-2 px-5 py-2" aria-busy>
         {[0, 1, 2].map((i) => (
-          <div key={i} className="h-16 animate-pulse rounded-2xl bg-neutral-900/[0.04]" />
+          <div key={i} className="h-16 animate-pulse rounded-2xl bg-tint" />
         ))}
       </div>
     );
@@ -75,7 +75,7 @@ function PartRow({
   return (
     <li style={{ marginLeft: depth * 12 }}>
       <div
-        className={`rounded-2xl border bg-white transition-shadow ${open ? 'border-brand-200 shadow-[0_0_0_3px_var(--color-brand-100)]' : 'border-neutral-200/80 hover:border-neutral-300'}`}
+        className={`rounded-2xl border bg-surface transition-shadow ${open ? 'border-brand-200 shadow-[0_0_0_3px_var(--color-brand-100)] dark:border-brand-500/60 dark:shadow-[0_0_0_3px_rgb(99_102_241_/_0.22)]' : 'border-line hover:border-ink-faint/40'}`}
       >
         <div className="flex items-center">
           <button
@@ -96,11 +96,11 @@ function PartRow({
             />
             <span className="min-w-0 flex-1">
               <span
-                className={`block truncate text-sm font-medium ${hidden ? 'text-neutral-400 line-through' : 'text-neutral-900'} ${node.hasName ? '' : 'italic'}`}
+                className={`block truncate text-sm font-medium ${hidden ? 'text-ink-faint line-through' : 'text-ink'} ${node.hasName ? '' : 'italic'}`}
               >
                 {name}
               </span>
-              <span className="block truncate text-xs text-neutral-500">
+              <span className="block truncate text-xs text-ink-muted">
                 {hidden
                   ? 'Hidden'
                   : color
@@ -109,7 +109,7 @@ function PartRow({
               </span>
             </span>
             <ChevronIcon
-              className={`shrink-0 text-neutral-400 transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
+              className={`shrink-0 text-ink-faint transition-transform duration-200 ${open ? 'rotate-90' : ''}`}
             />
           </button>
           <button
@@ -118,18 +118,14 @@ function PartRow({
             aria-label={`${hidden ? 'Show' : 'Hide'} ${name}`}
             title={hidden ? 'Show' : 'Hide'}
             onClick={() => update({ visible: hidden ? undefined : false })}
-            className={`mr-2 rounded-xl p-2.5 transition-colors ${hidden ? 'bg-neutral-900 text-white' : 'text-neutral-400 hover:bg-neutral-100 hover:text-neutral-900'} ${focusRing}`}
+            className={`mr-2 rounded-xl p-2.5 transition-colors ${hidden ? 'bg-ink text-surface' : 'text-ink-faint hover:bg-tint hover:text-ink'} ${focusRing}`}
           >
             {hidden ? <EyeOffIcon width={18} height={18} /> : <EyeIcon width={18} height={18} />}
           </button>
         </div>
 
         {open && (
-          <div
-            ref={swatchesRef}
-            id={pickerId}
-            className="border-t border-neutral-100 px-3 pt-3 pb-3"
-          >
+          <div ref={swatchesRef} id={pickerId} className="border-t border-line px-3 pt-3 pb-3">
             <div role="group" aria-label={`Color for ${name}`} className="grid grid-cols-7 gap-2">
               {DEMO_SWATCHES.map((swatch) => {
                 const active = color === swatch.hex;
@@ -144,14 +140,14 @@ function PartRow({
                       update({ color: swatch.hex });
                       setCustomOpen(false);
                     }}
-                    className={`grid aspect-square place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform duration-150 hover:scale-110 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2' : ''}`}
+                    className={`grid aspect-square place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform duration-150 hover:scale-110 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : ''}`}
                     style={{ background: swatch.hex }}
                   >
                     {active && (
                       <CheckIcon
                         width={14}
                         height={14}
-                        className={isLight(swatch.hex) ? 'text-neutral-900' : 'text-white'}
+                        className={isLight(swatch.hex) ? 'text-ink' : 'text-white'}
                       />
                     )}
                   </button>
@@ -164,7 +160,7 @@ function PartRow({
                 aria-pressed={isCustom}
                 title="Custom color"
                 onClick={() => setCustomOpen((v) => !v)}
-                className={`grid aspect-square place-items-center rounded-full transition-transform duration-150 hover:scale-110 ${focusRing} ${isCustom || customOpen ? 'ring-2 ring-brand-600 ring-offset-2' : ''}`}
+                className={`grid aspect-square place-items-center rounded-full transition-transform duration-150 hover:scale-110 ${focusRing} ${isCustom || customOpen ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : ''}`}
                 style={{ background: isCustom ? color : RAINBOW }}
               >
                 {!isCustom && (
@@ -187,7 +183,7 @@ function PartRow({
               />
             )}
 
-            <div className="mt-3 flex items-center justify-between gap-2 text-xs text-neutral-500">
+            <div className="mt-3 flex items-center justify-between gap-2 text-xs text-ink-muted">
               <span className="truncate">
                 {node.triangleCount.toLocaleString()} triangles
                 {node.materialNames.length > 0 && ` · ${node.materialNames.join(', ')}`}
@@ -199,7 +195,7 @@ function PartRow({
                   update({ color: undefined });
                   setCustomOpen(false);
                 }}
-                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+                className={`flex shrink-0 items-center gap-1.5 rounded-lg px-2 py-1 font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
               >
                 <ResetIcon width={14} height={14} /> Original
               </button>

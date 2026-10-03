@@ -22,6 +22,8 @@ import type { DecoderPaths, MeshOverrides, ModelInfo } from '../types';
 import { MeshHighlight } from './MeshHighlight';
 import { MeshPicker } from './MeshPicker';
 
+const COLOR_FADE_SECONDS = 0.2;
+
 export interface ModelController {
   replayAnimations: () => void;
 }
@@ -77,7 +79,11 @@ export function Model({
   const mixer = useMemo(() => new AnimationMixer(scene), [scene]);
   const index = useMemo(() => indexNodes(scene), [scene]);
   const idOf = useMemo(() => new Map([...index].map(([id, object]) => [object, id])), [index]);
-  const overrides = useMemo(() => new MeshOverrideApplier(index), [index]);
+  // Colour changes cross-fade over 0.2 s (instantly for users who prefer reduced motion).
+  const overrides = useMemo(
+    () => new MeshOverrideApplier(index, prefersReducedMotion() ? 0 : COLOR_FADE_SECONDS),
+    [index],
+  );
   const highlighted = highlightedMeshId ? index.get(highlightedMeshId) : undefined;
 
   // Layout effect so the first frame already shows the overrides.
@@ -133,6 +139,7 @@ export function Model({
   const animating = useRef(false);
   useFrame((_, delta) => {
     mixer.update(delta);
+    if (overrides.fading) overrides.step(delta);
     const running = clips.some((clip) => mixer.existingAction(clip)?.isRunning() === true);
     if (running !== animating.current) {
       animating.current = running;

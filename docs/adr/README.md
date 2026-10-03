@@ -11,3 +11,4 @@ To add one, copy [`template.md`](template.md) to `NNNN-short-title.md` with the 
 | [0001](0001-monorepo.md)                       | Use a pnpm + Turborepo monorepo            | Accepted                     |
 | [0002](0002-environments-and-asset-hosting.md) | HDRI environments and static asset hosting | Partially superseded by 0003 |
 | [0003](0003-hdris-light-only.md)               | HDRIs light the scene only                 | Accepted                     |
+| [0004](0004-look-and-rendering.md)             | Look and rendering pipeline                | Accepted                     |

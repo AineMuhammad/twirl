@@ -7,22 +7,36 @@ import type {
   ViewerError,
   ViewerHandle,
 } from '@twirl/viewer';
-import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
+import {
+  backgroundCss,
+  type CameraView,
+  DEFAULT_SCENE,
+  type SceneSettings,
+} from '@twirl/viewer/settings';
 import Link from 'next/link';
 import { useCallback, useRef, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
+import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
-import { CloseIcon, LogoMark, PlayIcon, ResetIcon, UploadIcon } from './icons';
+import { CloseIcon, LogoMark, MoonIcon, PlayIcon, ResetIcon, SunIcon, UploadIcon } from './icons';
 import { LazyViewer } from './LazyViewer';
 import { PartsPanel } from './PartsPanel';
 import { ScenePanel } from './ScenePanel';
 import { Tabs } from './Tabs';
 import { focusRing, glass } from './ui';
 import { useLocalModel } from './useLocalModel';
+import { useTheme } from './useTheme';
 
 const NO_OVERRIDES: MeshOverrides = {};
+const VIEW_BUTTONS: { view: CameraView; label: string }[] = [
+  { view: 'front', label: 'Front' },
+  { view: 'threeQuarter', label: '¾' },
+  { view: 'side', label: 'Side' },
+  { view: 'back', label: 'Back' },
+  { view: 'top', label: 'Top' },
+];
 const PANEL_WIDTH = 'lg:w-[400px]';
 
 export function DemoApp() {
@@ -30,15 +44,37 @@ export function DemoApp() {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const [scene, setScene] = useState<SceneSettings>({
+    ...DEFAULT_SCENE,
+    ...SAMPLE_MODELS[0]?.look,
+  });
   const [lighting, setLighting] = useState<EnvironmentStatus>('ready');
   const [tab, setTab] = useState('parts');
   const [sheetOpen, setSheetOpen] = useState(true);
   const [hintVisible, setHintVisible] = useState(true);
   const viewer = useRef<ViewerHandle>(null);
+  const [theme, setTheme] = useTheme();
+  // A product's default backdrop pairs with the theme: its own backdrop in light, charcoal in
+  // dark. A backdrop the shopper picked themselves is left alone.
+  const lightBackdrop =
+    SAMPLE_MODELS.find((m) => m.url === modelUrl)?.look.background ?? BACKDROP_FOR_THEME.light;
+  const pairedBackground = (current: SceneSettings['background']) =>
+    sameBackground(current, lightBackdrop) && theme === 'dark' ? BACKDROP_FOR_THEME.dark : current;
+  const sceneForTheme: SceneSettings = { ...scene, background: pairedBackground(scene.background) };
+  const toggleTheme = () => {
+    const next = theme === 'dark' ? 'light' : 'dark';
+    // Going light again restores the product's own backdrop if the dark default was showing.
+    if (next === 'light' && sameBackground(sceneForTheme.background, BACKDROP_FOR_THEME.dark)) {
+      setScene((s) => ({ ...s, background: lightBackdrop }));
+    }
+    setTheme(next);
+  };
   const fileInput = useRef<HTMLInputElement>(null);
 
   const loadModel = useCallback((url: string | null) => {
+    // Each product opens in its own look (uploads get the default look).
+    const look = SAMPLE_MODELS.find((m) => m.url === url)?.look ?? {};
+    setScene({ ...DEFAULT_SCENE, ...look });
     setInfo(null);
     setOverrides(NO_OVERRIDES);
     setSelectedId(null);
@@ -56,8 +92,8 @@ export function DemoApp() {
 
   return (
     <div
-      className="relative h-dvh overflow-hidden text-neutral-900"
-      style={{ background: backgroundCss(scene.background) }}
+      className="relative h-dvh overflow-hidden text-ink"
+      style={{ background: backgroundCss(sceneForTheme.background) }}
       {...local.dropHandlers}
     >
       {/* Stage: left of the full-height panel on desktop, above the bottom sheet on phones. */}
@@ -69,15 +105,37 @@ export function DemoApp() {
         <LazyViewer
           ref={viewer}
           modelUrl={modelUrl}
-          scene={scene}
+          scene={sceneForTheme}
           environmentSources={ENVIRONMENT_SOURCES}
           meshOverrides={overrides}
           onLoad={setInfo}
           onEnvironmentStatus={setLighting}
           onError={onError}
         />
+        {info && (
+          <div
+            role="group"
+            aria-label="Camera view"
+            className={`absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full p-1 lg:bottom-5 ${glass}`}
+          >
+            {VIEW_BUTTONS.map(({ view, label }) => (
+              <button
+                key={view}
+                type="button"
+                aria-label={view === 'threeQuarter' ? 'Three-quarter view' : `${label} view`}
+                onClick={() => {
+                  setHintVisible(false);
+                  viewer.current?.setView(view);
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:bg-tint-strong hover:text-ink ${focusRing}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {info && hintVisible && (
-          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-white/70 px-3 py-1.5 text-xs text-neutral-600 ring-1 ring-black/5 backdrop-blur lg:block">
+          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-surface/70 px-3 py-1.5 text-xs text-ink-soft ring-1 ring-line backdrop-blur lg:block">
             Drag to rotate · Scroll to zoom
           </p>
         )}
@@ -91,7 +149,7 @@ export function DemoApp() {
         >
           <LogoMark className="text-brand-600" />
           <span className="font-semibold tracking-tight">{APP_NAME}</span>
-          <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline">
+          <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
             Demo
           </span>
         </Link>
@@ -108,7 +166,7 @@ export function DemoApp() {
                 type="button"
                 aria-pressed={modelUrl === m.url}
                 onClick={() => loadModel(m.url)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
               >
                 {m.label}
               </button>
@@ -119,12 +177,25 @@ export function DemoApp() {
                 aria-pressed={modelUrl === local.model.url}
                 title={local.model.name}
                 onClick={() => local.model && loadModel(local.model.url)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-neutral-900 text-white' : 'text-neutral-600 hover:text-neutral-900'}`}
+                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
               >
                 Your file
               </button>
             )}
           </div>
+          <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+            title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+            className={`grid size-10 place-items-center rounded-full text-ink-soft hover:text-ink ${glass} ${focusRing}`}
+          >
+            {theme === 'dark' ? (
+              <SunIcon width={18} height={18} />
+            ) : (
+              <MoonIcon width={18} height={18} />
+            )}
+          </button>
           <button
             type="button"
             onClick={() => fileInput.current?.click()}
@@ -153,15 +224,15 @@ export function DemoApp() {
       {local.error && (
         <div
           role="alert"
-          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-white px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 lg:left-[calc((100%-400px)/2)]"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 lg:left-[calc((100%-400px)/2)]"
         >
           <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
-          <p className="flex-1 text-neutral-800">{local.error}</p>
+          <p className="flex-1 text-ink-soft">{local.error}</p>
           <button
             type="button"
             onClick={local.dismissError}
             aria-label="Dismiss"
-            className={`rounded-full p-1 text-neutral-500 hover:bg-neutral-100 hover:text-neutral-900 ${focusRing}`}
+            className={`rounded-full p-1 text-ink-muted hover:bg-tint hover:text-ink ${focusRing}`}
           >
             <CloseIcon />
           </button>
@@ -171,7 +242,7 @@ export function DemoApp() {
       {/* Control panel: full-height sidebar flush right on desktop; bottom sheet on phones. */}
       <aside
         aria-label="Configure"
-        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-white pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:inset-y-0 lg:right-0 lg:left-auto lg:h-full lg:rounded-none lg:border-l lg:border-neutral-200/80 lg:pb-0 lg:shadow-none ${PANEL_WIDTH} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
+        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:inset-y-0 lg:right-0 lg:left-auto lg:h-full lg:rounded-none lg:border-l lg:border-line lg:pb-0 lg:shadow-none ${PANEL_WIDTH} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
       >
         <button
           type="button"
@@ -180,7 +251,7 @@ export function DemoApp() {
           aria-label={sheetOpen ? 'Collapse panel' : 'Expand panel'}
           className={`flex shrink-0 justify-center pt-2 lg:hidden ${focusRing}`}
         >
-          <span aria-hidden className="h-1.5 w-10 rounded-full bg-neutral-900/15" />
+          <span aria-hidden className="h-1.5 w-10 rounded-full bg-ink-faint/50" />
         </button>
         <Tabs
           active={tab}
@@ -194,10 +265,10 @@ export function DemoApp() {
                 <p className="hidden text-xs font-semibold tracking-wider text-brand-600 uppercase lg:block">
                   Configure
                 </p>
-                <h1 className="truncate text-lg font-semibold tracking-tight lg:mt-1 lg:text-xl">
+                <h1 className="truncate font-display text-2xl leading-tight lg:mt-1 lg:text-3xl">
                   {title}
                 </h1>
-                <p className="mt-0.5 text-xs text-neutral-500">
+                <p className="mt-0.5 text-xs text-ink-muted">
                   {info
                     ? `${info.meshCount} parts · ${info.triangleCount.toLocaleString()} triangles`
                     : 'Loading model…'}
@@ -209,7 +280,7 @@ export function DemoApp() {
                   onClick={() => viewer.current?.replayAnimations()}
                   aria-label="Replay animation"
                   title="Replay animation"
-                  className={`grid size-9 shrink-0 place-items-center rounded-full bg-neutral-900/[0.05] text-neutral-800 hover:bg-neutral-900/10 ${focusRing}`}
+                  className={`grid size-9 shrink-0 place-items-center rounded-full bg-tint text-ink-soft hover:bg-tint-strong ${focusRing}`}
                 >
                   <PlayIcon width={14} height={14} />
                 </button>
@@ -235,7 +306,7 @@ export function DemoApp() {
               label: 'Scene',
               content: (
                 <ScenePanel
-                  scene={scene}
+                  scene={sceneForTheme}
                   onChange={setScene}
                   lightingLoading={lighting === 'loading'}
                 />
@@ -243,8 +314,8 @@ export function DemoApp() {
             },
           ]}
         />
-        <footer className="hidden shrink-0 items-center justify-between gap-3 border-t border-neutral-100 px-5 py-3.5 lg:flex">
-          <p className="text-xs text-neutral-500">
+        <footer className="hidden shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-3.5 lg:flex">
+          <p className="text-xs text-ink-muted">
             {changes === 0 ? 'Original design' : `${changes} change${changes === 1 ? '' : 's'}`}
           </p>
           <button
@@ -254,7 +325,7 @@ export function DemoApp() {
               setOverrides(NO_OVERRIDES);
               setSelectedId(null);
             }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-neutral-700 hover:bg-neutral-100 disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
           >
             <ResetIcon width={14} height={14} /> Reset all
           </button>
