@@ -17,3 +17,4 @@ To add one, copy [`template.md`](template.md) to `NNNN-short-title.md` with the 
 | [0007](0007-data-model.md)                     | Data model and database access             | Accepted                     |
 | [0008](0008-authentication.md)                 | Authentication and authorization           | Accepted                     |
 | [0009](0009-plans-and-limits.md)               | Plans and limits                           | Accepted                     |
+| [0010](0010-uploads.md)                        | Model uploads                              | Accepted                     |
