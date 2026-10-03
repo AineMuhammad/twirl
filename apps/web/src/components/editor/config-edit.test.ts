@@ -22,6 +22,12 @@ import {
   removeGroup,
   removePart,
   removeSwatch,
+  colorGroupOf,
+  setAllCustomisable,
+  setPartColorable,
+  setPartHideable,
+  visibilityGroupOf,
+  setMeshCustomisable,
   uniqueId,
   unassignMesh,
 } from './config-edit';
@@ -58,6 +64,7 @@ describe('ids and meshes', () => {
       node('1', 'Mesh 2', false),
     ];
     expect(meshChoices(tree).map((m) => m.ref)).toEqual(['Leg', '#1']);
+    expect(meshChoices(tree)[0]?.nodeId).toBe('0/0');
   });
 });
 
@@ -163,5 +170,54 @@ describe('sizes and rules', () => {
   it("doesn't add rules without options", () => {
     const empty = { ...chair(), groups: [], rules: [] };
     expect(addRule(empty, 'requires')).toBe(empty);
+  });
+});
+
+describe('customisable meshes', () => {
+  const mesh = (ref: string, hasName = true) => ({ ref, label: ref, hasName, nodeId: ref });
+
+  it('turns meshes into parts and back, once each', () => {
+    let config: ProductConfig = { ...chair(), parts: [], groups: [], rules: [] };
+    config = setMeshCustomisable(config, mesh('Pillow_01'), true);
+    config = setMeshCustomisable(config, mesh('Pillow_01'), true);
+    expect(config.parts).toEqual([{ id: 'pillow-01', label: 'Pillow 01', meshes: ['Pillow_01'] }]);
+    expect(setMeshCustomisable(config, mesh('Pillow_01'), false).parts).toEqual([]);
+  });
+
+  it('selects all or none, and removes options left without parts', () => {
+    const meshes = ['iron', 'Chair', 'Pillow_01', 'Pillow_02', '#4'].map((r) =>
+      mesh(r, r[0] !== '#'),
+    );
+    const all = setAllCustomisable(chair(), meshes, true);
+    expect(all.parts.map((p) => p.meshes[0]).sort()).toEqual(
+      ['#4', 'Chair', 'Pillow_01', 'Pillow_02', 'iron'].sort(),
+    );
+    expect(all.parts.find((p) => p.meshes[0] === '#4')?.label).toBe('Part 5');
+    const none = setAllCustomisable(all, meshes, false);
+    expect(none.parts).toEqual([]);
+    expect(none.groups).toEqual([]);
+    expect(none.rules).toEqual([]);
+  });
+});
+
+describe('per-part options', () => {
+  it('turns colour and show/hide on and off for one part', () => {
+    let config = chair();
+    expect(colorGroupOf(config, 'seat')?.id).toBe('fabric');
+    config = setPartColorable(config, 'seat', false);
+    expect(colorGroupOf(config, 'seat')).toBeUndefined();
+    // Rules that used the fabric option go with it.
+    expect(config.rules.map((r) => r.id)).toEqual(['large-needs-brass']);
+    config = setPartColorable(config, 'seat', true);
+    expect(colorGroupOf(config, 'seat')?.parts).toEqual(['seat']);
+
+    expect(visibilityGroupOf(config, 'seat')).toBeUndefined();
+    config = setPartHideable(config, 'seat', true);
+    expect(visibilityGroupOf(config, 'seat')).toMatchObject({ parts: ['seat'], default: true });
+    config = setPartHideable(config, 'seat', true);
+    expect(
+      config.groups.filter((g) => g.type === 'visibility' && g.parts.includes('seat')),
+    ).toHaveLength(1);
+    expect(valid(config)).toBe(true);
   });
 });
