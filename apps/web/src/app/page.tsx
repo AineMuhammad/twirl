@@ -1,8 +1,9 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { Logo } from '@/components/brand/Logo';
 import { HeroScene } from '@/components/marketing/HeroScene';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SiteHeader } from '@/components/marketing/SiteHeader';
 
 const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
@@ -205,37 +206,7 @@ function QuoteCard() {
 export default function HomePage() {
   return (
     <div className="min-h-dvh bg-background text-ink">
-      <header className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
-        <Link href="/" className={`rounded-md ${focusRing}`} aria-label="Twirl home">
-          <Logo />
-        </Link>
-        <nav aria-label="Main" className="flex items-center gap-1 sm:gap-2">
-          <Link
-            href="/demo"
-            className={`hidden h-10 items-center rounded-lg px-3 text-[15px] font-medium text-ink-soft hover:text-ink sm:flex ${focusRing}`}
-          >
-            Demo
-          </Link>
-          <Link
-            href="/pricing"
-            className={`flex h-10 items-center rounded-lg px-3 text-[15px] font-medium text-ink-soft hover:text-ink ${focusRing}`}
-          >
-            Pricing
-          </Link>
-          <Link
-            href="/dashboard"
-            className={`flex h-10 items-center rounded-lg px-3 text-[15px] font-medium text-ink-soft hover:text-ink ${focusRing}`}
-          >
-            Sign in
-          </Link>
-          <Link
-            href="/dashboard"
-            className={`hidden h-10 items-center rounded-lg bg-ink px-4 text-[15px] font-medium text-surface hover:opacity-90 sm:flex ${focusRing}`}
-          >
-            Start free
-          </Link>
-        </nav>
-      </header>
+      <SiteHeader />
 
       <main>
         {/* Hero */}
@@ -408,23 +379,7 @@ export default function HomePage() {
         </section>
       </main>
 
-      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-10 text-[14px] text-ink-muted">
-        <Logo size="sm" />
-        <nav aria-label="Footer" className="flex flex-wrap gap-6">
-          <Link href="/demo" className="hover:text-ink">
-            Demo
-          </Link>
-          <Link href="/pricing" className="hover:text-ink">
-            Pricing
-          </Link>
-          <Link href="/request-model" className="hover:text-ink">
-            Get a 3D model made
-          </Link>
-          <Link href="/dashboard" className="hover:text-ink">
-            Sign in
-          </Link>
-        </nav>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

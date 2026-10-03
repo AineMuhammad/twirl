@@ -1,10 +1,10 @@
 import type { Metadata } from 'next';
-import Link from 'next/link';
 
 import { getCurrentUser } from '@/server/auth/session';
 
 import { RequestModelForm } from './RequestModelForm';
-import { Logo } from '@/components/brand/Logo';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SiteHeader } from '@/components/marketing/SiteHeader';
 
 export const metadata: Metadata = {
   title: 'Get a 3D model made',
@@ -15,17 +15,7 @@ export default async function RequestModelPage() {
   const user = await getCurrentUser();
   return (
     <div className="min-h-dvh bg-tint text-ink">
-      <header className="mx-auto flex h-16 max-w-3xl items-center justify-between px-5">
-        <Link href="/" className="rounded-md font-display text-[28px] leading-none tracking-tight">
-          <Logo />
-        </Link>
-        <Link
-          href={user ? '/dashboard' : '/pricing'}
-          className="text-[15px] font-medium text-ink-soft hover:text-ink"
-        >
-          {user ? 'Dashboard' : 'Pricing'}
-        </Link>
-      </header>
+      <SiteHeader signedIn={Boolean(user)} />
       <main className="mx-auto max-w-3xl px-5 pt-10 pb-24">
         <h1 className="font-display text-[44px] leading-none tracking-tight sm:text-[52px]">
           Need a 3D model?
@@ -38,6 +28,7 @@ export default async function RequestModelPage() {
           <RequestModelForm name={user?.name ?? ''} email={user?.email ?? ''} />
         </div>
       </main>
+      <SiteFooter />
     </div>
   );
 }

@@ -7,7 +7,8 @@ import { getCurrentUser } from '@/server/auth/session';
 import { databaseEnabled, db } from '@/server/db';
 
 import { UpgradeButton } from './UpgradeButton';
-import { Logo } from '@/components/brand/Logo';
+import { SiteFooter } from '@/components/marketing/SiteFooter';
+import { SiteHeader } from '@/components/marketing/SiteHeader';
 
 export const metadata: Metadata = {
   title: 'Pricing',
@@ -48,20 +49,7 @@ export default async function PricingPage() {
 
   return (
     <div className="min-h-dvh bg-tint text-ink">
-      <header className="mx-auto flex h-16 max-w-6xl items-center justify-between px-5">
-        <Link
-          href="/"
-          className={`rounded-md font-display text-[28px] leading-none tracking-tight ${focusRing}`}
-        >
-          <Logo />
-        </Link>
-        <Link
-          href="/dashboard"
-          className={`flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-[15px] font-medium shadow-sm hover:bg-tint ${focusRing}`}
-        >
-          {user ? 'Dashboard' : 'Sign in'}
-        </Link>
-      </header>
+      <SiteHeader signedIn={Boolean(user)} />
 
       <main className="mx-auto max-w-6xl px-5 pt-12 pb-24">
         <div className="max-w-2xl">
@@ -149,6 +137,7 @@ export default async function PricingPage() {
           </Link>
         </p>
       </main>
+      <SiteFooter />
     </div>
   );
 }

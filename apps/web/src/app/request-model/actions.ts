@@ -6,7 +6,8 @@ import { headers } from 'next/headers';
 import { serverEnv } from '@/env/server';
 import { getCurrentUser } from '@/server/auth/session';
 import { databaseEnabled, db } from '@/server/db';
-import { escapeHtml, sendEmail } from '@/server/email';
+import { sendEmail } from '@/server/email';
+import { renderEmail } from '@/server/email-layout';
 import { createModelRequest } from '@/server/model-requests';
 import { underLimit } from '@/server/rate-limit';
 
@@ -61,8 +62,20 @@ export async function submitModelRequest(
         to: admins,
         replyTo: request.email,
         subject: `3D model request from ${request.name}${company ? ` (${company})` : ''}`,
-        text: `${request.name} <${request.email}>${company ? `, ${company}` : ''}\n\n${description}${links ? `\n\nLinks:\n${links}` : ''}\n\nSee all requests in the admin panel. Reply to this email to answer them.`,
-        html: `<p><strong>${escapeHtml(request.name)}</strong> &lt;${escapeHtml(request.email)}&gt;${company ? `, ${escapeHtml(company)}` : ''}</p><p style="white-space:pre-wrap">${escapeHtml(description)}</p>${links ? `<p style="white-space:pre-wrap">${escapeHtml(links)}</p>` : ''}<p>See all requests in the admin panel. Reply to this email to answer them.</p>`,
+        ...renderEmail({
+          preheader: `${request.name} needs a 3D model made.`,
+          heading: '3D model request',
+          paragraphs: [description],
+          rows: [
+            ['From', `${request.name} <${request.email}>`],
+            ...(company ? ([['Company', company]] as [string, string][]) : []),
+            ...links
+              .split(/\n+/)
+              .filter(Boolean)
+              .map((l, i) => [`Link ${i + 1}`, l.trim()] as [string, string]),
+          ],
+          note: 'See all requests in the admin panel. Reply to this email to answer them.',
+        }),
       });
     });
   }
