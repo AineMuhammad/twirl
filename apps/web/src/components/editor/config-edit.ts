@@ -1,5 +1,6 @@
 import {
   type ColorGroup,
+  type ConditionLeaf,
   groupsIn,
   type OptionGroup,
   type ProductConfig,
@@ -228,4 +229,105 @@ export function parseMoney(text: string): number | null {
 /** 4950 → "49.50" for an input field. */
 export function moneyInput(minor: number): string {
   return (minor / 100).toFixed(2);
+}
+
+// ── Sizes ──────────────────────────────────────────────────────────────────────────────────
+
+export function addDimensionGroup(
+  config: ProductConfig,
+  label: string,
+  parts: string[],
+): ProductConfig {
+  const id = uniqueId(label, groupIds(config), 'size');
+  return {
+    ...config,
+    groups: [
+      ...config.groups,
+      {
+        type: 'dimension',
+        id,
+        label,
+        unit: 'cm',
+        min: 80,
+        max: 120,
+        step: 5,
+        default: 100,
+        nativeSize: 100,
+        axes: ['x'],
+        behaviors: parts.map((part) => ({ part, mode: 'stretch' as const })),
+        pricePerStep: 0,
+      },
+    ],
+  };
+}
+
+// ── Rules ──────────────────────────────────────────────────────────────────────────────────
+
+/** A sensible first condition on a group: its default value. */
+export function defaultCondition(group: OptionGroup): ConditionLeaf {
+  if (group.type === 'color') return { group: group.id, equals: group.default ?? 'original' };
+  if (group.type === 'visibility') return { group: group.id, equals: true };
+  return { group: group.id, min: group.default };
+}
+
+export function isLeaf(condition: unknown): condition is ConditionLeaf {
+  return typeof condition === 'object' && condition !== null && 'group' in condition;
+}
+
+/** Choices a colour condition can name: the original finish, swatches, and custom. */
+export function colorOptions(group: ColorGroup): { id: string; label: string }[] {
+  return [
+    { id: 'original', label: group.originalLabel },
+    ...group.swatches.map((s) => ({ id: s.id, label: s.label })),
+    ...(group.allowCustom ? [{ id: 'custom', label: 'Custom colour' }] : []),
+  ];
+}
+
+export function addRule(config: ProductConfig, type: Rule['type']): ProductConfig {
+  const [first, second] = config.groups;
+  if (!first) return config;
+  const other = second ?? first;
+  const id = uniqueId(
+    `${type}-rule`,
+    config.rules.map((r) => r.id),
+    'rule',
+  );
+  const rule: Rule =
+    type === 'requires'
+      ? {
+          type,
+          id,
+          message: 'This choice needs another option.',
+          when: defaultCondition(first),
+          require: defaultCondition(other),
+        }
+      : type === 'excludes'
+        ? {
+            type,
+            id,
+            message: "These options can't be combined.",
+            a: defaultCondition(first),
+            b: defaultCondition(other),
+          }
+        : {
+            type,
+            id,
+            message: "This option isn't available with your current choices.",
+            when: defaultCondition(first),
+            target: { group: other.id },
+            effect: 'disable',
+          };
+  return { ...config, rules: [...config.rules, rule] };
+}
+
+export function updateRule(
+  config: ProductConfig,
+  id: string,
+  update: (rule: Rule) => Rule,
+): ProductConfig {
+  return { ...config, rules: config.rules.map((r) => (r.id === id ? update(r) : r)) };
+}
+
+export function removeRule(config: ProductConfig, id: string): ProductConfig {
+  return { ...config, rules: config.rules.filter((r) => r.id !== id) };
 }

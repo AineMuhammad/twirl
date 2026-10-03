@@ -2,6 +2,7 @@
 
 import type {
   ColorGroup,
+  DimensionGroup,
   OptionGroup,
   ProductConfig,
   VisibilityGroup,
@@ -11,6 +12,7 @@ import { useState } from 'react';
 
 import {
   addColorGroup,
+  addDimensionGroup,
   addSwatch,
   addVisibilityGroup,
   coloredParts,
@@ -19,7 +21,16 @@ import {
   removeSwatch,
   updateGroup,
 } from './config-edit';
-import { ColorField, Field, IconButton, inputClass, MoneyField, TextField } from './fields';
+import {
+  ColorField,
+  Field,
+  IconButton,
+  inputClass,
+  MoneyField,
+  NumberField,
+  SelectField,
+  TextField,
+} from './fields';
 import { DownIcon, PlusIcon, TrashIcon, UpIcon } from './icons';
 
 export interface OptionsEditorProps {
@@ -39,13 +50,15 @@ export function OptionsEditor({ config, onChange }: OptionsEditorProps) {
   const uncolored = config.parts.filter((p) => !coloredParts(config).has(p.id));
   const firstPart = config.parts[0];
 
-  const add = (type: 'color' | 'visibility') => {
+  const add = (type: OptionGroup['type']) => {
     const part = type === 'color' ? uncolored[0] : firstPart;
     if (!part) return;
     const next =
       type === 'color'
         ? addColorGroup(config, `${part.label} colour`, [part.id])
-        : addVisibilityGroup(config, part.label, [part.id]);
+        : type === 'visibility'
+          ? addVisibilityGroup(config, part.label, [part.id])
+          : addDimensionGroup(config, 'Width', [part.id]);
     onChange(next);
     setOpenId(next.groups.at(-1)?.id ?? null);
   };
@@ -116,9 +129,7 @@ export function OptionsEditor({ config, onChange }: OptionsEditorProps) {
                     <VisibilityGroupFields config={config} group={group} update={update} />
                   )}
                   {group.type === 'dimension' && (
-                    <p className="text-xs text-ink-muted">
-                      Size options can be edited in the next update of the editor.
-                    </p>
+                    <DimensionGroupFields config={config} group={group} update={update} />
                   )}
                 </div>
               )}
@@ -144,6 +155,14 @@ export function OptionsEditor({ config, onChange }: OptionsEditorProps) {
           className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint disabled:opacity-40"
         >
           <PlusIcon /> Show / hide option
+        </button>
+        <button
+          type="button"
+          disabled={!firstPart}
+          onClick={() => add('dimension')}
+          className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint disabled:opacity-40"
+        >
+          <PlusIcon /> Size option
         </button>
       </div>
     </div>
@@ -347,6 +366,140 @@ function VisibilityGroupFields({
         currency={config.pricing.currency}
         value={group.price}
         onChange={(price) => update((g) => ({ ...g, price }))}
+      />
+    </>
+  );
+}
+
+const UNIT_OPTIONS = [
+  { value: 'mm', label: 'Millimetres (mm)' },
+  { value: 'cm', label: 'Centimetres (cm)' },
+  { value: 'm', label: 'Metres (m)' },
+  { value: 'in', label: 'Inches (in)' },
+] as const;
+
+const AXIS_LABELS = { x: 'Width (x)', y: 'Height (y)', z: 'Depth (z)' } as const;
+
+function DimensionGroupFields({
+  config,
+  group,
+  update,
+}: {
+  config: ProductConfig;
+  group: DimensionGroup;
+  update: Update<DimensionGroup>;
+}) {
+  const modeOf = (part: string) => group.behaviors.find((b) => b.part === part)?.mode ?? 'fixed';
+  const setMode = (part: string, mode: 'stretch' | 'anchor' | 'fixed') =>
+    update((g) => {
+      const others = g.behaviors.filter((b) => b.part !== part);
+      return { ...g, behaviors: mode === 'fixed' ? others : [...others, { part, mode }] };
+    });
+  return (
+    <>
+      <SelectField
+        label="Unit"
+        value={group.unit}
+        options={UNIT_OPTIONS}
+        onChange={(unit) => update((g) => ({ ...g, unit }))}
+      />
+      <div className="grid grid-cols-2 gap-2">
+        <NumberField
+          label="Minimum"
+          value={group.min}
+          min={0}
+          onChange={(min) => update((g) => ({ ...g, min }))}
+        />
+        <NumberField
+          label="Maximum"
+          value={group.max}
+          min={0}
+          onChange={(max) => update((g) => ({ ...g, max }))}
+        />
+        <NumberField
+          label="Step"
+          value={group.step}
+          min={0}
+          onChange={(step) => update((g) => ({ ...g, step }))}
+        />
+        <NumberField
+          label="Default"
+          value={group.default}
+          min={0}
+          onChange={(value) => update((g) => ({ ...g, default: value }))}
+        />
+      </div>
+      <NumberField
+        label={`Model's actual size (${group.unit})`}
+        hint="How big the uploaded model is along the chosen directions. Sizes scale relative to this."
+        value={group.nativeSize}
+        min={0}
+        onChange={(nativeSize) => update((g) => ({ ...g, nativeSize }))}
+      />
+      <fieldset>
+        <legend className="text-xs font-medium text-ink-soft">Directions</legend>
+        <div className="mt-1 flex gap-3">
+          {(['x', 'y', 'z'] as const).map((axis) => {
+            const checked = group.axes.includes(axis);
+            return (
+              <label key={axis} className="flex items-center gap-1.5 text-sm text-ink">
+                <input
+                  type="checkbox"
+                  className="accent-brand-600"
+                  checked={checked}
+                  disabled={checked && group.axes.length === 1}
+                  onChange={() =>
+                    update((g) => ({
+                      ...g,
+                      axes: checked ? g.axes.filter((a) => a !== axis) : [...g.axes, axis],
+                    }))
+                  }
+                />
+                {AXIS_LABELS[axis]}
+              </label>
+            );
+          })}
+        </div>
+      </fieldset>
+      <fieldset>
+        <legend className="text-xs font-medium text-ink-soft">How each part responds</legend>
+        <p className="text-xs text-ink-faint">
+          Stretch: resizes. Move: keeps its size and stays attached (legs, cushions). Fixed:
+          unaffected.
+        </p>
+        <div className="mt-2 space-y-1.5">
+          {config.parts.map((part) => (
+            <div key={part.id} className="flex items-center gap-2 text-sm">
+              <span className="min-w-0 flex-1 truncate text-ink">{part.label}</span>
+              <select
+                aria-label={`How ${part.label} responds`}
+                className={`${inputClass} w-32`}
+                value={modeOf(part.id)}
+                // A size option needs at least one part that responds.
+                onChange={(e) => {
+                  const mode = e.target.value as 'stretch' | 'anchor' | 'fixed';
+                  if (
+                    mode === 'fixed' &&
+                    group.behaviors.length === 1 &&
+                    modeOf(part.id) !== 'fixed'
+                  )
+                    return;
+                  setMode(part.id, mode);
+                }}
+              >
+                <option value="stretch">Stretch</option>
+                <option value="anchor">Move</option>
+                <option value="fixed">Fixed</option>
+              </select>
+            </div>
+          ))}
+        </div>
+      </fieldset>
+      <MoneyField
+        label={`Price change per step (${group.step} ${group.unit}) from the default`}
+        currency={config.pricing.currency}
+        value={group.pricePerStep}
+        onChange={(pricePerStep) => update((g) => ({ ...g, pricePerStep }))}
       />
     </>
   );

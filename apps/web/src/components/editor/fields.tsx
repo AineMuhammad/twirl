@@ -172,3 +172,82 @@ export function IconButton({
     </button>
   );
 }
+
+/** A number input that commits valid numbers as you type and resets on blur. */
+export function NumberField({
+  label,
+  value,
+  onChange,
+  hint,
+  min,
+}: {
+  label: string;
+  value: number;
+  onChange: (value: number) => void;
+  hint?: string;
+  min?: number;
+}) {
+  const [text, setText] = useState(String(value));
+  const [editing, setEditing] = useState(false);
+  return (
+    <Field label={label} {...(hint && { hint })}>
+      {(id) => (
+        <input
+          id={id}
+          inputMode="decimal"
+          className={`${inputClass} tabular-nums`}
+          value={editing ? text : String(value)}
+          onFocus={() => {
+            setText(String(value));
+            setEditing(true);
+          }}
+          onBlur={() => setEditing(false)}
+          onChange={(e) => {
+            setText(e.target.value);
+            const n = Number(e.target.value);
+            if (
+              e.target.value.trim() !== '' &&
+              Number.isFinite(n) &&
+              (min === undefined || n >= min)
+            ) {
+              onChange(n);
+            }
+          }}
+        />
+      )}
+    </Field>
+  );
+}
+
+export function SelectField<T extends string>({
+  label,
+  value,
+  options,
+  onChange,
+  hint,
+}: {
+  label: string;
+  value: T;
+  options: readonly { value: T; label: string }[];
+  onChange: (value: T) => void;
+  hint?: string;
+}) {
+  return (
+    <Field label={label} {...(hint && { hint })}>
+      {(id) => (
+        <select
+          id={id}
+          className={inputClass}
+          value={value}
+          onChange={(e) => onChange(e.target.value as T)}
+        >
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </select>
+      )}
+    </Field>
+  );
+}
