@@ -130,3 +130,57 @@ describe('MeshOverrideApplier (visibility)', () => {
     expect(m.frame.visible).toBe(true);
   });
 });
+
+describe('MeshOverrideApplier (colour fades)', () => {
+  const FADE = 0.2;
+
+  it('cross-fades to a new colour over the fade time', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root), FADE);
+    applier.apply({ '0': { color: '#000000' } });
+    expect(applier.fading).toBe(true);
+    expect(hex(m.frame)).toBe('#ffffff'); // nothing jumps before the first frame
+    applier.step(FADE / 2);
+    const mid = (m.frame.material as MeshStandardMaterial).color.r;
+    expect(mid).toBeGreaterThan(0.05);
+    expect(mid).toBeLessThan(0.95);
+    applier.step(FADE);
+    expect(hex(m.frame)).toBe('#000000');
+    expect(applier.fading).toBe(false);
+  });
+
+  it('retargets smoothly when the colour changes mid-fade', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root), FADE);
+    applier.apply({ '0': { color: '#000000' } });
+    applier.step(FADE / 2);
+    applier.apply({ '0': { color: '#ff0000' } });
+    applier.step(FADE);
+    expect(hex(m.frame)).toBe('#ff0000');
+  });
+
+  it('fades back to the original, then restores the original material', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root), FADE);
+    applier.apply({ '0': { color: '#000000' } });
+    applier.step(FADE);
+    applier.apply({});
+    expect(m.frame.material).not.toBe(m.shared); // still fading back on the clone
+    applier.step(FADE);
+    expect(m.frame.material).toBe(m.shared);
+    expect(m.shared.color.getHexString()).toBe('ffffff');
+  });
+
+  it('cancels a pending restore when recoloured during the fade back', () => {
+    const m = model();
+    const applier = new MeshOverrideApplier(indexNodes(m.root), FADE);
+    applier.apply({ '0': { color: '#000000' } });
+    applier.step(FADE);
+    applier.apply({});
+    applier.step(FADE / 2);
+    applier.apply({ '0': { color: '#00ff00' } });
+    applier.step(FADE);
+    expect(m.frame.material).not.toBe(m.shared);
+    expect(hex(m.frame)).toBe('#00ff00');
+  });
+});
