@@ -84,3 +84,26 @@ export function createDeferredDisposer(dispose: () => void) {
     },
   };
 }
+
+/**
+ * Counts how many mounted users share a resource (e.g. one loaded model shown by two viewers), so
+ * the shared part is freed only when the last one goes away.
+ */
+export function createUsageCounter() {
+  const users = new Map<string, number>();
+  return {
+    acquire(key: string) {
+      users.set(key, (users.get(key) ?? 0) + 1);
+    },
+    /** Returns how many users remain. */
+    release(key: string): number {
+      const left = Math.max(0, (users.get(key) ?? 0) - 1);
+      if (left === 0) users.delete(key);
+      else users.set(key, left);
+      return left;
+    },
+    count(key: string): number {
+      return users.get(key) ?? 0;
+    },
+  };
+}

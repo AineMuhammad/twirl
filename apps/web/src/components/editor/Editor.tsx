@@ -40,6 +40,7 @@ import {
   TagIcon,
   XIcon,
 } from './icons';
+import { EmbedDialog } from './EmbedDialog';
 import { LookEditor } from './LookEditor';
 import { OptionsEditor } from './OptionsEditor';
 import { PartsEditor } from './PartsEditor';
@@ -49,6 +50,8 @@ import { Button, focusRing, MoneyField, SectionHeader, SelectField, TextField } 
 
 export interface EditorProps {
   productId: string;
+  /** Short id used in public URLs (embed, share links). */
+  publicId: string;
   initialConfig: ProductConfig;
   modelUrl: string;
   /** Published versions, newest first. */
@@ -166,7 +169,14 @@ function describePath(config: ProductConfig, path: string): string {
  * full shopper preview on demand. Edits stay local until saved; the config is validated as you go
  * and again on the server.
  */
-export function Editor({ productId, initialConfig, modelUrl, versions, live }: EditorProps) {
+export function Editor({
+  productId,
+  publicId,
+  initialConfig,
+  modelUrl,
+  versions,
+  live,
+}: EditorProps) {
   const [config, setConfig] = useState(initialConfig);
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialConfig));
   const [info, setInfo] = useState<ModelInfo | null>(null);
@@ -178,6 +188,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
   const [saveError, setSaveError] = useState<string | null>(null);
   const [confirmPublish, setConfirmPublish] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [embedOpen, setEmbedOpen] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const router = useRouter();
   const [saving, startSaving] = useTransition();
@@ -317,6 +328,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
         setProblemsOpen(false);
         setConfirmPublish(false);
         setHistoryOpen(false);
+        setEmbedOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -422,6 +434,13 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
         )}
         <Button onClick={() => setPreviewing(true)} title="See what shoppers see">
           <EyeIcon /> <span className="hidden md:inline">Try as a shopper</span>
+        </Button>
+        <Button
+          onClick={() => setEmbedOpen(true)}
+          disabled={!live}
+          title={live ? 'Get the code for your website' : 'Publish first'}
+        >
+          Embed
         </Button>
         <Button onClick={() => setHistoryOpen(true)} title="Published versions">
           <span className="hidden md:inline">Versions</span>
@@ -643,6 +662,8 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
           <CheckIcon size={15} /> {notice}
         </div>
       )}
+
+      {embedOpen && <EmbedDialog publicId={publicId} onClose={() => setEmbedOpen(false)} />}
 
       {historyOpen && (
         <VersionsDrawer

@@ -45,6 +45,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <Editor
       productId={product.id}
+      publicId={product.publicId}
       initialConfig={parsed.config}
       modelUrl={publicUrl(asset.key)}
       versions={versions.map((v) => ({

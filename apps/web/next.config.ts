@@ -12,6 +12,27 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
   // Workspace packages ship TypeScript source; Next compiles them.
   transpilePackages: ['@twirl/config-schema', '@twirl/viewer'],
+  async headers() {
+    return [
+      {
+        // Everything except the embed refuses to be framed (clickjacking protection). The embed
+        // sends no framing restriction, so any page can show it: `frame-ancestors *` would
+        // still block pages without a web origin, such as a local test file.
+        source: '/((?!embed/).*)',
+        headers: [
+          { key: 'X-Frame-Options', value: 'DENY' },
+          { key: 'Content-Security-Policy', value: "frame-ancestors 'none'" },
+        ],
+      },
+      {
+        // embed.js is loaded by other sites; let browsers cache it briefly.
+        source: '/embed.js',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=300, stale-while-revalidate=86400' },
+        ],
+      },
+    ];
+  },
 };
 
 export default nextConfig;
