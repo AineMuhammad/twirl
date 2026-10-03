@@ -1,44 +1,21 @@
 import Link from 'next/link';
 
-import { PLANS } from '@/config/plans';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
 import { eventCounts } from '@/server/events';
 import { listProducts } from '@/server/products';
-import { storageEnabled } from '@/server/storage/r2';
-import { DeleteModelButton } from '@/components/dashboard/DeleteModelButton';
-import { ModelReportDetails } from '@/components/dashboard/ModelReportDetails';
-import { ModelUploader } from '@/components/dashboard/ModelUploader';
-
-const RECENT_PENDING_MS = 60 * 60 * 1000;
 
 const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? '' : 's'}`;
 
-function formatBytes(bytes: number) {
-  return bytes >= 1024 * 1024
-    ? `${(bytes / 1024 / 1024).toFixed(1)} MB`
-    : `${Math.max(1, Math.round(bytes / 1024))} KB`;
-}
-
 export default async function DashboardPage() {
   const { user, workspace } = await requireWorkspace();
-  const plan = PLANS[workspace.plan];
   const [published, products, models] = await Promise.all([
     countPublishedProducts(db(), workspace.id),
     listProducts(db(), workspace.id),
-    // Abandoned uploads stay PENDING; only show recent ones.
     db().asset.findMany({
-      where: {
-        workspaceId: workspace.id,
-        OR: [
-          { status: { not: 'PENDING' } },
-          // eslint-disable-next-line react-hooks/purity -- request-time cutoff, not render state
-          { createdAt: { gte: new Date(Date.now() - RECENT_PENDING_MS) } },
-        ],
-      },
-      orderBy: { createdAt: 'desc' },
-      take: 50,
+      where: { workspaceId: workspace.id, status: 'READY' },
+      select: { id: true, status: true },
     }),
   ]);
 
@@ -49,7 +26,6 @@ export default async function DashboardPage() {
   );
   const firstName = user.name?.split(' ')[0];
   const readyModels = models.filter((m) => m.status === 'READY');
-  const usage = Math.min(100, (published / plan.maxPublishedProducts) * 100);
   const steps = [
     {
       title: 'Upload your 3D model',
@@ -58,7 +34,7 @@ export default async function DashboardPage() {
     },
     {
       title: 'Create a product from it',
-      text: 'Click “Create product” next to the model.',
+      text: 'In 3D models, click “Create product” next to it.',
       done: products.length > 0,
     },
     {
@@ -113,7 +89,7 @@ export default async function DashboardPage() {
         </section>
       )}
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_300px]">
+      <div>
         <div className="space-y-8">
           {/* Products */}
           <section aria-labelledby="products" className="space-y-4">
@@ -126,18 +102,34 @@ export default async function DashboardPage() {
                   Each product is a configurator built from one of your models.
                 </p>
               </div>
+              {products.length > 0 && (
+                <Link
+                  href="/dashboard/models"
+                  className="inline-flex h-10 shrink-0 items-center rounded-lg bg-brand-600 px-4 text-[14px] font-medium text-white shadow-sm hover:bg-brand-700"
+                >
+                  New product
+                </Link>
+              )}
             </div>
             {products.length === 0 ? (
               <div className="rounded-xl border-2 border-dashed border-line bg-surface/50 px-6 py-10 text-center">
                 <p className="text-[15px] font-medium text-ink">No products yet</p>
                 <p className="mt-1 text-[14px] text-ink-muted">
                   {readyModels.length > 0
-                    ? 'Choose “Create product” next to one of your models below.'
-                    : 'Upload a 3D model below first.'}
+                    ? 'Open 3D models and choose “Create product” next to a model.'
+                    : 'Start by uploading a 3D model of your product.'}
+                </p>
+                <p className="mt-4">
+                  <Link
+                    href="/dashboard/models"
+                    className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-[14px] font-medium text-white shadow-sm hover:bg-brand-700"
+                  >
+                    {readyModels.length > 0 ? 'Go to 3D models' : 'Upload a model'}
+                  </Link>
                 </p>
               </div>
             ) : (
-              <ul className="grid gap-3 sm:grid-cols-2">
+              <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 {products.map((product) => (
                   <li key={product.id}>
                     <Link
@@ -176,121 +168,8 @@ export default async function DashboardPage() {
               </ul>
             )}
           </section>
-
-          {/* Models */}
-          <section aria-labelledby="models" className="space-y-4">
-            <div>
-              <h2 id="models" className="text-[20px] font-semibold tracking-tight text-ink">
-                3D models
-              </h2>
-              <p className="mt-0.5 text-[14px] text-ink-muted">
-                Upload a model once, then create one or more products from it.
-              </p>
-            </div>
-            <div className="rounded-xl bg-surface p-5 ring-1 ring-line">
-              <ModelUploader enabled={storageEnabled} />
-              <p className="mt-1 text-[14px] text-ink-muted">
-                No 3D model yet?{' '}
-                <Link
-                  href="/request-model"
-                  className="font-medium text-brand-700 hover:underline dark:text-brand-200"
-                >
-                  We can make one for you
-                </Link>
-              </p>
-              {models.length > 0 && (
-                <ul className="mt-2 divide-y divide-line" aria-label="Uploaded models">
-                  {models.map((model) => (
-                    <li key={model.id} className="flex flex-wrap items-start gap-x-4 gap-y-3 py-4">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <p className="truncate text-[15px] font-medium text-ink">
-                            {model.filename}
-                          </p>
-                          <StatusBadge status={model.status} />
-                        </div>
-                        <p className="mt-0.5 text-[13px] text-ink-muted">
-                          {formatBytes(model.size)} · uploaded{' '}
-                          {model.createdAt.toLocaleDateString('en-US', { dateStyle: 'medium' })}
-                        </p>
-                        <ModelReportDetails validation={model.validation} />
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {model.status === 'READY' && (
-                          <Link
-                            href={`/dashboard/products/new?model=${model.id}`}
-                            className="inline-flex h-9 items-center rounded-lg bg-brand-600 px-3.5 text-[14px] font-medium text-white shadow-sm hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
-                          >
-                            Create product
-                          </Link>
-                        )}
-                        <DeleteModelButton id={model.id} filename={model.filename} />
-                      </div>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </section>
         </div>
-
-        {/* Plan */}
-        <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start" aria-label="Your plan">
-          <section className="rounded-xl bg-surface p-5 ring-1 ring-line">
-            <p className="text-[13px] font-medium tracking-wide text-ink-muted uppercase">
-              Your plan
-            </p>
-            <p className="mt-1 text-[22px] font-semibold tracking-tight text-ink">{plan.label}</p>
-            <p className="mt-4 flex items-baseline justify-between text-[14px]">
-              <span className="text-ink-soft">Live products</span>
-              <span className="font-medium text-ink tabular-nums">
-                {published} of {plan.maxPublishedProducts}
-              </span>
-            </p>
-            <div
-              className="mt-2 h-2 overflow-hidden rounded-full bg-tint-strong"
-              role="progressbar"
-              aria-label="Live products used"
-              aria-valuemin={0}
-              aria-valuemax={plan.maxPublishedProducts}
-              aria-valuenow={published}
-            >
-              <div
-                className={`h-full rounded-full ${usage >= 100 ? 'bg-amber-500' : 'bg-brand-600'}`}
-                style={{ width: `${usage}%` }}
-              />
-            </div>
-            <p className="mt-3 text-[13px] leading-snug text-ink-muted">
-              Drafts are unlimited; only live products count.{' '}
-              {plan.watermark
-                ? 'Your configurators show a small watermark on this plan.'
-                : 'No watermark on this plan.'}
-            </p>
-            <Link
-              href="/pricing"
-              className="mt-4 inline-flex text-[14px] font-medium text-brand-700 hover:underline dark:text-brand-200"
-            >
-              See plans →
-            </Link>
-          </section>
-        </aside>
       </div>
     </div>
-  );
-}
-
-function StatusBadge({ status }: { status: 'PENDING' | 'READY' | 'INVALID' }) {
-  const styles = {
-    PENDING: 'bg-tint-strong text-ink-soft',
-    READY: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300',
-    INVALID: 'bg-red-50 text-red-700 dark:bg-red-500/15 dark:text-red-300',
-  } as const;
-  const labels = { PENDING: 'Uploading…', READY: 'Ready', INVALID: "Can't be used" } as const;
-  return (
-    <span
-      className={`shrink-0 rounded-full px-2.5 py-0.5 text-[12px] font-medium ${styles[status]}`}
-    >
-      {labels[status]}
-    </span>
   );
 }
