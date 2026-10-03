@@ -18,6 +18,7 @@ const LIMITS = {
   quote: { requests: 5, window: '10 m' },
   share: { requests: 20, window: '10 m' },
   events: { requests: 60, window: '1 m' },
+  model: { requests: 3, window: '1 h' },
 } as const;
 
 export type LimitKind = keyof typeof LIMITS;
@@ -40,28 +41,46 @@ function limiterFor(kind: LimitKind): Ratelimit | null {
         timeout: 1500,
         analytics: false,
       });
-    return { quote: make('quote'), share: make('share'), events: make('events') };
+    return {
+      quote: make('quote'),
+      share: make('share'),
+      events: make('events'),
+      model: make('model'),
+    };
   })();
   return limiters[kind];
+}
+
+/**
+ * Whether a visitor (by request headers) is still under the limit. Counts the attempt. Fails open
+ * when Redis is unavailable, and is always true when rate limiting is off.
+ */
+export async function underLimit(
+  kind: LimitKind,
+  headers: Headers,
+): Promise<{ ok: true } | { ok: false; retryAfter: number }> {
+  const limiter = limiterFor(kind);
+  if (!limiter) return { ok: true };
+  try {
+    const key = visitorKey(headers, serverEnv.AUTH_SECRET ?? 'twirl-rate-limit');
+    const { success, reset } = await limiter.limit(key);
+    return success
+      ? { ok: true }
+      : { ok: false, retryAfter: Math.max(1, Math.ceil((reset - Date.now()) / 1000)) };
+  } catch (error) {
+    console.error('[rate-limit] check failed; allowing the request', kind, error);
+    return { ok: true };
+  }
 }
 
 /**
  * Null when the request may proceed; otherwise a 429 response to return. Counts the request.
  */
 export async function rateLimit(kind: LimitKind, request: Request): Promise<NextResponse | null> {
-  const limiter = limiterFor(kind);
-  if (!limiter) return null;
-  try {
-    const key = visitorKey(request.headers, serverEnv.AUTH_SECRET ?? 'twirl-rate-limit');
-    const { success, reset } = await limiter.limit(key);
-    if (success) return null;
-    const retryAfter = Math.max(1, Math.ceil((reset - Date.now()) / 1000));
-    return NextResponse.json(
-      { error: 'Too many requests. Please try again in a few minutes.' },
-      { status: 429, headers: { 'Retry-After': String(retryAfter) } },
-    );
-  } catch (error) {
-    console.error('[rate-limit] check failed; allowing the request', kind, error);
-    return null;
-  }
+  const result = await underLimit(kind, request.headers);
+  if (result.ok) return null;
+  return NextResponse.json(
+    { error: 'Too many requests. Please try again in a few minutes.' },
+    { status: 429, headers: { 'Retry-After': String(result.retryAfter) } },
+  );
 }

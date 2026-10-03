@@ -189,6 +189,15 @@ export default async function DashboardPage() {
             </div>
             <div className="rounded-2xl bg-surface p-5 ring-1 ring-line">
               <ModelUploader enabled={storageEnabled} />
+              <p className="mt-1 text-[14px] text-ink-muted">
+                No 3D model yet?{' '}
+                <Link
+                  href="/request-model"
+                  className="font-medium text-brand-700 hover:underline dark:text-brand-200"
+                >
+                  We can make one for you
+                </Link>
+              </p>
               {models.length > 0 && (
                 <ul className="mt-2 divide-y divide-line" aria-label="Uploaded models">
                   {models.map((model) => (
@@ -257,6 +266,12 @@ export default async function DashboardPage() {
                 ? 'Your configurators show a small watermark on this plan.'
                 : 'No watermark on this plan.'}
             </p>
+            <Link
+              href="/pricing"
+              className="mt-4 inline-flex text-[14px] font-medium text-brand-700 hover:underline dark:text-brand-200"
+            >
+              See plans →
+            </Link>
           </section>
         </aside>
       </div>

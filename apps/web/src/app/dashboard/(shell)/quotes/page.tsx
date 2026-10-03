@@ -2,12 +2,11 @@ import { formatPrice } from '@twirl/config-schema';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { APP_NAME } from '@/config/app';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { listQuotes } from '@/server/quotes';
 
-export const metadata: Metadata = { title: `Quotes · ${APP_NAME}` };
+export const metadata: Metadata = { title: 'Quotes' };
 
 const tabClass = (active: boolean) =>
   `flex h-9 items-center rounded-lg px-3.5 text-[14px] font-medium ${active ? 'bg-surface text-ink shadow-sm ring-1 ring-line' : 'text-ink-muted hover:text-ink'}`;

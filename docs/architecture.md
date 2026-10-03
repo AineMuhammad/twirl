@@ -1,18 +1,19 @@
 # Architecture
 
-This document gives the big picture and is kept up to date as milestones land. Decisions and their
-reasoning live in the [ADRs](adr/). Sections marked **Planned** describe the intended design from
-the product spec; they become **Implemented** when the code exists and may change along the way.
+This document gives the big picture of how Twirl is built. Decisions and their reasoning live in
+the [ADRs](adr/); what the product does is described in [product.md](product.md), and deployment
+in [deploy.md](deploy.md).
 
-| Area                                | Status           |
-| ----------------------------------- | ---------------- |
-| Monorepo, tooling, CI               | Implemented (M0) |
-| Viewer (scene, parts, HDRIs), /demo | Implemented (M1) |
-| Config, rules, pricing              | Planned (M2)     |
-| Accounts, data, plans               | Planned (M3)     |
-| Uploads, editor, publish            | Planned (M4)     |
-| Embed, share links, export          | Planned (M5)     |
-| Leads, events                       | Planned (M6)     |
+| Area                                    | Status           |
+| --------------------------------------- | ---------------- |
+| Monorepo, tooling, CI                   | Implemented (M0) |
+| Viewer (scene, parts, HDRIs), /demo     | Implemented (M1) |
+| Config, rules, pricing, configurator    | Implemented (M2) |
+| Accounts, data, plans                   | Implemented (M3) |
+| Uploads, validation, editor, publishing | Implemented (M4) |
+| Embed, share links, image export        | Implemented (M5) |
+| Quotes, events, rate limiting           | Implemented (M6) |
+| Pricing page, model requests, admin     | Implemented (M7) |
 
 ## System overview
 

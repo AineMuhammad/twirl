@@ -12,8 +12,9 @@
   --surface: #ffffff;
   --ink: #171717;
   --ink-soft: #404040;
-  --ink-muted: #737373;
-  --ink-faint: #a3a3a3;
+  /* Muted/faint text meets WCAG AA (4.5:1) on white and on tinted panels. */
+  --ink-muted: #616161;
+  --ink-faint: #767676;
   --line: rgb(0 0 0 / 0.08);
   --tint: rgb(0 0 0 / 0.045);
   --tint-strong: rgb(0 0 0 / 0.08);
@@ -27,7 +28,7 @@
   --ink: #f4f4f5;
   --ink-soft: #d4d4d8;
   --ink-muted: #a1a1aa;
-  --ink-faint: #71717a;
+  --ink-faint: #8e8e96;
   --line: rgb(255 255 255 / 0.1);
   --tint: rgb(255 255 255 / 0.06);
   --tint-strong: rgb(255 255 255 / 0.11);

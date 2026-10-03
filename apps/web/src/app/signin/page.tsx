@@ -10,7 +10,7 @@ import { safeReturnPath, signInErrorMessage } from '@/server/auth/redirect';
 import { signInWithGoogle } from './actions';
 import { EmailForm } from './EmailForm';
 
-export const metadata: Metadata = { title: `Sign in · ${APP_NAME}` };
+export const metadata: Metadata = { title: 'Sign in' };
 
 export default async function SignInPage({
   searchParams,
