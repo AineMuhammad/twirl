@@ -45,15 +45,7 @@ import { OptionsEditor } from './OptionsEditor';
 import { PartsEditor } from './PartsEditor';
 import { RulesEditor } from './RulesEditor';
 import { type VersionSummary, VersionsDrawer } from './VersionsDrawer';
-import {
-  Button,
-  focusRing,
-  InfoTip,
-  MoneyField,
-  SectionHeader,
-  SelectField,
-  TextField,
-} from './ui';
+import { Button, focusRing, MoneyField, SectionHeader, SelectField, TextField } from './ui';
 
 export interface EditorProps {
   productId: string;
@@ -122,20 +114,20 @@ function issuesOf(config: ProductConfig): ConfigIssue[] {
 }
 
 const FIELD_NAMES: Record<string, string> = {
-  label: 'name',
-  swatches: 'choice',
+  label: 'title',
+  swatches: 'colour',
   color: 'colour',
-  originalLabel: 'finish name',
+  originalLabel: 'original colour name',
   message: 'message',
   default: 'default',
   name: 'name',
-  base: 'base price',
-  min: 'smallest',
-  max: 'largest',
+  base: 'price',
+  min: 'minimum',
+  max: 'maximum',
   step: 'step',
-  nativeSize: 'real size',
+  nativeSize: 'current size',
   behaviors: 'parts',
-  meshes: 'meshes',
+  meshes: 'model parts',
   parts: 'parts',
 };
 
@@ -151,7 +143,7 @@ function describePath(config: ProductConfig, path: string): string {
         : section === 'rules'
           ? `Rule ${i + 1}`
           : section === 'product'
-            ? 'Details'
+            ? 'Product'
             : section === 'pricing'
               ? 'Pricing'
               : section;
@@ -256,7 +248,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
       if (result.ok) {
         setSavedJson(json);
         setSaveError(null);
-        setNotice(`Version ${result.number} is live. Shoppers now see these changes.`);
+        setNotice(`Published. Version ${result.number} is live.`);
         router.refresh();
       } else {
         setSaveError(result.error);
@@ -283,7 +275,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
         setConfig(result.config);
         setSavedJson(JSON.stringify(result.config));
         setHistoryOpen(false);
-        setNotice('The draft now matches that version. Publish to make it live.');
+        setNotice('Version copied. Publish to make it live.');
       } else {
         setSaveError(result.error);
       }
@@ -341,7 +333,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
     ? 'Fix the problems first'
     : !dirty
       ? 'No changes to save'
-      : 'Save your changes (Ctrl+S). Shoppers see them once you publish.';
+      : 'Save without publishing (Ctrl+S)';
 
   return (
     <div className="flex h-dvh flex-col bg-tint text-[15px] text-ink">
@@ -377,14 +369,14 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
                 <span aria-hidden className="size-1.5 rounded-full bg-amber-500" /> Unsaved changes
               </span>
             ) : live && unpublished ? (
-              <span className="text-ink-muted">Saved · not published yet</span>
+              <span className="text-ink-muted">Saved, not published</span>
             ) : live ? (
               <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
-                <CheckIcon size={13} /> Shoppers see the latest version
+                <CheckIcon size={13} /> Published
               </span>
             ) : (
               <span className="flex items-center gap-1 text-ink-muted">
-                <CheckIcon size={13} /> Saved as a draft
+                <CheckIcon size={13} /> Saved
               </span>
             )}
           </p>
@@ -404,7 +396,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
             {problemsOpen && (
               <div className="absolute top-12 right-0 w-[min(92vw,26rem)] overflow-hidden rounded-xl bg-surface shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-line">
                 <p className="border-b border-line px-4 py-3 text-[13px] text-ink-muted">
-                  Fix these before saving. Click one to go to it.
+                  Click a problem to go to it.
                 </p>
                 <ul className="max-h-80 overflow-y-auto py-1">
                   {issues.map((issue) => (
@@ -428,10 +420,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
             )}
           </div>
         )}
-        <Button
-          onClick={() => setPreviewing(true)}
-          title="Try your configurator as a shopper would"
-        >
+        <Button onClick={() => setPreviewing(true)} title="See what shoppers see">
           <EyeIcon /> <span className="hidden md:inline">Try as a shopper</span>
         </Button>
         <Button onClick={() => setHistoryOpen(true)} title="Published versions">
@@ -450,8 +439,8 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
               !valid
                 ? 'Fix the problems first'
                 : !unpublished && !dirty
-                  ? 'Shoppers already see the latest version'
-                  : 'Make these changes live for shoppers'
+                  ? 'Already published'
+                  : 'Make your changes visible to shoppers'
             }
             aria-expanded={confirmPublish}
           >
@@ -462,8 +451,8 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
               <p className="text-[15px] font-semibold text-ink">Publish version {nextVersion}?</p>
               <p className="mt-1 text-[14px] text-ink-muted">
                 {live
-                  ? `Shoppers will see these changes straight away, replacing version ${live.number}.`
-                  : 'Your product goes live for shoppers. It counts towards your plan’s live products.'}
+                  ? 'Shoppers will see your changes right away.'
+                  : 'Shoppers will be able to see this product.'}
               </p>
               <div className="mt-4 flex justify-end gap-2">
                 <Button size="sm" variant="ghost" onClick={() => setConfirmPublish(false)}>
@@ -535,10 +524,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
           <div ref={content} className="min-h-0 flex-1 overflow-y-auto overscroll-contain">
             {section === 'product' && (
               <div className="space-y-6 p-6">
-                <SectionHeader
-                  title="Product"
-                  description="The basics shoppers see first: the product name, a short description and the starting price."
-                />
+                <SectionHeader title="Product" description="Name, description and price." />
                 <TextField
                   label="Product name"
                   value={config.product.name}
@@ -547,8 +533,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
                   error={config.product.name.trim() ? undefined : 'Give your product a name.'}
                 />
                 <TextField
-                  label="Short description"
-                  hint="Optional. One or two sentences under the name."
+                  label="Description (optional)"
                   multiline
                   value={config.product.description ?? ''}
                   maxLength={2000}
@@ -576,8 +561,8 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
                     }
                   />
                   <MoneyField
-                    label="Base price"
-                    help="The price with every option at its default. Option prices add to or take away from it."
+                    label="Price"
+                    help="The price before any extra costs from options."
                     currency={config.pricing.currency}
                     value={config.pricing.base}
                     allowNegative={false}
@@ -628,11 +613,7 @@ export function Editor({ productId, initialConfig, modelUrl, versions, live }: E
           />
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
             <span className="pointer-events-auto flex items-center gap-2 rounded-full bg-surface/90 py-1.5 pr-2 pl-3.5 text-[13px] font-medium text-ink-soft shadow-sm ring-1 ring-line backdrop-blur">
-              {valid ? 'Preview · default choices' : 'Showing the last valid version'}
-              <InfoTip label="About this preview" align="center">
-                This is what shoppers see before they change anything. Hover a part to highlight it.
-                Use “Try as a shopper” to try the options.
-              </InfoTip>
+              {valid ? 'Preview' : 'Fix the problems to update the preview'}
             </span>
           </div>
           {info && (

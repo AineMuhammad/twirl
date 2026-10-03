@@ -52,10 +52,7 @@ export function VersionsDrawer({
             <h2 id="versions-title" className="text-lg font-semibold text-ink">
               Published versions
             </h2>
-            <p className="mt-1 text-[14px] text-ink-muted">
-              Each time you publish, a version is saved here for good. Shoppers see the one marked
-              Live.
-            </p>
+            <p className="mt-1 text-[14px] text-ink-muted">Shoppers see the version marked Live.</p>
           </div>
           <button
             type="button"

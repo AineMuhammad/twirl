@@ -27,7 +27,7 @@ export function groupSummary(config: ProductConfig, group: OptionGroup): string 
       group.swatches.length === 0
         ? group.allowCustom
           ? 'Any colour'
-          : 'Original finish only'
+          : 'Original colour only'
         : `${group.swatches.length} colour${group.swatches.length === 1 ? '' : 's'}${group.allowCustom ? ' + any colour' : ''}`,
       partNames(config, group.parts),
       `Default: ${def}`,

@@ -87,7 +87,7 @@ function OptionPanel({
   iconClass: string;
   title: string;
   toggleLabel: string;
-  toggleHelp: string;
+  toggleHelp?: string;
   on: boolean;
   onToggle: (on: boolean) => void;
   children: ReactNode;
@@ -104,7 +104,12 @@ function OptionPanel({
         <div className="min-w-0 flex-1">
           <h4 className="text-[15px] font-semibold text-ink">{title}</h4>
           <div className="mt-2">
-            <Toggle label={toggleLabel} description={toggleHelp} checked={on} onChange={onToggle} />
+            <Toggle
+              label={toggleLabel}
+              {...(toggleHelp && { description: toggleHelp })}
+              checked={on}
+              onChange={onToggle}
+            />
           </div>
         </div>
       </div>
@@ -125,11 +130,9 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
       <div className="space-y-5">
         <SectionHeader
           title="Options"
-          description="Switch on “Customisable” for the parts shoppers can change. Then choose whether they can change its colour, remove it, or both."
+          description="Choose which parts shoppers can customise, and how."
         />
-        {config.parts.length === 0 && (
-          <Callout>Choose your customisable parts in step 2 first.</Callout>
-        )}
+        {config.parts.length === 0 && <Callout>Add parts in step 2 first.</Callout>}
         <ul className="space-y-3" aria-label="Options for each part">
           {config.parts.map((part) => {
             const color = colorGroupOf(config, part.id);
@@ -157,9 +160,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
                       {!customisable ? (
-                        <span className="text-[13px] text-ink-muted">
-                          Fixed: always looks as in your 3D file
-                        </span>
+                        <span className="text-[13px] text-ink-muted">Not customisable</span>
                       ) : problems > 0 ? (
                         <Badge tone="red">
                           <AlertIcon size={12} /> Needs attention
@@ -169,14 +170,14 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                           <Badge tone={color ? 'violet' : 'neutral'}>
                             <PaletteIcon size={12} />
                             {!color
-                              ? 'Colour fixed'
+                              ? 'No colour choice'
                               : color.swatches.length === 0 && !color.allowCustom
-                                ? 'Colour: original only'
+                                ? 'No colours added'
                                 : `Colour: ${color.swatches.length + 1} choices${color.allowCustom ? ' + any' : ''}`}
                           </Badge>
                           <Badge tone={visibility ? 'sky' : 'neutral'}>
                             <EyeIcon size={12} />
-                            {visibility ? 'Can be removed' : 'Always shown'}
+                            {visibility ? 'Removable' : 'Always shown'}
                           </Badge>
                         </>
                       )}
@@ -205,8 +206,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                       icon={<PaletteIcon size={17} />}
                       iconClass="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"
                       title="Colour"
-                      toggleLabel="Shoppers can change the colour"
-                      toggleHelp="Off: this part keeps the finish from your 3D file."
+                      toggleLabel="Let shoppers change the colour"
                       on={Boolean(color)}
                       onToggle={(on) => onChange(setPartColorable(config, part.id, on))}
                     >
@@ -220,15 +220,15 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                             </Callout>
                           )}
                           <TextField
-                            label="Heading shoppers see"
-                            hint="e.g. “Seat colour” or “Fabric”."
+                            label="Title shown to shoppers"
+                            placeholder="e.g. Seat colour"
                             value={color.label}
                             onChange={(label) =>
                               onChange(
                                 updateGroup<ColorGroup>(config, color.id, (g) => ({ ...g, label })),
                               )
                             }
-                            error={color.label.trim() ? undefined : 'Add a heading.'}
+                            error={color.label.trim() ? undefined : 'Add a title.'}
                           />
                           <ColorGroupFields
                             config={config}
@@ -243,8 +243,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                       icon={<EyeIcon size={17} />}
                       iconClass="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
                       title="Show / hide"
-                      toggleLabel="Shoppers can remove this part"
-                      toggleHelp="For optional extras like cushions or a headrest. Off: always shown."
+                      toggleLabel="Let shoppers remove this part"
                       on={Boolean(visibility)}
                       onToggle={(on) => onChange(setPartHideable(config, part.id, on))}
                     >
@@ -257,8 +256,8 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                             </Callout>
                           )}
                           <TextField
-                            label="Label shoppers see"
-                            hint="Next to the on/off switch, e.g. “Add cushions”."
+                            label="Title shown to shoppers"
+                            placeholder="e.g. Add cushions"
                             value={visibility.label}
                             onChange={(label) =>
                               onChange(
@@ -268,7 +267,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                                 })),
                               )
                             }
-                            error={visibility.label.trim() ? undefined : 'Add a label.'}
+                            error={visibility.label.trim() ? undefined : 'Add a title.'}
                           />
                           <VisibilityGroupFields
                             config={config}
@@ -296,13 +295,13 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
               <RulerIcon size={18} /> Sizes
             </h3>
             <p className="mt-1 text-[14px] text-ink-muted">
-              Optional sliders that resize the whole product, like width or length.
+              Let shoppers resize the whole product.
             </p>
           </div>
           <Button
             size="sm"
             disabled={config.parts.length === 0}
-            title={config.parts.length === 0 ? 'Choose customisable parts first' : undefined}
+            title={config.parts.length === 0 ? 'Add parts first' : undefined}
             onClick={() => {
               const first = config.parts[0];
               if (!first) return;
@@ -320,7 +319,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
         </div>
         {sizes.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-line px-4 py-5 text-center text-[14px] text-ink-muted">
-            No sizes. Shoppers get your product at the size it was modelled.
+            No sizes yet.
           </p>
         ) : (
           <ul className="space-y-3" aria-label="Sizes">
@@ -369,11 +368,11 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                     <div className="space-y-6 border-t border-line bg-tint/40 p-5">
                       <IssueList issues={groupIssues} />
                       <TextField
-                        label="Name shoppers see"
-                        hint="Above the slider, e.g. “Width” or “Table length”."
+                        label="Title shown to shoppers"
+                        placeholder="e.g. Width"
                         value={group.label}
                         onChange={(label) => update((g) => ({ ...g, label }))}
-                        error={group.label.trim() ? undefined : 'Add a name.'}
+                        error={group.label.trim() ? undefined : 'Add a title.'}
                       />
                       <DimensionGroupFields config={config} group={group} update={update} />
                       <div className="flex justify-end border-t border-line pt-4">
@@ -422,10 +421,7 @@ function ColorGroupFields({
 
   return (
     <>
-      <Subsection
-        title="Colours"
-        help="The colours shoppers can pick. Your model's own finish (as uploaded, textures included) is always offered too."
-      >
+      <Subsection title="Colours">
         <div className="overflow-hidden rounded-xl border border-line bg-surface">
           <div className="grid grid-cols-[2.5rem_1fr_8rem_5rem] items-center gap-3 border-b border-line bg-tint px-3 py-2 text-[12px] font-medium text-ink-muted">
             <span>Colour</span>
@@ -433,8 +429,7 @@ function ColorGroupFields({
             <span className="flex items-center gap-1">
               Extra cost
               <InfoTip label="About extra cost" align="end">
-                Added to the price when a shopper picks this colour. Use a negative amount for a
-                discount, or 0 for no change.
+                Added to the price when this colour is picked. Leave at 0 for no extra cost.
               </InfoTip>
             </span>
             <span className="sr-only">Actions</span>
@@ -455,9 +450,9 @@ function ColorGroupFields({
                   maxLength={80}
                   onChange={(e) => update((g) => ({ ...g, originalLabel: e.target.value }))}
                 />
-                <p className="mt-1 text-[12px] text-ink-muted">Your model&apos;s own finish</p>
+                <p className="mt-1 text-[12px] text-ink-muted">Original colour</p>
               </div>
-              <span className="text-[13px] text-ink-muted">No extra cost</span>
+              <span className="text-[13px] text-ink-muted">—</span>
               <span />
             </li>
             {group.swatches.map((swatch) => (
@@ -505,7 +500,7 @@ function ColorGroupFields({
           </ul>
           {group.swatches.length === 0 && (
             <p className="border-t border-line px-3 py-3 text-[13px] text-ink-muted">
-              Only your model&apos;s own finish so far. Add the colours shoppers can choose from.
+              Add the colours shoppers can choose.
             </p>
           )}
           <div className="border-t border-line px-3 py-2">
@@ -515,26 +510,24 @@ function ColorGroupFields({
           </div>
         </div>
         <SelectField
-          label="Shoppers start with"
-          help="The colour shown before a shopper picks one."
+          label="Default colour"
           value={group.default ?? ''}
           options={[
-            { value: '', label: `${group.originalLabel || 'Original'} (your model's finish)` },
+            { value: '', label: `${group.originalLabel || 'Original'} (original colour)` },
             ...group.swatches.map((s) => ({ value: s.id, label: s.label || 'Unnamed colour' })),
           ]}
           onChange={(value) => update((g) => ({ ...g, default: value || null }))}
         />
       </Subsection>
-      <Subsection title="Custom colour">
+      <Subsection title="Own colour">
         <Toggle
           label="Let shoppers pick any colour"
-          description="Adds a colour picker after your choices."
           checked={group.allowCustom}
           onChange={(allowCustom) => update((g) => ({ ...g, allowCustom }))}
         />
         {group.allowCustom && (
           <MoneyField
-            label="Price for a custom colour"
+            label="Extra cost"
             currency={currency}
             value={group.customPrice}
             onChange={(customPrice) => update((g) => ({ ...g, customPrice }))}
@@ -556,16 +549,14 @@ function VisibilityGroupFields({
 }) {
   return (
     <>
-      <Subsection title="Behaviour">
+      <Subsection title="Settings">
         <Toggle
-          label="Included by default"
-          description="Whether shoppers see these parts before changing anything."
+          label="Shown by default"
           checked={group.default}
           onChange={(value) => update((g) => ({ ...g, default: value }))}
         />
         <MoneyField
-          label="Price when included"
-          help="Added to the price whenever these parts are shown, including by default."
+          label="Extra cost when shown"
           currency={config.pricing.currency}
           value={group.price}
           onChange={(price) => update((g) => ({ ...g, price }))}
@@ -592,14 +583,14 @@ const RESPONSES = [
   {
     value: 'stretch',
     label: 'Stretch',
-    title: 'Grows and shrinks with the size (seats, tabletops).',
+    title: 'Resizes with the slider',
   },
   {
     value: 'anchor',
     label: 'Move',
-    title: 'Keeps its own size but moves to stay attached (legs, cushions).',
+    title: 'Keeps its size and moves with the edge',
   },
-  { value: 'fixed', label: 'Fixed', title: 'Not affected by this size.' },
+  { value: 'fixed', label: 'Fixed', title: 'Stays as it is' },
 ] as const;
 
 function DimensionGroupFields({
@@ -620,10 +611,7 @@ function DimensionGroupFields({
     });
   return (
     <>
-      <Subsection
-        title="Range"
-        help="Shoppers move a slider between the minimum and maximum, in steps."
-      >
+      <Subsection title="Slider">
         <SelectField
           label="Unit"
           value={unit}
@@ -632,14 +620,14 @@ function DimensionGroupFields({
         />
         <div className="grid grid-cols-2 gap-3">
           <NumberField
-            label="Smallest"
+            label="Minimum"
             suffix={unit}
             value={group.min}
             min={0}
             onChange={(min) => update((g) => ({ ...g, min }))}
           />
           <NumberField
-            label="Largest"
+            label="Maximum"
             suffix={unit}
             value={group.max}
             min={0}
@@ -647,15 +635,14 @@ function DimensionGroupFields({
           />
           <NumberField
             label="Step"
-            help="How much each notch of the slider changes the size."
+            help="How much the size changes with each move of the slider."
             suffix={unit}
             value={group.step}
             min={0}
             onChange={(step) => update((g) => ({ ...g, step }))}
           />
           <NumberField
-            label="Starts at"
-            help="The size shoppers see first. Prices are relative to it."
+            label="Default"
             suffix={unit}
             value={group.default}
             min={0}
@@ -663,20 +650,17 @@ function DimensionGroupFields({
           />
         </div>
       </Subsection>
-      <Subsection
-        title="Real size of your model"
-        help="Measure your uploaded model in the directions below (for example its width in cm). Twirl scales it relative to this, so a shopper picking 140 on a 120 cm model makes it 140/120 = 1.17× larger."
-      >
+      <Subsection title="Your model">
         <NumberField
-          label={`Size as uploaded`}
+          label="Current size"
+          help="Measure your model in the chosen direction. If it is 120 cm wide and a shopper picks 140 cm, it is stretched to match."
           suffix={unit}
           value={group.nativeSize}
           min={0}
           onChange={(nativeSize) => update((g) => ({ ...g, nativeSize }))}
-          hint="If this is wrong, sizes in the preview won't match the numbers shoppers pick."
         />
         <div>
-          <p className="mb-2 text-[14px] font-medium text-ink">Directions it changes</p>
+          <p className="mb-2 text-[14px] font-medium text-ink">Direction</p>
           <div className="flex flex-wrap gap-2">
             {AXES.map(({ axis, label, hint }) => {
               const checked = group.axes.includes(axis);
@@ -701,8 +685,8 @@ function DimensionGroupFields({
         </div>
       </Subsection>
       <Subsection
-        title="How each part responds"
-        help="Stretch: grows with the size (seat, tabletop). Move: keeps its size but moves to stay attached (legs, cushions). Fixed: unaffected."
+        title="Parts"
+        help="Stretch: resizes with the slider. Move: keeps its size and moves with the edge (legs, cushions). Fixed: stays as it is."
       >
         <ul className="divide-y divide-line rounded-xl border border-line bg-surface">
           {config.parts.map((part) => {
@@ -728,8 +712,8 @@ function DimensionGroupFields({
       </Subsection>
       <Subsection title="Price">
         <MoneyField
-          label={`Price change per ${group.step} ${unit}`}
-          help={`Each step above “Starts at” adds this; each step below takes it off.`}
+          label={`Extra cost per ${group.step} ${unit}`}
+          help="Added for each step above the default size and taken off for each step below."
           currency={config.pricing.currency}
           value={group.pricePerStep}
           onChange={(pricePerStep) => update((g) => ({ ...g, pricePerStep }))}

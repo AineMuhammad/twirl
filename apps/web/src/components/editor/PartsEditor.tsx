@@ -16,7 +16,7 @@ import {
   setMeshShown,
 } from './config-edit';
 import { AlertIcon } from './icons';
-import { Badge, Button, Callout, controlClass, InfoTip, SectionHeader } from './ui';
+import { Button, Callout, controlClass, SectionHeader } from './ui';
 
 export interface PartsEditorProps {
   config: ProductConfig;
@@ -36,7 +36,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
   const header = (
     <SectionHeader
       title="Parts"
-      description="These are the pieces in your 3D file. Untick any you don't want in your product; they're hidden from the model. Give the pieces you keep a name shoppers will understand."
+      description="Untick parts you don't want shoppers to see. Give the rest names shoppers will understand."
     />
   );
   if (!meshes) {
@@ -64,7 +64,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
       <div className="flex items-center justify-between gap-3 rounded-xl bg-tint px-4 py-3">
         <p className="text-[14px] text-ink">
           <span className="font-semibold tabular-nums">{shownCount}</span> of{' '}
-          <span className="tabular-nums">{meshes.length}</span> pieces shown
+          <span className="tabular-nums">{meshes.length}</span> parts shown
         </p>
         <div className="flex gap-2">
           <Button
@@ -78,7 +78,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
             size="sm"
             variant="ghost"
             disabled={shownCount === 0}
-            title="Hide every piece. Options that used them are removed too."
+            title="Hides every part and removes their options"
             onClick={() => onChange(setAllShown(config, meshes, false))}
           >
             Hide all
@@ -86,30 +86,15 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
         </div>
       </div>
 
-      <div className="flex items-center gap-2 text-[13px] text-ink-muted">
-        Hover a row to highlight that piece in the preview.
-        <InfoTip label="About pieces">
-          Pieces are the separate objects inside your 3D file, listed under the names your 3D tool
-          gave them. Pieces with the same name are listed once and change together.
-        </InfoTip>
-      </div>
-
       <ul
         className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
-        aria-label="Pieces of your model"
+        aria-label="Parts of your model"
       >
         {meshes.map((mesh, index) => {
           const shown = isMeshShown(config, mesh.ref);
           const part = partForMesh(config, mesh.ref);
           const partIndex = part ? config.parts.indexOf(part) : -1;
           const partIssues = issues.filter((i) => i.path.startsWith(`parts.${partIndex}`));
-          const usedBy = part
-            ? config.groups.filter((g) =>
-                g.type === 'dimension'
-                  ? g.behaviors.some((b) => b.part === part.id)
-                  : g.parts.includes(part.id),
-              )
-            : [];
           const checkboxId = `piece-${index}`;
           return (
             <li
@@ -134,7 +119,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
                     className={`${controlClass} font-medium ${part.label.trim() ? '' : 'border-red-400'}`}
                     value={part.label}
                     maxLength={80}
-                    placeholder="Name this part"
+                    placeholder="Part name"
                     onChange={(e) => onChange(renamePart(config, part.id, e.target.value))}
                     onFocus={() => onHighlight(mesh.nodeId)}
                     onBlur={() => onHighlight(null)}
@@ -144,38 +129,22 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
                     size="sm"
                     onClick={() => onChange(addPart(config, meshPartName(mesh, index), [mesh.ref]))}
                   >
-                    Name this piece
+                    Add a name
                   </Button>
                 ) : (
                   <label
                     htmlFor={checkboxId}
                     className="flex h-10 cursor-pointer items-center text-[15px] text-ink-muted line-through decoration-ink-faint"
                   >
-                    Hidden from the model
+                    Hidden
                   </label>
                 )}
                 <p id={`${checkboxId}-file`} className="mt-1 text-[13px] text-ink-muted">
-                  In your file:{' '}
+                  Original name:{' '}
                   <span className={mesh.hasName ? 'text-ink-soft' : 'italic'}>
-                    {mesh.hasName ? mesh.label : 'unnamed piece'}
+                    {mesh.hasName ? mesh.label : 'none'}
                   </span>
                 </p>
-                {part && (
-                  <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                    {usedBy.length === 0 ? (
-                      <span className="text-[13px] text-ink-faint">
-                        Fixed (make it customisable in Options)
-                      </span>
-                    ) : (
-                      <>
-                        <span className="text-[13px] text-ink-muted">Used in</span>
-                        {usedBy.map((g) => (
-                          <Badge key={g.id}>{g.label}</Badge>
-                        ))}
-                      </>
-                    )}
-                  </div>
-                )}
                 {partIssues.map((issue) => (
                   <p
                     key={issue.message}
@@ -193,8 +162,8 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
       {orphaned.length > 0 && (
         <Callout tone="warning">
           <p className="flex items-center gap-2 font-medium">
-            <AlertIcon /> {orphaned.length} part{orphaned.length === 1 ? '' : 's'} no longer match
-            your model
+            <AlertIcon /> {orphaned.length} part{orphaned.length === 1 ? ' is' : 's are'} missing
+            from your model
           </p>
           <ul className="mt-2 space-y-1.5">
             {orphaned.map((part) => (
@@ -205,7 +174,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
                   variant="ghost"
                   onClick={() => onChange(removePart(config, part.id))}
                 >
-                  Remove part
+                  Remove
                 </Button>
               </li>
             ))}

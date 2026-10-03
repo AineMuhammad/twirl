@@ -43,25 +43,25 @@ const RULE_TYPES: Record<
   { label: string; tone: Tone; icon: ReactNode; iconClass: string; blurb: string }
 > = {
   requires: {
-    label: 'Needs another choice',
+    label: 'Requires',
     tone: 'brand',
     icon: <LinkIcon size={18} />,
     iconClass: 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300',
-    blurb: 'One choice needs another, e.g. large sizes need the reinforced frame.',
+    blurb: 'One choice needs another. Example: large sizes need a metal frame.',
   },
   excludes: {
-    label: "Can't be combined",
+    label: 'Not together',
     tone: 'rose',
     icon: <BanIcon size={18} />,
     iconClass: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
-    blurb: 'Two choices that never go together, e.g. brass with terracotta.',
+    blurb: "Two choices that can't be picked together.",
   },
   availability: {
-    label: 'Hide or grey out',
+    label: 'Hide or disable',
     tone: 'amber',
     icon: <EyeIcon size={18} />,
     iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
-    blurb: 'Grey out or hide an option while another choice is selected.',
+    blurb: 'Hide or disable an option when another choice is picked.',
   },
 };
 
@@ -76,12 +76,12 @@ export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
     <div className="space-y-6 p-6">
       <SectionHeader
         title="Rules"
-        description="Stop shoppers from picking combinations you don't sell. If a choice breaks a rule, Twirl fixes the other choice automatically and shows your message."
+        description="Stop combinations you don't sell. If a shopper picks one, we fix it and show your message."
       />
-      {!hasGroups && <Callout>Add some options first. Rules connect options together.</Callout>}
+      {!hasGroups && <Callout>Add options first.</Callout>}
       {hasGroups && config.rules.length === 0 && (
         <p className="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-[14px] text-ink-muted">
-          No rules. That&apos;s fine if every combination is available.
+          No rules yet.
         </p>
       )}
 
@@ -168,12 +168,11 @@ export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
                     <AvailabilityFields config={config} rule={rule} update={update} />
                   )}
                   <TextField
-                    label="Message for shoppers"
-                    help="Shown when this rule changes one of the shopper's choices, so they know why."
+                    label="Message to shoppers"
                     value={rule.message}
                     maxLength={200}
                     onChange={(message) => update((r) => ({ ...r, message }))}
-                    error={rule.message.trim() ? undefined : 'Write a short message.'}
+                    error={rule.message.trim() ? undefined : 'Add a message.'}
                   />
                   <div className="flex justify-end border-t border-line pt-4">
                     <Button
@@ -263,7 +262,7 @@ function AvailabilityFields({
           value={rule.effect}
           onChange={(e) => set({ effect: e.target.value as AvailabilityRule['effect'] })}
         >
-          <option value="disable">grey out</option>
+          <option value="disable">disable</option>
           <option value="hide">hide</option>
         </select>
         <select
@@ -282,7 +281,7 @@ function AvailabilityFields({
       {target?.type === 'color' && (
         <fieldset>
           <legend className="text-[13px] text-ink-muted">
-            Only these choices (leave all unticked to affect the whole option)
+            Only these colours (leave empty for all)
           </legend>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {colorOptions(target).map((option) => {
