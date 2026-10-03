@@ -25,3 +25,10 @@ test('admin pages all require sign-in', async ({ page }) => {
     await expect(page).toHaveURL(/\/signin/);
   }
 });
+
+test('dashboard pages all require sign-in', async ({ page }) => {
+  for (const path of ['/dashboard/models', '/dashboard/quotes', '/dashboard/settings']) {
+    await page.goto(path);
+    await expect(page).toHaveURL(/\/signin/);
+  }
+});
