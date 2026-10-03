@@ -44,35 +44,37 @@ export function DemoApp() {
   const [info, setInfo] = useState<ModelInfo | null>(null);
   const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [scene, setScene] = useState<SceneSettings>(DEFAULT_SCENE);
+  const [scene, setScene] = useState<SceneSettings>({
+    ...DEFAULT_SCENE,
+    ...SAMPLE_MODELS[0]?.look,
+  });
   const [lighting, setLighting] = useState<EnvironmentStatus>('ready');
   const [tab, setTab] = useState('parts');
   const [sheetOpen, setSheetOpen] = useState(true);
   const [hintVisible, setHintVisible] = useState(true);
   const viewer = useRef<ViewerHandle>(null);
   const [theme, setTheme] = useTheme();
-  // The default backdrops pair with the theme: warm studio in light, charcoal in dark.
-  // A backdrop the shopper picked themselves is left alone.
+  // A product's default backdrop pairs with the theme: its own backdrop in light, charcoal in
+  // dark. A backdrop the shopper picked themselves is left alone.
+  const lightBackdrop =
+    SAMPLE_MODELS.find((m) => m.url === modelUrl)?.look.background ?? BACKDROP_FOR_THEME.light;
   const pairedBackground = (current: SceneSettings['background']) =>
-    sameBackground(current, BACKDROP_FOR_THEME.light) && theme === 'dark'
-      ? BACKDROP_FOR_THEME.dark
-      : sameBackground(current, BACKDROP_FOR_THEME.dark) && theme === 'light'
-        ? BACKDROP_FOR_THEME.light
-        : current;
+    sameBackground(current, lightBackdrop) && theme === 'dark' ? BACKDROP_FOR_THEME.dark : current;
   const sceneForTheme: SceneSettings = { ...scene, background: pairedBackground(scene.background) };
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
-    setScene((s) => ({
-      ...s,
-      background: sameBackground(s.background, BACKDROP_FOR_THEME[theme])
-        ? BACKDROP_FOR_THEME[next]
-        : s.background,
-    }));
+    // Going light again restores the product's own backdrop if the dark default was showing.
+    if (next === 'light' && sameBackground(sceneForTheme.background, BACKDROP_FOR_THEME.dark)) {
+      setScene((s) => ({ ...s, background: lightBackdrop }));
+    }
     setTheme(next);
   };
   const fileInput = useRef<HTMLInputElement>(null);
 
   const loadModel = useCallback((url: string | null) => {
+    // Each product opens in its own look (uploads get the default look).
+    const look = SAMPLE_MODELS.find((m) => m.url === url)?.look ?? {};
+    setScene({ ...DEFAULT_SCENE, ...look });
     setInfo(null);
     setOverrides(NO_OVERRIDES);
     setSelectedId(null);
