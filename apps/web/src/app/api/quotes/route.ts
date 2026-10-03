@@ -4,16 +4,19 @@ import { apiError } from '@/server/api';
 import { databaseEnabled, db } from '@/server/db';
 import { sendEmail } from '@/server/email';
 import { isSameOrigin } from '@/server/http';
+import { rateLimit } from '@/server/rate-limit';
 import { quoteEmail } from '@/server/quote-email';
 import { createQuote, workspaceOwnerEmails } from '@/server/quotes';
 
 /**
  * A shopper's quote request. Public (no sign-in), so it only accepts requests from Twirl's own
- * pages, validates everything and re-prices on the server. Rate limiting: next branch.
+ * pages, is rate limited per visitor, validates everything and re-prices on the server.
  */
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return apiError(403, 'Cross-site request blocked.');
   if (!databaseEnabled) return apiError(503, 'Quotes are not available right now.');
+  const limited = await rateLimit('quote', request);
+  if (limited) return limited;
   const body: unknown = await request.json().catch(() => null);
   const result = await createQuote(db(), body);
   if (!result.ok) return apiError(400, result.error);

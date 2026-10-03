@@ -3,11 +3,13 @@ import { NextResponse } from 'next/server';
 import { databaseEnabled, db } from '@/server/db';
 import { recordEvents } from '@/server/events';
 import { isSameOrigin } from '@/server/http';
+import { rateLimit } from '@/server/rate-limit';
 
 /** Batched anonymous events from the configurator (sent with sendBeacon as text/plain). */
 export async function POST(request: Request) {
   if (!isSameOrigin(request)) return new NextResponse(null, { status: 403 });
   if (!databaseEnabled) return new NextResponse(null, { status: 204 });
+  if (await rateLimit('events', request)) return new NextResponse(null, { status: 429 });
   const text = await request.text();
   // A batch is small; anything bigger isn't ours.
   if (text.length > 16_000) return new NextResponse(null, { status: 413 });
