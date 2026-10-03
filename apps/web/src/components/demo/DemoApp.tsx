@@ -228,7 +228,7 @@ export function DemoApp() {
                 <p className="hidden text-xs font-semibold tracking-wider text-brand-600 uppercase lg:block">
                   Configure
                 </p>
-                <h1 className="truncate text-lg font-semibold tracking-tight lg:mt-1 lg:text-xl">
+                <h1 className="truncate font-display text-2xl leading-tight lg:mt-1 lg:text-3xl">
                   {title}
                 </h1>
                 <p className="mt-0.5 text-xs text-neutral-500">
