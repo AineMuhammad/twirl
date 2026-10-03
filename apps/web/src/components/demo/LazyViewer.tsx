@@ -9,7 +9,7 @@ import dynamic from 'next/dynamic';
 export const LazyViewer = dynamic(() => import('@twirl/viewer').then((m) => m.Viewer), {
   ssr: false,
   loading: () => (
-    <div className="flex h-full items-center justify-center text-sm text-ink-muted">
+    <div className="flex h-full items-center justify-center text-[14px] text-ink-muted">
       Loading 3D viewer…
     </div>
   ),

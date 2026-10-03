@@ -16,8 +16,11 @@ validated and identical everywhere.
    `@twirl/config-schema`: parts, option groups, pricing, rules, scene and presentation.
 2. **Parts reference meshes by node name**, or `#path` for unnamed nodes. Names survive
    re-exports better than indices; meshes sharing a name are one part.
-3. **Three option-group types:** colour (swatches, the model's original finish, optional custom
-   colour), visibility, and dimension. Swaps are out of scope for v1.
+   - **Hidden meshes:** `hiddenMeshes` lists pieces of the file left out of the product entirely
+     (never rendered). A hidden mesh can't also belong to a part. Added in schema v1 with a default
+     of `[]`, so existing configs stay valid.
+3. **Three option-group types:** colour (the model's original finish, optional swatches and an optional custom
+   colour; a colour option may start with no swatches), visibility, and dimension. Swaps are out of scope for v1.
 4. **Money is integer minor units** in one currency per product, formatted with `Intl`.
 5. **Rules are data:** `requires`, `excludes` and `availability` (hide/disable), each with a
    shopper-facing message. The engine auto-corrects conflicts. It never undoes the shopper's

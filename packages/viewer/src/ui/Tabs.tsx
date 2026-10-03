@@ -71,7 +71,7 @@ export function Tabs({
                 tabIndex={selected ? 0 : -1}
                 onClick={() => onChange(tab.id)}
                 onKeyDown={(e) => onKeyDown(e, i)}
-                className={`rounded-full px-3 py-2 text-sm font-medium transition-all duration-200 ${focusRing} ${selected ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/12' : 'text-ink-muted hover:text-ink'}`}
+                className={`rounded-full px-3 py-2 text-[14px] font-medium transition-all duration-200 ${focusRing} ${selected ? 'bg-surface text-ink shadow-[0_1px_3px_rgba(0,0,0,0.12)] dark:bg-white/12' : 'text-ink-muted hover:text-ink'}`}
               >
                 {tab.label}
               </button>

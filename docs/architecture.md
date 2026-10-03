@@ -135,7 +135,11 @@ erDiagram
 
 Auth.js's `VerificationToken` stands alone.
 
-## Upload flow (Planned, M4)
+## Upload flow (Implemented)
+
+The same dependency-free inspector (`apps/web/src/lib/model-report.ts`) reads the model in the
+browser before upload and on the server afterwards. The server's report is the one stored.
+Decisions: [ADR-0010](adr/0010-uploads.md).
 
 ```mermaid
 sequenceDiagram
@@ -145,16 +149,17 @@ sequenceDiagram
   participant R2 as Cloudflare R2
   participant DB as Postgres
 
-  M->>M: Validate file locally (type, ≤ 15 MB, parses, ≥ 1 mesh) and build report
-  M->>API: Request upload (name, size, mime)
-  API->>API: Auth + workspace check, plan limits
+  M->>M: Check + inspect locally (type, ≤ 15 MB, parses, ≥ 1 mesh, supported extensions)
+  M->>API: POST /api/assets (filename, size)
+  API->>API: Session + workspace, same-origin check, Zod
   API->>DB: Create Asset (status = PENDING)
-  API-->>M: Presigned PUT URL
+  API-->>M: Presigned PUT URL (10 min; type and exact size signed)
   M->>R2: PUT file directly (bypasses Vercel)
-  M->>API: Confirm upload + client report
-  API->>R2: HEAD object (size, content type)
-  API->>DB: Asset status = READY, store report
-  API-->>M: Asset + validation report
+  M->>API: POST /api/assets/:id/complete
+  API->>R2: HEAD object (size, content type), then GET bytes
+  API->>API: Inspect model → validation report
+  API->>DB: Asset READY + report (or INVALID + report, object deleted)
+  API-->>M: Status + report
 ```
 
 ## Embed flow (Planned, M5)
