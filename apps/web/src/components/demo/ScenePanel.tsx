@@ -54,7 +54,7 @@ function LightingTile({
       style={{ background: `radial-gradient(120% 90% at 25% 15%, ${tones[0]}, ${tones[1]})` }}
     >
       <span className="absolute inset-x-2 bottom-2 flex items-center justify-between">
-        <span className="rounded-full bg-surface/85 px-2.5 py-1 text-xs font-medium text-ink backdrop-blur">
+        <span className="rounded-full bg-surface/85 px-2.5 py-1 text-[13px] font-medium text-ink backdrop-blur">
           {label}
         </span>
         {pressed &&
