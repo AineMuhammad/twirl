@@ -26,24 +26,24 @@ export function DeleteModelButton({ id, filename }: { id: string; filename: stri
 
   return (
     <div className="flex items-center justify-end gap-2">
-      {error && <span className="text-xs text-red-600 dark:text-red-400">{error}</span>}
+      {error && <span className="text-[13px] text-red-600 dark:text-red-400">{error}</span>}
       {confirming ? (
         <>
           <button
             type="button"
             onClick={() => setConfirming(false)}
-            className="rounded-lg px-2.5 py-1 text-xs font-medium text-ink-soft hover:bg-tint"
+            className="inline-flex h-9 items-center rounded-lg border border-line px-3 text-[14px] font-medium text-ink-soft hover:bg-tint"
           >
-            Cancel
+            Keep it
           </button>
           <button
             type="button"
             disabled={pending}
             onClick={() => void remove()}
             aria-label={`Confirm delete ${filename}`}
-            className="rounded-lg bg-red-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-red-700 disabled:opacity-50"
+            className="inline-flex h-9 items-center rounded-lg bg-red-600 px-3 text-[14px] font-medium text-white hover:bg-red-700 disabled:opacity-50"
           >
-            {pending ? 'Deleting…' : 'Confirm'}
+            {pending ? 'Deleting…' : 'Yes, delete'}
           </button>
         </>
       ) : (
@@ -51,9 +51,9 @@ export function DeleteModelButton({ id, filename }: { id: string; filename: stri
           type="button"
           onClick={() => setConfirming(true)}
           aria-label={`Delete ${filename}`}
-          className="rounded-lg px-2.5 py-1 text-xs font-medium text-ink-soft hover:bg-tint hover:text-red-600"
+          className="inline-flex h-9 items-center rounded-lg px-3 text-[14px] font-medium text-ink-soft hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-500/10"
         >
-          Delete
+          Delete model
         </button>
       )}
     </div>

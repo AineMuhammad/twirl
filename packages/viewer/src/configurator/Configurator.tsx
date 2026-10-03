@@ -226,7 +226,7 @@ export function Configurator({
                   setHintVisible(false);
                   viewer.current?.setView(view);
                 }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:bg-tint-strong hover:text-ink ${focusRing}`}
+                className={`rounded-full px-3 py-1.5 text-[13px] font-medium text-ink-soft transition-colors hover:bg-tint-strong hover:text-ink ${focusRing}`}
               >
                 {label}
               </button>
@@ -234,7 +234,7 @@ export function Configurator({
           </div>
         )}
         {info && hintVisible && (
-          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-surface/70 px-3 py-1.5 text-xs text-ink-soft ring-1 ring-line backdrop-blur lg:block">
+          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-surface/70 px-3 py-1.5 text-[13px] text-ink-soft ring-1 ring-line backdrop-blur lg:block">
             Drag to rotate · Scroll to zoom
           </p>
         )}
@@ -282,7 +282,7 @@ export function Configurator({
                 >
                   {heading}
                 </h1>
-                <p className="mt-0.5 truncate text-xs text-ink-muted">
+                <p className="mt-0.5 truncate text-[13px] text-ink-muted">
                   {!info
                     ? 'Loading model…'
                     : (config?.product.description ??
@@ -339,7 +339,7 @@ export function Configurator({
                 setNotices([]);
               }}
               title={changes === 0 ? 'Original design' : `${changes} changed`}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
             >
               <ResetIcon width={14} height={14} /> Reset
             </button>
@@ -357,7 +357,7 @@ function PriceSummary({ evaluation }: { evaluation: Evaluation }) {
   const extras = price.lines.slice(1);
   return (
     <div className="min-w-0">
-      <p className="text-xs text-ink-muted">Total</p>
+      <p className="text-[13px] text-ink-muted">Total</p>
       <p
         className="text-xl font-semibold tracking-tight text-ink tabular-nums"
         aria-live="polite"
@@ -367,7 +367,7 @@ function PriceSummary({ evaluation }: { evaluation: Evaluation }) {
       </p>
       {extras.length > 0 && (
         <p
-          className="truncate text-xs text-ink-muted"
+          className="truncate text-[13px] text-ink-muted"
           title={extras
             .map(
               (l) =>
@@ -388,7 +388,7 @@ function Notices({ notices, onDismiss }: { notices: Correction[]; onDismiss: () 
   return (
     <div role="status" aria-live="polite" className="px-5">
       {notices.length > 0 && (
-        <div className="mb-3 flex items-start gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-sm text-ink ring-1 ring-brand-200 dark:bg-brand-500/15 dark:ring-brand-500/30">
+        <div className="mb-3 flex items-start gap-3 rounded-2xl bg-brand-50 px-4 py-3 text-[14px] text-ink ring-1 ring-brand-200 dark:bg-brand-500/15 dark:ring-brand-500/30">
           <ul className="flex-1 space-y-1">
             {[...new Set(notices.map((n) => n.message))].map((message) => (
               <li key={message}>{message}</li>

@@ -45,7 +45,7 @@ export default async function AdminPage({
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-ink">Workspaces</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="mt-1 text-[14px] text-ink-muted">
             Set plans by hand (no billing yet). Newest first
             {workspaces.length === PAGE_SIZE ? `, first ${PAGE_SIZE} shown` : ''}.
           </p>
@@ -57,11 +57,11 @@ export default async function AdminPage({
             defaultValue={q}
             placeholder="Workspace or owner email"
             aria-label="Search workspaces"
-            className="w-64 rounded-lg border border-line bg-surface px-3 py-1.5 text-sm text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
+            className="h-9 w-64 rounded-lg border border-line bg-surface px-3 text-[14px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
           />
           <button
             type="submit"
-            className="rounded-lg border border-line bg-surface px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint"
+            className="h-9 rounded-lg border border-line bg-surface px-3 text-[14px] font-medium text-ink-soft hover:bg-tint"
           >
             Search
           </button>
@@ -69,8 +69,8 @@ export default async function AdminPage({
       </div>
 
       <div className="overflow-x-auto rounded-2xl bg-surface ring-1 ring-line">
-        <table className="w-full text-left text-sm">
-          <thead className="border-b border-line text-xs text-ink-muted">
+        <table className="w-full text-left text-[14px]">
+          <thead className="border-b border-line text-[13px] text-ink-muted">
             <tr>
               <th scope="col" className="px-4 py-3 font-medium">
                 Workspace

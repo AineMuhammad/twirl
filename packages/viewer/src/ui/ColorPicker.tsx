@@ -38,18 +38,18 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
           style={{ background: color }}
         />
         <div className="flex min-w-0 flex-1 items-center rounded-xl border border-line bg-tint px-3 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
-          <span className="text-sm text-ink-faint">#</span>
+          <span className="text-[14px] text-ink-faint">#</span>
           <HexColorInput
             color={color}
             onChange={onChange}
             aria-label={`Hex color for ${label}`}
-            className="w-full bg-transparent py-2 pl-1 font-mono text-sm uppercase outline-none"
+            className="w-full bg-transparent py-2 pl-1 font-mono text-[14px] uppercase outline-none"
           />
         </div>
         <button
           type="button"
           onClick={onDone}
-          className={`rounded-xl bg-ink px-3.5 py-2 text-sm font-medium text-surface hover:opacity-90 ${focusRing}`}
+          className={`rounded-xl bg-ink px-3.5 py-2 text-[14px] font-medium text-surface hover:opacity-90 ${focusRing}`}
         >
           Done
         </button>

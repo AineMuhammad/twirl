@@ -18,8 +18,8 @@ export const RAINBOW =
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h3 className="text-sm font-semibold text-ink">{children}</h3>
-      {hint && <p className="text-xs text-ink-muted">{hint}</p>}
+      <h3 className="text-[14px] font-semibold text-ink">{children}</h3>
+      {hint && <p className="text-[13px] text-ink-muted">{hint}</p>}
     </div>
   );
 }
@@ -44,8 +44,8 @@ export function Switch({
       className={`flex w-full items-center justify-between gap-4 rounded-xl px-3 py-3 text-left hover:bg-tint ${focusRing}`}
     >
       <span>
-        <span className="block text-sm font-medium text-ink">{label}</span>
-        {description && <span className="block text-xs text-ink-muted">{description}</span>}
+        <span className="block text-[14px] font-medium text-ink">{label}</span>
+        {description && <span className="block text-[13px] text-ink-muted">{description}</span>}
       </span>
       <span
         aria-hidden

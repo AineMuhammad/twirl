@@ -111,7 +111,7 @@ export function DemoApp() {
           >
             <LogoMark className="text-brand-600" />
             <span className="font-semibold tracking-tight">{APP_NAME}</span>
-            <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
+            <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-[13px] font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
               Demo
             </span>
           </Link>
@@ -128,7 +128,7 @@ export function DemoApp() {
                   type="button"
                   aria-pressed={modelUrl === m.url}
                   onClick={() => loadModel(m.url)}
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
+                  className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
                 >
                   {m.label}
                 </button>
@@ -139,7 +139,7 @@ export function DemoApp() {
                   aria-pressed={modelUrl === local.model.url}
                   title={local.model.name}
                   onClick={() => local.model && loadModel(local.model.url)}
-                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
+                  className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
                 >
                   Your file
                 </button>
@@ -162,7 +162,7 @@ export function DemoApp() {
               type="button"
               onClick={() => fileInput.current?.click()}
               aria-label="Upload a model"
-              className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
+              className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
             >
               <UploadIcon />
               <span className="hidden sm:inline">Upload</span>
@@ -200,7 +200,7 @@ export function DemoApp() {
       {local.error && (
         <div
           role="alert"
-          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-[14px] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20"
         >
           <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
           <p className="flex-1 text-ink-soft">{local.error}</p>
@@ -220,7 +220,7 @@ export function DemoApp() {
           <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
             <UploadIcon width={28} height={28} />
             <p className="text-lg font-semibold">Drop to view your model</p>
-            <p className="text-sm text-white/80">
+            <p className="text-[14px] text-white/80">
               .glb or .gltf, up to 15 MB. It stays on your device.
             </p>
           </div>

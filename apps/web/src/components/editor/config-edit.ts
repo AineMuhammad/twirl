@@ -2,6 +2,7 @@ import {
   type ColorGroup,
   type ConditionLeaf,
   groupsIn,
+  humanizeName,
   type OptionGroup,
   type ProductConfig,
   type Rule,
@@ -31,6 +32,8 @@ export interface MeshChoice {
   ref: string;
   label: string;
   hasName: boolean;
+  /** A node to highlight in the preview. */
+  nodeId: string;
 }
 
 /** Every mesh in the model, once per reference (meshes sharing a name are one choice). */
@@ -40,7 +43,9 @@ export function meshChoices(tree: readonly MeshTreeNode[]): MeshChoice[] {
     for (const node of nodes) {
       if (node.kind === 'mesh') {
         const ref = node.hasName ? node.name : `#${node.id}`;
-        if (!choices.has(ref)) choices.set(ref, { ref, label: node.name, hasName: node.hasName });
+        if (!choices.has(ref)) {
+          choices.set(ref, { ref, label: node.name, hasName: node.hasName, nodeId: node.id });
+        }
       }
       walk(node.children);
     }
@@ -59,6 +64,40 @@ export function addPart(config: ProductConfig, label: string, meshes: string[]):
   );
   const withoutMeshes = removeMeshes(config, meshes);
   return { ...withoutMeshes, parts: [...withoutMeshes.parts, { id, label, meshes }] };
+}
+
+/** The part a mesh belongs to, if any. */
+export function partForMesh(config: ProductConfig, ref: string) {
+  return config.parts.find((p) => p.meshes.includes(ref));
+}
+
+/** A friendly starting name for a mesh: `Pillow_01` → `Pillow 01`. */
+export function meshPartName(mesh: MeshChoice, index: number): string {
+  return (mesh.hasName ? humanizeName(mesh.label) : `Part ${index + 1}`).slice(0, 80) || 'Part';
+}
+
+/**
+ * Makes a mesh customisable (its own part) or not. Turning one off also removes it from options,
+ * and options left with no parts are removed.
+ */
+export function setMeshCustomisable(
+  config: ProductConfig,
+  mesh: MeshChoice,
+  on: boolean,
+  index = 0,
+): ProductConfig {
+  const part = partForMesh(config, mesh.ref);
+  if (on) return part ? config : addPart(config, meshPartName(mesh, index), [mesh.ref]);
+  return part ? unassignMesh(config, mesh.ref) : config;
+}
+
+/** Turns every mesh on or off. */
+export function setAllCustomisable(
+  config: ProductConfig,
+  meshes: readonly MeshChoice[],
+  on: boolean,
+): ProductConfig {
+  return meshes.reduce((c, mesh, i) => setMeshCustomisable(c, mesh, on, i), config);
 }
 
 export function renamePart(config: ProductConfig, id: string, label: string): ProductConfig {
@@ -330,4 +369,36 @@ export function updateRule(
 
 export function removeRule(config: ProductConfig, id: string): ProductConfig {
   return { ...config, rules: config.rules.filter((r) => r.id !== id) };
+}
+
+// ── Per-part options ───────────────────────────────────────────────────────────────────────
+
+/** The colour option for a part (each part has at most one). */
+export function colorGroupOf(config: ProductConfig, partId: string): ColorGroup | undefined {
+  return config.groups.find((g): g is ColorGroup => g.type === 'color' && g.parts.includes(partId));
+}
+
+/** The show/hide option for a part, if it has one. */
+export function visibilityGroupOf(config: ProductConfig, partId: string) {
+  return config.groups.find(
+    (g): g is Extract<OptionGroup, { type: 'visibility' }> =>
+      g.type === 'visibility' && g.parts.includes(partId),
+  );
+}
+
+/** Lets shoppers change a part's colour, or stops them (removing that option and its rules). */
+export function setPartColorable(config: ProductConfig, partId: string, on: boolean) {
+  const existing = colorGroupOf(config, partId);
+  const part = config.parts.find((p) => p.id === partId);
+  if (on)
+    return existing || !part ? config : addColorGroup(config, `${part.label} colour`, [partId]);
+  return existing ? removeGroup(config, existing.id) : config;
+}
+
+/** Lets shoppers remove a part, or stops them (removing that option and its rules). */
+export function setPartHideable(config: ProductConfig, partId: string, on: boolean) {
+  const existing = visibilityGroupOf(config, partId);
+  const part = config.parts.find((p) => p.id === partId);
+  if (on) return existing || !part ? config : addVisibilityGroup(config, part.label, [partId]);
+  return existing ? removeGroup(config, existing.id) : config;
 }

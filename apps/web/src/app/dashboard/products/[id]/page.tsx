@@ -25,10 +25,13 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
       <main className="grid min-h-dvh place-items-center bg-tint p-6 text-center">
         <div>
           <h1 className="text-lg font-semibold text-ink">This product can&apos;t be opened</h1>
-          <p className="mt-1 text-sm text-ink-muted">
+          <p className="mt-1 text-[15px] text-ink-muted">
             Its saved configuration or model is missing. Please contact support.
           </p>
-          <Link href="/dashboard" className="mt-4 inline-block text-sm font-medium text-brand-600">
+          <Link
+            href="/dashboard"
+            className="mt-4 inline-block text-[15px] font-medium text-brand-600"
+          >
             Back to dashboard
           </Link>
         </div>

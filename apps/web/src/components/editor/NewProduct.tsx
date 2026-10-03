@@ -45,7 +45,7 @@ export function NewProduct({
       <div className="pointer-events-none absolute inset-x-0 top-6 flex justify-center">
         <div
           role="status"
-          className="pointer-events-auto rounded-2xl bg-surface px-5 py-3 text-sm shadow-lg ring-1 ring-line"
+          className="pointer-events-auto rounded-2xl bg-surface px-5 py-3 text-[15px] shadow-lg ring-1 ring-line"
         >
           {error ? (
             <span className="text-red-600 dark:text-red-400">

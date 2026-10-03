@@ -7,6 +7,9 @@ import type {
   ProductConfig,
   Rule,
 } from '@twirl/config-schema/engine';
+import { type ReactNode, useState } from 'react';
+
+import type { ConfigIssue } from '@/server/products';
 
 import {
   addRule,
@@ -16,118 +19,222 @@ import {
   removeRule,
   updateRule,
 } from './config-edit';
-import { IconButton, inputClass, TextField } from './fields';
-import { PlusIcon, TrashIcon } from './icons';
+import { AlertIcon, BanIcon, EyeIcon, LinkIcon, PlusIcon, TrashIcon } from './icons';
+import { ruleSummary } from './summaries';
+import {
+  Badge,
+  Button,
+  Callout,
+  controlClass,
+  focusRing,
+  SectionHeader,
+  TextField,
+  type Tone,
+} from './ui';
 
 export interface RulesEditorProps {
   config: ProductConfig;
+  issues: ConfigIssue[];
   onChange: (config: ProductConfig) => void;
 }
 
-const RULE_TITLES: Record<Rule['type'], string> = {
-  requires: 'Requires',
-  excludes: "Can't combine",
-  availability: 'Hide or disable',
+const RULE_TYPES: Record<
+  Rule['type'],
+  { label: string; tone: Tone; icon: ReactNode; iconClass: string; blurb: string }
+> = {
+  requires: {
+    label: 'Needs another choice',
+    tone: 'brand',
+    icon: <LinkIcon size={18} />,
+    iconClass: 'bg-brand-50 text-brand-600 dark:bg-brand-500/15 dark:text-brand-300',
+    blurb: 'One choice needs another, e.g. large sizes need the reinforced frame.',
+  },
+  excludes: {
+    label: "Can't be combined",
+    tone: 'rose',
+    icon: <BanIcon size={18} />,
+    iconClass: 'bg-rose-50 text-rose-600 dark:bg-rose-500/15 dark:text-rose-300',
+    blurb: 'Two choices that never go together, e.g. brass with terracotta.',
+  },
+  availability: {
+    label: 'Hide or grey out',
+    tone: 'amber',
+    icon: <EyeIcon size={18} />,
+    iconClass: 'bg-amber-50 text-amber-600 dark:bg-amber-500/15 dark:text-amber-300',
+    blurb: 'Grey out or hide an option while another choice is selected.',
+  },
 };
 
 /**
  * Compatibility rules. When a shopper's choice breaks one, the configurator fixes the other
- * choice and shows the rule's message.
+ * choice automatically and shows the rule's message.
  */
-export function RulesEditor({ config, onChange }: RulesEditorProps) {
+export function RulesEditor({ config, issues, onChange }: RulesEditorProps) {
+  const [openId, setOpenId] = useState<string | null>(null);
   const hasGroups = config.groups.length > 0;
   return (
-    <div className="space-y-4 p-5">
-      <p className="text-xs text-ink-muted">
-        Rules keep shoppers from picking combinations you don&apos;t sell. Conflicts are corrected
-        automatically and explained with your message.
-      </p>
+    <div className="space-y-6 p-6">
+      <SectionHeader
+        title="Rules"
+        description="Stop shoppers from picking combinations you don't sell. If a choice breaks a rule, Twirl fixes the other choice automatically and shows your message."
+      />
+      {!hasGroups && <Callout>Add some options first. Rules connect options together.</Callout>}
+      {hasGroups && config.rules.length === 0 && (
+        <p className="rounded-2xl border border-dashed border-line px-4 py-6 text-center text-[14px] text-ink-muted">
+          No rules. That&apos;s fine if every combination is available.
+        </p>
+      )}
+
       <ul className="space-y-3" aria-label="Rules">
-        {config.rules.map((rule) => {
+        {config.rules.map((rule, index) => {
+          const open = openId === rule.id;
+          const type = RULE_TYPES[rule.type];
+          const ruleIssues = issues.filter(
+            (i) => i.path === `rules.${index}` || i.path.startsWith(`rules.${index}.`),
+          );
           const update = (fn: (r: Rule) => Rule) => onChange(updateRule(config, rule.id, fn));
           return (
-            <li key={rule.id} className="space-y-3 rounded-xl border border-line bg-surface p-3">
-              <div className="flex items-center justify-between gap-2">
-                <span className="text-xs font-semibold tracking-wide text-ink-soft uppercase">
-                  {RULE_TITLES[rule.type]}
-                </span>
-                <IconButton
-                  label="Remove rule"
-                  tone="danger"
-                  onClick={() => onChange(removeRule(config, rule.id))}
+            <li
+              key={rule.id}
+              className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${ruleIssues.length ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
+            >
+              <div className="flex items-start gap-3 p-4">
+                <span
+                  aria-hidden
+                  className={`grid size-10 shrink-0 place-items-center rounded-xl ${type.iconClass}`}
                 >
-                  <TrashIcon />
-                </IconButton>
+                  {type.icon}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <Badge tone={type.tone}>{type.label}</Badge>
+                  <p className="mt-1.5 text-[14px] leading-snug text-ink">
+                    {ruleSummary(config, rule)}
+                  </p>
+                  {ruleIssues.length > 0 ? (
+                    <p className="mt-1 flex items-center gap-1 text-[13px] text-red-600 dark:text-red-400">
+                      <AlertIcon size={13} /> {ruleIssues[0]?.message}
+                    </p>
+                  ) : (
+                    <p className="mt-1 truncate text-[13px] text-ink-muted">
+                      Shoppers see: “{rule.message}”
+                    </p>
+                  )}
+                </div>
+                <Button
+                  size="sm"
+                  variant={open ? 'ghost' : 'secondary'}
+                  aria-expanded={open}
+                  onClick={() => setOpenId(open ? null : rule.id)}
+                >
+                  {open ? 'Close' : 'Edit'}
+                </Button>
               </div>
 
-              {rule.type === 'requires' && (
-                <>
-                  <Sentence>When</Sentence>
-                  <ConditionEditor
-                    config={config}
-                    condition={rule.when}
-                    onChange={(when) => update((r) => ({ ...r, when }) as Rule)}
+              {open && (
+                <div className="space-y-4 border-t border-line bg-tint/40 p-5">
+                  {rule.type === 'requires' && (
+                    <>
+                      <Sentence>If a shopper chooses</Sentence>
+                      <ConditionEditor
+                        config={config}
+                        condition={rule.when}
+                        onChange={(when) => update((r) => ({ ...r, when }) as Rule)}
+                      />
+                      <Sentence>they must also have</Sentence>
+                      <ConditionEditor
+                        config={config}
+                        condition={rule.require}
+                        onChange={(require) => update((r) => ({ ...r, require }) as Rule)}
+                      />
+                    </>
+                  )}
+                  {rule.type === 'excludes' && (
+                    <>
+                      <Sentence>This choice</Sentence>
+                      <ConditionEditor
+                        config={config}
+                        condition={rule.a}
+                        onChange={(a) => update((r) => ({ ...r, a }) as Rule)}
+                      />
+                      <Sentence>can&apos;t be combined with</Sentence>
+                      <ConditionEditor
+                        config={config}
+                        condition={rule.b}
+                        onChange={(b) => update((r) => ({ ...r, b }) as Rule)}
+                      />
+                    </>
+                  )}
+                  {rule.type === 'availability' && (
+                    <AvailabilityFields config={config} rule={rule} update={update} />
+                  )}
+                  <TextField
+                    label="Message for shoppers"
+                    help="Shown when this rule changes one of the shopper's choices, so they know why."
+                    value={rule.message}
+                    maxLength={200}
+                    onChange={(message) => update((r) => ({ ...r, message }))}
+                    error={rule.message.trim() ? undefined : 'Write a short message.'}
                   />
-                  <Sentence>the shopper must also have</Sentence>
-                  <ConditionEditor
-                    config={config}
-                    condition={rule.require}
-                    onChange={(require) => update((r) => ({ ...r, require }) as Rule)}
-                  />
-                </>
+                  <div className="flex justify-end border-t border-line pt-4">
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => onChange(removeRule(config, rule.id))}
+                    >
+                      <TrashIcon size={14} /> Delete rule
+                    </Button>
+                  </div>
+                </div>
               )}
-              {rule.type === 'excludes' && (
-                <>
-                  <ConditionEditor
-                    config={config}
-                    condition={rule.a}
-                    onChange={(a) => update((r) => ({ ...r, a }) as Rule)}
-                  />
-                  <Sentence>can&apos;t be combined with</Sentence>
-                  <ConditionEditor
-                    config={config}
-                    condition={rule.b}
-                    onChange={(b) => update((r) => ({ ...r, b }) as Rule)}
-                  />
-                </>
-              )}
-              {rule.type === 'availability' && (
-                <AvailabilityFields config={config} rule={rule} update={update} />
-              )}
-
-              <TextField
-                label="Message shown to shoppers"
-                value={rule.message}
-                maxLength={200}
-                onChange={(message) => update((r) => ({ ...r, message }))}
-              />
             </li>
           );
         })}
       </ul>
 
-      {!hasGroups ? (
-        <p className="text-xs text-ink-muted">Add options first; rules connect options.</p>
-      ) : (
-        <div className="flex flex-wrap gap-2">
-          {(['requires', 'excludes', 'availability'] as const).map((type) => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => onChange(addRule(config, type))}
-              className="flex items-center gap-1.5 rounded-lg border border-line px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint"
-            >
-              <PlusIcon /> {RULE_TITLES[type]}
-            </button>
-          ))}
-        </div>
+      {hasGroups && (
+        <section aria-labelledby="add-rule" className="space-y-3">
+          <h3 id="add-rule" className="text-[15px] font-semibold text-ink">
+            Add a rule
+          </h3>
+          <div className="grid gap-2">
+            {(['requires', 'excludes', 'availability'] as const).map((kind) => {
+              const t = RULE_TYPES[kind];
+              return (
+                <button
+                  key={kind}
+                  type="button"
+                  onClick={() => {
+                    const next = addRule(config, kind);
+                    onChange(next);
+                    setOpenId(next.rules.at(-1)?.id ?? null);
+                  }}
+                  className={`hover:border-brand-300 flex items-center gap-3 rounded-2xl border border-line bg-surface p-3 text-left transition-colors hover:bg-brand-50/40 dark:hover:bg-brand-500/5 ${focusRing}`}
+                >
+                  <span
+                    aria-hidden
+                    className={`grid size-10 shrink-0 place-items-center rounded-xl ${t.iconClass}`}
+                  >
+                    {t.icon}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-[15px] font-medium text-ink">
+                      Add “{t.label}” rule
+                    </span>
+                    <span className="block text-[13px] text-ink-muted">{t.blurb}</span>
+                  </span>
+                  <PlusIcon className="shrink-0 text-ink-faint" />
+                </button>
+              );
+            })}
+          </div>
+        </section>
       )}
     </div>
   );
 }
 
-function Sentence({ children }: { children: React.ReactNode }) {
-  return <p className="text-xs font-medium text-ink-muted">{children}</p>;
+function Sentence({ children }: { children: ReactNode }) {
+  return <p className="text-[14px] font-medium text-ink-soft">{children}</p>;
 }
 
 type AvailabilityRule = Extract<Rule, { type: 'availability' }>;
@@ -146,21 +253,22 @@ function AvailabilityFields({
     update((r) => ({ ...(r as AvailabilityRule), ...patch }));
   return (
     <>
-      <Sentence>When</Sentence>
+      <Sentence>While a shopper has</Sentence>
       <ConditionEditor config={config} condition={rule.when} onChange={(when) => set({ when })} />
+      <Sentence>then</Sentence>
       <div className="flex items-center gap-2">
         <select
           aria-label="Effect"
-          className={`${inputClass} w-28`}
+          className={`${controlClass} w-32`}
           value={rule.effect}
           onChange={(e) => set({ effect: e.target.value as AvailabilityRule['effect'] })}
         >
-          <option value="disable">disable</option>
+          <option value="disable">grey out</option>
           <option value="hide">hide</option>
         </select>
         <select
           aria-label="Target option"
-          className={inputClass}
+          className={controlClass}
           value={rule.target.group}
           onChange={(e) => set({ target: { group: e.target.value } })}
         >
@@ -173,15 +281,15 @@ function AvailabilityFields({
       </div>
       {target?.type === 'color' && (
         <fieldset>
-          <legend className="text-xs text-ink-muted">
-            Only these choices (leave all unticked for the whole option)
+          <legend className="text-[13px] text-ink-muted">
+            Only these choices (leave all unticked to affect the whole option)
           </legend>
           <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1">
             {colorOptions(target).map((option) => {
               const options = rule.target.options ?? [];
               const checked = options.includes(option.id);
               return (
-                <label key={option.id} className="flex items-center gap-1.5 text-sm text-ink">
+                <label key={option.id} className="flex items-center gap-1.5 text-[14px] text-ink">
                   <input
                     type="checkbox"
                     className="accent-brand-600"
@@ -221,7 +329,7 @@ function ConditionEditor({
   const first = config.groups[0];
   if (!isLeaf(condition)) {
     return (
-      <div className="rounded-lg bg-tint p-2 text-xs text-ink-muted">
+      <div className="rounded-xl bg-surface p-3 text-[14px] text-ink-muted ring-1 ring-line">
         This rule uses a combined condition that the editor can&apos;t show yet.{' '}
         {first && (
           <button
@@ -237,10 +345,10 @@ function ConditionEditor({
   }
   const group = config.groups.find((g) => g.id === condition.group);
   return (
-    <div className="flex flex-wrap items-center gap-2 rounded-lg bg-tint p-2">
+    <div className="flex flex-wrap items-center gap-2 rounded-xl bg-surface p-3 ring-1 ring-line">
       <select
         aria-label="Option"
-        className={`${inputClass} w-auto max-w-[45%]`}
+        className={`${controlClass} w-auto max-w-[55%]`}
         value={condition.group}
         onChange={(e) => {
           const next = config.groups.find((g) => g.id === e.target.value);
@@ -268,7 +376,7 @@ function ComparisonEditor({
   condition: ConditionLeaf;
   onChange: (condition: ConditionLeaf) => void;
 }) {
-  const select = `${inputClass} w-auto`;
+  const select = `${controlClass} w-auto`;
   if (group.type === 'visibility') {
     return (
       <select
@@ -305,7 +413,7 @@ function ComparisonEditor({
         <input
           aria-label="Size"
           type="number"
-          className={`${inputClass} w-20`}
+          className={`${controlClass} w-24`}
           value={value}
           min={group.min}
           max={group.max}
@@ -316,7 +424,7 @@ function ComparisonEditor({
             onChange(atMost ? { group: group.id, max: n } : { group: group.id, min: n });
           }}
         />
-        <span className="text-xs text-ink-muted">{group.unit}</span>
+        <span className="text-[13px] text-ink-muted">{group.unit}</span>
       </>
     );
   }
@@ -345,7 +453,7 @@ function ComparisonEditor({
           {options.map((o) => {
             const checked = chosen.includes(o.id);
             return (
-              <label key={o.id} className="flex items-center gap-1.5 text-sm text-ink">
+              <label key={o.id} className="flex items-center gap-1.5 text-[14px] text-ink">
                 <input
                   type="checkbox"
                   className="accent-brand-600"
