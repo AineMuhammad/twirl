@@ -13,3 +13,8 @@ test('sign-in errors are explained, and off-site return URLs are ignored', async
   const returnTo = page.locator('input[name=callbackUrl]').first();
   if ((await returnTo.count()) > 0) await expect(returnTo).toHaveValue('/dashboard');
 });
+
+test('admin pages require sign-in', async ({ page }) => {
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/signin\?callbackUrl=%2Fadmin$/);
+});

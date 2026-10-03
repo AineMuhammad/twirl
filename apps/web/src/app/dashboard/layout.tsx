@@ -24,9 +24,12 @@ export default async function DashboardLayout({ children }: { children: ReactNod
           </div>
           <div className="flex items-center gap-3">
             {user.isAdmin && (
-              <span className="rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 dark:bg-brand-500/20 dark:text-brand-200">
+              <Link
+                href="/admin"
+                className="rounded-full bg-brand-50 px-2.5 py-1 text-xs font-medium text-brand-700 hover:bg-brand-100 dark:bg-brand-500/20 dark:text-brand-200"
+              >
                 Admin
-              </span>
+              </Link>
             )}
             <span className="hidden truncate text-sm text-ink-soft sm:inline">{user.email}</span>
             <form action={signOutAction}>

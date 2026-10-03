@@ -1,6 +1,6 @@
 import 'server-only';
 
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 import { cache } from 'react';
 
 import { auth, authEnabled } from '@/auth';
@@ -70,4 +70,11 @@ export async function assertMember(userId: string, workspaceId: string) {
   });
   if (!membership) throw new ForbiddenError();
   return membership.role;
+}
+
+/** An admin (`ADMIN_EMAILS`); anyone else gets a 404, so admin pages aren't discoverable. */
+export async function requireAdmin(returnTo = '/admin'): Promise<CurrentUser> {
+  const user = await requireUser(returnTo);
+  if (!user.isAdmin) notFound();
+  return user;
 }
