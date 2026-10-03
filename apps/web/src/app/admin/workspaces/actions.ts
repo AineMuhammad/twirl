@@ -30,6 +30,6 @@ export async function setWorkspacePlan(
     data: { plan: parsed.data.plan, planSetById: admin.id, planSetAt: new Date() },
   });
   if (updated.count === 0) return { error: 'Workspace not found.' };
-  revalidatePath('/admin');
+  revalidatePath('/admin', 'layout');
   return { ok: true };
 }

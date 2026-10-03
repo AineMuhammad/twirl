@@ -1,120 +1,62 @@
-import { PLANS } from '@/config/plans';
+import Link from 'next/link';
+
+import { PLAN_ORDER, PLANS } from '@/config/plans';
+import { adminStats } from '@/server/admin';
 import { requireAdmin } from '@/server/auth/session';
 import { db } from '@/server/db';
 
-import { PlanSelect } from './PlanSelect';
-
-const PAGE_SIZE = 50;
-
-export default async function AdminPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ q?: string }>;
-}) {
+export default async function AdminOverviewPage() {
   await requireAdmin();
-  const q = (await searchParams).q?.trim().slice(0, 100) ?? '';
-  const workspaces = await db().workspace.findMany({
-    where: q
-      ? {
-          OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            {
-              memberships: {
-                some: { user: { email: { contains: q, mode: 'insensitive' } } },
-              },
-            },
-          ],
-        }
-      : {},
-    orderBy: { createdAt: 'desc' },
-    take: PAGE_SIZE,
-    include: {
-      memberships: {
-        where: { role: 'OWNER' },
-        take: 1,
-        include: { user: { select: { email: true } } },
-      },
-      _count: {
-        select: { products: { where: { publishedVersionId: { not: null }, archivedAt: null } } },
-      },
-    },
-  });
-
+  const stats = await adminStats(db());
+  const tiles = [
+    { label: 'Workspaces', value: stats.workspaces, href: '/admin/workspaces' },
+    { label: 'Users', value: stats.users, href: null },
+    { label: 'Live products', value: stats.liveProducts, href: null },
+    { label: 'Quotes (30 days)', value: stats.quotes30d, href: null },
+    { label: 'New model requests', value: stats.newModelRequests, href: '/admin/model-requests' },
+  ];
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-ink">Workspaces</h1>
-          <p className="mt-1 text-[14px] text-ink-muted">
-            Set plans by hand (no billing yet). Newest first
-            {workspaces.length === PAGE_SIZE ? `, first ${PAGE_SIZE} shown` : ''}.
-          </p>
-        </div>
-        <form className="flex gap-2" role="search">
-          <input
-            type="search"
-            name="q"
-            defaultValue={q}
-            placeholder="Workspace or owner email"
-            aria-label="Search workspaces"
-            className="h-9 w-64 rounded-lg border border-line bg-surface px-3 text-[14px] text-ink focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none"
-          />
-          <button
-            type="submit"
-            className="h-9 rounded-lg border border-line bg-surface px-3 text-[14px] font-medium text-ink-soft hover:bg-tint"
-          >
-            Search
-          </button>
-        </form>
-      </div>
-
-      <div className="overflow-x-auto rounded-2xl bg-surface ring-1 ring-line">
-        <table className="w-full text-left text-[14px]">
-          <thead className="border-b border-line text-[13px] text-ink-muted">
-            <tr>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Workspace
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Owner
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Published
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Created
-              </th>
-              <th scope="col" className="px-4 py-3 font-medium">
-                Plan
-              </th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-line">
-            {workspaces.map((w) => (
-              <tr key={w.id}>
-                <td className="px-4 py-3 font-medium text-ink">{w.name}</td>
-                <td className="px-4 py-3 text-ink-soft">{w.memberships[0]?.user.email ?? '—'}</td>
-                <td className="px-4 py-3 text-ink-soft tabular-nums">
-                  {w._count.products} / {PLANS[w.plan].maxPublishedProducts}
-                </td>
-                <td className="px-4 py-3 text-ink-muted">
-                  {w.createdAt.toLocaleDateString('en-US')}
-                </td>
-                <td className="px-4 py-3">
-                  <PlanSelect workspaceId={w.id} workspaceName={w.name} plan={w.plan} />
-                </td>
-              </tr>
-            ))}
-            {workspaces.length === 0 && (
-              <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-ink-muted">
-                  No workspaces found.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+      <h1 className="text-2xl font-semibold tracking-tight text-ink">Overview</h1>
+      <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {tiles.map((t) => {
+          const body = (
+            <>
+              <p className="text-[13px] text-ink-muted">{t.label}</p>
+              <p className="mt-1 text-[26px] font-semibold text-ink tabular-nums">{t.value}</p>
+            </>
+          );
+          return (
+            <li key={t.label}>
+              {t.href ? (
+                <Link
+                  href={t.href}
+                  className="hover:ring-brand-300 block rounded-2xl bg-surface p-4 ring-1 ring-line"
+                >
+                  {body}
+                </Link>
+              ) : (
+                <div className="rounded-2xl bg-surface p-4 ring-1 ring-line">{body}</div>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+      <section className="rounded-2xl bg-surface p-5 ring-1 ring-line" aria-labelledby="plans">
+        <h2 id="plans" className="text-[16px] font-semibold text-ink">
+          Workspaces by plan
+        </h2>
+        <dl className="mt-3 grid grid-cols-3 gap-4">
+          {PLAN_ORDER.map((p) => (
+            <div key={p}>
+              <dt className="text-[13px] text-ink-muted">{PLANS[p].label}</dt>
+              <dd className="text-[20px] font-semibold text-ink tabular-nums">
+                {stats.byPlan[p] ?? 0}
+              </dd>
+            </div>
+          ))}
+        </dl>
+      </section>
     </div>
   );
 }
