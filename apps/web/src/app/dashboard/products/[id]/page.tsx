@@ -2,7 +2,6 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
 
-import { APP_NAME } from '@/config/app';
 import { Editor } from '@/components/editor/Editor';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
@@ -11,7 +10,7 @@ import { eventCounts } from '@/server/events';
 import { listVersions } from '@/server/versions';
 import { publicUrl } from '@/server/storage/r2';
 
-export const metadata: Metadata = { title: `Edit product · ${APP_NAME}` };
+export const metadata: Metadata = { title: 'Edit product' };
 
 export default async function EditProductPage({ params }: { params: Promise<{ id: string }> }) {
   const { workspace } = await requireWorkspace();

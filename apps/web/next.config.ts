@@ -15,6 +15,18 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // Baseline hardening for every response. (Vercel adds HSTS on its domains.)
+        source: '/:path*',
+        headers: [
+          { key: 'X-Content-Type-Options', value: 'nosniff' },
+          { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=(), payment=(), usb=()',
+          },
+        ],
+      },
+      {
         // Everything except the embed refuses to be framed (clickjacking protection). The embed
         // sends no framing restriction, so any page can show it: `frame-ancestors *` would
         // still block pages without a web origin, such as a local test file.

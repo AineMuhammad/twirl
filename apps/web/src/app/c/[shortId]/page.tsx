@@ -16,7 +16,7 @@ function load(shortId: string) {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const share = await load((await params).shortId);
   return {
-    title: share ? `${share.config.product.name} · ${APP_NAME}` : APP_NAME,
+    title: share ? share.config.product.name : APP_NAME,
     robots: { index: false },
   };
 }

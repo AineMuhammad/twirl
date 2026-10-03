@@ -15,7 +15,7 @@ function load(publicId: string) {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const product = await load((await params).publicId);
   return {
-    title: product ? `${product.config.product.name} · ${APP_NAME}` : APP_NAME,
+    title: product ? product.config.product.name : APP_NAME,
     robots: { index: false },
   };
 }

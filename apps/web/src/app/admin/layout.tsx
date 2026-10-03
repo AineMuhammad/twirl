@@ -5,7 +5,7 @@ import type { ReactNode } from 'react';
 import { APP_NAME } from '@/config/app';
 import { requireAdmin } from '@/server/auth/session';
 
-export const metadata: Metadata = { title: `Admin · ${APP_NAME}`, robots: { index: false } };
+export const metadata: Metadata = { title: 'Admin', robots: { index: false } };
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const user = await requireAdmin();

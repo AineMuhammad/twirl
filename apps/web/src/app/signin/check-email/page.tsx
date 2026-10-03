@@ -1,9 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 
-import { APP_NAME } from '@/config/app';
-
-export const metadata: Metadata = { title: `Check your email · ${APP_NAME}` };
+export const metadata: Metadata = { title: 'Check your email' };
 
 export default function CheckEmailPage() {
   return (
