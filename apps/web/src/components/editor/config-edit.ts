@@ -16,8 +16,6 @@ import type { MeshTreeNode } from '@twirl/viewer';
  * (saved selections, share links and rules refer to them).
  */
 
-const STARTER_COLORS = ['#f5f5f4', '#292524', '#b08d57', '#3b5b7a'];
-
 /** A new id from `label`, unique among `taken` (`seat`, `seat-2`, …). */
 export function uniqueId(label: string, taken: Iterable<string>, fallback: string): string {
   const used = new Set(taken);
@@ -76,28 +74,39 @@ export function meshPartName(mesh: MeshChoice, index: number): string {
   return (mesh.hasName ? humanizeName(mesh.label) : `Part ${index + 1}`).slice(0, 80) || 'Part';
 }
 
-/**
- * Makes a mesh customisable (its own part) or not. Turning one off also removes it from options,
- * and options left with no parts are removed.
- */
-export function setMeshCustomisable(
-  config: ProductConfig,
-  mesh: MeshChoice,
-  on: boolean,
-  index = 0,
-): ProductConfig {
-  const part = partForMesh(config, mesh.ref);
-  if (on) return part ? config : addPart(config, meshPartName(mesh, index), [mesh.ref]);
-  return part ? unassignMesh(config, mesh.ref) : config;
+/** Whether a mesh is part of the product (not hidden). */
+export function isMeshShown(config: ProductConfig, ref: string): boolean {
+  return !config.hiddenMeshes.includes(ref);
 }
 
-/** Turns every mesh on or off. */
-export function setAllCustomisable(
+/**
+ * Shows a mesh (as its own named part) or hides it from the product entirely. Hiding also removes
+ * its part from options; options left with no parts are removed.
+ */
+export function setMeshShown(
+  config: ProductConfig,
+  mesh: MeshChoice,
+  shown: boolean,
+  index = 0,
+): ProductConfig {
+  const hiddenMeshes = config.hiddenMeshes.filter((m) => m !== mesh.ref);
+  if (shown) {
+    const visible = { ...config, hiddenMeshes };
+    return partForMesh(visible, mesh.ref)
+      ? visible
+      : addPart(visible, meshPartName(mesh, index), [mesh.ref]);
+  }
+  const withoutPart = partForMesh(config, mesh.ref) ? unassignMesh(config, mesh.ref) : config;
+  return { ...withoutPart, hiddenMeshes: [...hiddenMeshes, mesh.ref] };
+}
+
+/** Shows or hides every mesh. */
+export function setAllShown(
   config: ProductConfig,
   meshes: readonly MeshChoice[],
-  on: boolean,
+  shown: boolean,
 ): ProductConfig {
-  return meshes.reduce((c, mesh, i) => setMeshCustomisable(c, mesh, on, i), config);
+  return meshes.reduce((c, mesh, i) => setMeshShown(c, mesh, shown, i), config);
 }
 
 export function renamePart(config: ProductConfig, id: string, label: string): ProductConfig {
@@ -172,12 +181,7 @@ export function addColorGroup(
     id,
     label,
     parts,
-    swatches: STARTER_COLORS.map((color, i) => ({
-      id: `color-${i + 1}`,
-      label: `Colour ${i + 1}`,
-      color,
-      price: 0,
-    })),
+    swatches: [],
     default: null,
     originalLabel: 'Original',
     allowCustom: false,
@@ -401,4 +405,19 @@ export function setPartHideable(config: ProductConfig, partId: string, on: boole
   const part = config.parts.find((p) => p.id === partId);
   if (on) return existing || !part ? config : addVisibilityGroup(config, part.label, [partId]);
   return existing ? removeGroup(config, existing.id) : config;
+}
+
+/** A part is customisable when shoppers can change its colour or remove it. */
+export function isPartCustomisable(config: ProductConfig, partId: string): boolean {
+  return Boolean(colorGroupOf(config, partId) || visibilityGroupOf(config, partId));
+}
+
+/**
+ * Makes a part customisable (starting with a colour option offering only its original finish) or
+ * fixed (removing its colour and show/hide options).
+ */
+export function setPartCustomisable(config: ProductConfig, partId: string, on: boolean) {
+  if (on)
+    return isPartCustomisable(config, partId) ? config : setPartColorable(config, partId, true);
+  return setPartHideable(setPartColorable(config, partId, false), partId, false);
 }

@@ -31,7 +31,8 @@ export function NewProduct({
       started.current = true;
       const { starterConfig } = await import('@twirl/config-schema');
       const name = humanizeName(filename.replace(/\.(glb|gltf)$/i, '')) || 'New product';
-      const config = starterConfig({ name, meshTree: info.meshTree });
+      // Parts only: the merchant chooses what's customisable in the editor.
+      const config = starterConfig({ name, meshTree: info.meshTree, withOptions: false });
       const result = await createProductAction({ assetId, config });
       // On success the action redirects to the editor.
       if (result.error) setError(result.error);

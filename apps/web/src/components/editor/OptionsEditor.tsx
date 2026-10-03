@@ -18,6 +18,7 @@ import {
   removeGroup,
   removeSwatch,
   setPartColorable,
+  setPartCustomisable,
   setPartHideable,
   updateGroup,
   visibilityGroupOf,
@@ -124,7 +125,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
       <div className="space-y-5">
         <SectionHeader
           title="Options"
-          description="For each part, choose whether shoppers can change its colour and whether they can remove it."
+          description="Switch on “Customisable” for the parts shoppers can change. Then choose whether they can change its colour, remove it, or both."
         />
         {config.parts.length === 0 && (
           <Callout>Choose your customisable parts in step 2 first.</Callout>
@@ -136,7 +137,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
             const colorIssues = issuesFor(config, issues, color);
             const visibilityIssues = issuesFor(config, issues, visibility);
             const problems = colorIssues.length + visibilityIssues.length;
-            const open = openId === `part:${part.id}`;
+            const customisable = Boolean(color || visibility);
             const shared = (group: OptionGroup | undefined) =>
               group && group.type !== 'dimension' && group.parts.length > 1
                 ? group.parts
@@ -147,7 +148,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
               <li
                 key={part.id}
                 id={`part-options-${part.id}`}
-                className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${problems ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
+                className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${problems ? 'border-red-300 dark:border-red-500/50' : customisable ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
               >
                 <div className="flex items-center gap-3 p-4">
                   <div className="min-w-0 flex-1">
@@ -155,7 +156,11 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                       {part.label || 'Unnamed part'}
                     </p>
                     <div className="mt-1.5 flex flex-wrap gap-1.5">
-                      {problems > 0 ? (
+                      {!customisable ? (
+                        <span className="text-[13px] text-ink-muted">
+                          Fixed: always looks as in your 3D file
+                        </span>
+                      ) : problems > 0 ? (
                         <Badge tone="red">
                           <AlertIcon size={12} /> Needs attention
                         </Badge>
@@ -163,9 +168,11 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                         <>
                           <Badge tone={color ? 'violet' : 'neutral'}>
                             <PaletteIcon size={12} />
-                            {color
-                              ? `Colour: ${color.swatches.length} choice${color.swatches.length === 1 ? '' : 's'}${color.allowCustom ? ' + any' : ''}`
-                              : 'Colour fixed'}
+                            {!color
+                              ? 'Colour fixed'
+                              : color.swatches.length === 0 && !color.allowCustom
+                                ? 'Colour: original only'
+                                : `Colour: ${color.swatches.length + 1} choices${color.allowCustom ? ' + any' : ''}`}
                           </Badge>
                           <Badge tone={visibility ? 'sky' : 'neutral'}>
                             <EyeIcon size={12} />
@@ -175,17 +182,24 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                       )}
                     </div>
                   </div>
-                  <Button
-                    size="sm"
-                    variant={open ? 'ghost' : 'secondary'}
-                    aria-expanded={open}
-                    onClick={() => onOpen(open ? null : `part:${part.id}`)}
-                  >
-                    {open ? 'Close' : 'Edit'}
-                  </Button>
+                  <label className="flex shrink-0 cursor-pointer items-center gap-2.5 text-[14px] font-medium text-ink">
+                    Customisable
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={customisable}
+                      aria-label={`${part.label} is customisable`}
+                      onClick={() => onChange(setPartCustomisable(config, part.id, !customisable))}
+                      className={`relative h-6 w-11 shrink-0 rounded-full transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 ${customisable ? 'bg-brand-600' : 'bg-tint-strong'}`}
+                    >
+                      <span
+                        className={`absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${customisable ? 'translate-x-5' : ''}`}
+                      />
+                    </button>
+                  </label>
                 </div>
 
-                {open && (
+                {customisable && (
                   <div className="space-y-4 border-t border-line bg-tint/40 p-4">
                     <OptionPanel
                       icon={<PaletteIcon size={17} />}
@@ -481,12 +495,7 @@ function ColorGroupFields({
                 <Button
                   size="sm"
                   variant="danger"
-                  disabled={group.swatches.length === 1}
-                  title={
-                    group.swatches.length === 1
-                      ? 'Keep at least one colour'
-                      : `Remove ${swatch.label}`
-                  }
+                  title={`Remove ${swatch.label}`}
                   onClick={() => update((g) => removeSwatch(g, swatch.id))}
                 >
                   Remove
@@ -494,6 +503,11 @@ function ColorGroupFields({
               </li>
             ))}
           </ul>
+          {group.swatches.length === 0 && (
+            <p className="border-t border-line px-3 py-3 text-[13px] text-ink-muted">
+              Only your model&apos;s own finish so far. Add the colours shoppers can choose from.
+            </p>
+          )}
           <div className="border-t border-line px-3 py-2">
             <Button variant="ghost" size="sm" onClick={() => update(addSwatch)}>
               <PlusIcon size={14} /> Add a colour

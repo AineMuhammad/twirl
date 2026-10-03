@@ -24,7 +24,11 @@ export function groupSummary(config: ProductConfig, group: OptionGroup): string 
   if (group.type === 'color') {
     const def = group.swatches.find((s) => s.id === group.default)?.label ?? group.originalLabel;
     return [
-      `${group.swatches.length} colour${group.swatches.length === 1 ? '' : 's'}${group.allowCustom ? ' + any colour' : ''}`,
+      group.swatches.length === 0
+        ? group.allowCustom
+          ? 'Any colour'
+          : 'Original finish only'
+        : `${group.swatches.length} colour${group.swatches.length === 1 ? '' : 's'}${group.allowCustom ? ' + any colour' : ''}`,
       partNames(config, group.parts),
       `Default: ${def}`,
     ].join(' · ');
