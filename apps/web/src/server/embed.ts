@@ -7,6 +7,8 @@ import { validateConfig } from './products';
 
 export interface PublishedProduct {
   publicId: string;
+  /** The live version's id (share links pin it). */
+  versionId: string;
   config: ProductConfig;
   /** Object key of the model in storage. */
   modelKey: string;
@@ -28,7 +30,7 @@ export async function getPublishedProduct(
       publicId: true,
       workspace: { select: { plan: true } },
       publishedVersion: {
-        select: { config: true, modelAsset: { select: { key: true, status: true } } },
+        select: { id: true, config: true, modelAsset: { select: { key: true, status: true } } },
       },
     },
   });
@@ -42,6 +44,7 @@ export async function getPublishedProduct(
   }
   return {
     publicId: product.publicId,
+    versionId: version.id,
     config: parsed.config,
     modelKey: asset.key,
     watermark: planDefinition(product.workspace.plan).watermark,

@@ -18,3 +18,17 @@ test('only the embed can be framed; embed.js is served', async ({ request }) => 
   expect(script.ok()).toBe(true);
   expect(await script.text()).toContain('data-twirl-product');
 });
+
+test('unknown share links explain themselves; sharing rejects other sites', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/c/doesNotExist1');
+  await expect(page.getByText("This link doesn't work any more")).toBeVisible();
+
+  const crossSite = await request.post('/api/share', {
+    headers: { origin: 'https://evil.example' },
+    data: { publicId: 'abcdefgh', versionId: 'x', selections: {} },
+  });
+  expect(crossSite.status()).toBe(403);
+});

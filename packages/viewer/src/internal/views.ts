@@ -21,15 +21,22 @@ export const VIEW_GLIDE_SECONDS = 0.9;
 
 type Vec3 = readonly [number, number, number];
 
-/** Camera position for a named view, at the model's framing distance. */
-export function viewPosition(framing: Framing, view: CameraView): [number, number, number] {
+/**
+ * Camera position for a named view, at the model's framing distance. `frontAzimuth` (degrees)
+ * says where the model's front faces, for models not exported facing +Z.
+ */
+export function viewPosition(
+  framing: Framing,
+  view: CameraView,
+  frontAzimuth = 0,
+): [number, number, number] {
   const target = new Vector3(...framing.target);
   const distance = new Vector3(...framing.position).distanceTo(target);
   const { azimuth, elevation } = VIEW_ANGLES[view];
   const s = new Spherical(
     distance,
     MathUtils.degToRad(90 - elevation),
-    MathUtils.degToRad(azimuth),
+    MathUtils.degToRad(azimuth + frontAzimuth),
   );
   return new Vector3().setFromSpherical(s).add(target).toArray();
 }
@@ -56,4 +63,10 @@ export function glidePosition(
     a.theta + dTheta * k,
   );
   return new Vector3().setFromSpherical(s).add(center).toArray();
+}
+
+/** The camera's angle around `target` in degrees (−180…180, 0 = +Z), as views measure it. */
+export function azimuthOf(target: Vec3, position: Vec3): number {
+  const degrees = MathUtils.radToDeg(Math.atan2(position[0] - target[0], position[2] - target[2]));
+  return Math.round(degrees * 10) / 10;
 }

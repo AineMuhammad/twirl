@@ -9,6 +9,7 @@ import {
   type ProductConfig,
   type SelectionValue,
 } from '@twirl/config-schema/engine';
+import { createPortal } from 'react-dom';
 import {
   type ComponentType,
   type HTMLAttributes,
@@ -22,7 +23,7 @@ import {
 import type { CameraView } from '../camera-views';
 import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '../scene';
 import type { Deformation, MeshOverrides, ModelInfo } from '../types';
-import { CloseIcon, PlayIcon, ResetIcon } from '../ui/icons';
+import { CloseIcon, PlayIcon, ResetIcon, ShareIcon } from '../ui/icons';
 import { type Tab, Tabs } from '../ui/Tabs';
 import { focusRing, glass } from '../ui/ui';
 import type { ViewerHandle, ViewerProps } from '../Viewer';
@@ -42,7 +43,14 @@ export interface ConfiguratorProps {
   /** Extra viewer props (environment sources, decoder paths, effects…). */
   viewerProps?: Omit<
     ViewerProps,
-    'ref' | 'modelUrl' | 'meshOverrides' | 'deformations' | 'scene' | 'onLoad' | 'initialView'
+    | 'ref'
+    | 'modelUrl'
+    | 'meshOverrides'
+    | 'deformations'
+    | 'scene'
+    | 'onLoad'
+    | 'initialView'
+    | 'frontAzimuth'
   >;
   /** Overrides `config.scene` (e.g. a demo's scene controls). */
   scene?: SceneSettings;
@@ -61,6 +69,13 @@ export interface ConfiguratorProps {
   onLoad?: (info: ModelInfo) => void;
   /** Called with the evaluated configuration (selections, price) whenever it changes. */
   onEvaluationChange?: (evaluation: Evaluation) => void;
+  /** Choices to start from (e.g. a shared link). Invalid ones fall back to defaults. */
+  initialSelections?: Record<string, unknown>;
+  /**
+   * Saves the current choices and resolves to a shareable URL. When set, a Share button appears.
+   * Reject with an Error whose message is safe to show.
+   */
+  onShare?: (evaluation: Evaluation) => Promise<string>;
 }
 
 const NO_OVERRIDES: MeshOverrides = {};
@@ -124,11 +139,15 @@ export function Configurator({
   rootProps,
   onLoad,
   onEvaluationChange,
+  initialSelections,
+  onShare,
 }: ConfiguratorProps) {
   const viewer = useRef<ViewerHandle>(null);
   const [loaded, setLoaded] = useState<{ url: string | null; info: ModelInfo } | null>(null);
   const info = loaded?.url === modelUrl ? loaded.info : null;
-  const [evaluation, setEvaluation] = useState(() => (config ? evaluate(config, {}) : null));
+  const [evaluation, setEvaluation] = useState(() =>
+    config ? evaluate(config, initialSelections ?? {}) : null,
+  );
   const [evaluatedFor, setEvaluatedFor] = useState(config);
   const [notices, setNotices] = useState<Correction[]>([]);
   const [tab, setTab] = useState('options');
@@ -138,7 +157,7 @@ export function Configurator({
   // A new config starts from its defaults (adjusting state during render, not in an effect).
   if (config !== evaluatedFor) {
     setEvaluatedFor(config);
-    setEvaluation(config ? evaluate(config, {}) : null);
+    setEvaluation(config ? evaluate(config, initialSelections ?? {}) : null);
     setNotices([]);
   }
   const current = config && evaluation && evaluatedFor === config ? evaluation : null;
@@ -205,7 +224,10 @@ export function Configurator({
           scene={scene}
           meshOverrides={meshOverrides}
           deformations={deformations}
-          {...(presentation && { initialView: presentation.camera.initialView })}
+          {...(presentation && {
+            initialView: presentation.camera.initialView,
+            frontAzimuth: presentation.camera.frontAzimuth,
+          })}
           onLoad={(next) => {
             setLoaded({ url: modelUrl, info: next });
             onLoad?.(next);
@@ -331,18 +353,21 @@ export function Configurator({
         {config && current && (
           <footer className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-3">
             <PriceSummary evaluation={current} />
-            <button
-              type="button"
-              disabled={changes === 0}
-              onClick={() => {
-                setEvaluation(evaluate(config, {}));
-                setNotices([]);
-              }}
-              title={changes === 0 ? 'Original design' : `${changes} changed`}
-              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
-            >
-              <ResetIcon width={14} height={14} /> Reset
-            </button>
+            <div className="flex items-center gap-1">
+              {onShare && <ShareButton evaluation={current} onShare={onShare} />}
+              <button
+                type="button"
+                disabled={changes === 0}
+                onClick={() => {
+                  setEvaluation(evaluate(config, {}));
+                  setNotices([]);
+                }}
+                title={changes === 0 ? 'Original design' : `${changes} changed`}
+                className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
+              >
+                <ResetIcon width={14} height={14} /> Reset
+              </button>
+            </div>
           </footer>
         )}
       </aside>
@@ -404,6 +429,137 @@ function Notices({ notices, onDismiss }: { notices: Correction[]; onDismiss: () 
           </button>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Saves the current choices and shows a link to copy. */
+function ShareButton({
+  evaluation,
+  onShare,
+}: {
+  evaluation: Evaluation;
+  onShare: (evaluation: Evaluation) => Promise<string>;
+}) {
+  const [state, setState] = useState<
+    | { phase: 'idle' }
+    | { phase: 'saving' }
+    | { phase: 'ready'; url: string; copied: boolean }
+    | { phase: 'error'; message: string }
+  >({ phase: 'idle' });
+  const open = state.phase !== 'idle';
+  const close = () => setState({ phase: 'idle' });
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setState({ phase: 'idle' });
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const copyAgain = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setState({ phase: 'ready', url, copied: true });
+    } catch {
+      // Blocked clipboard: the link stays selected in the field to copy by hand.
+    }
+  };
+
+  const share = async () => {
+    setState({ phase: 'saving' });
+    try {
+      const url = await onShare(evaluation);
+      let copied = false;
+      try {
+        await navigator.clipboard.writeText(url);
+        copied = true;
+      } catch {
+        // Clipboard can be blocked (e.g. inside some iframes); the link is shown to copy by hand.
+      }
+      setState({ phase: 'ready', url, copied });
+    } catch (error) {
+      setState({
+        phase: 'error',
+        message: error instanceof Error ? error.message : 'Could not create a link.',
+      });
+    }
+  };
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => void share()}
+        aria-expanded={open}
+        className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint ${focusRing}`}
+      >
+        <ShareIcon width={14} height={14} /> Share
+      </button>
+      {open &&
+        createPortal(
+          // Rendered on <body> so the panel's clipping and the 3D stage can't cover it.
+          <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/30 p-4 sm:items-center">
+            {/* Clicking outside closes. Esc does too; keyboard users have the Close button. */}
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              onClick={close}
+              className="absolute inset-0 cursor-default"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="twirl-share-title"
+              className="relative w-full max-w-sm rounded-2xl bg-surface p-5 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h2 id="twirl-share-title" className="text-[16px] font-semibold">
+                  {state.phase === 'ready' && state.copied ? 'Link copied' : 'Share your design'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close"
+                  className={`-mt-1 -mr-1 rounded-full p-1.5 text-ink-muted hover:bg-tint hover:text-ink ${focusRing}`}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              {state.phase === 'saving' && (
+                <p className="mt-2 text-[14px] text-ink-soft">Creating your link…</p>
+              )}
+              {state.phase === 'error' && (
+                <p className="mt-2 text-[14px] text-red-600 dark:text-red-400">{state.message}</p>
+              )}
+              {state.phase === 'ready' && (
+                <>
+                  <p className="mt-1 text-[14px] text-ink-muted">
+                    Anyone with this link sees your design.
+                  </p>
+                  <div className="mt-4 flex gap-2">
+                    <input
+                      readOnly
+                      aria-label="Share link"
+                      value={state.url}
+                      onFocus={(e) => e.target.select()}
+                      className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-tint px-3 font-mono text-[13px] text-ink"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void copyAgain(state.url)}
+                      className={`h-10 shrink-0 rounded-lg bg-ink px-4 text-[14px] font-medium text-surface hover:opacity-90 ${focusRing}`}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }

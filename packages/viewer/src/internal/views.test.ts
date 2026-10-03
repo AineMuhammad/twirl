@@ -2,7 +2,7 @@ import { Box3, MathUtils, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 
 import { computeFraming } from './framing';
-import { CAMERA_VIEWS, glidePosition, viewPosition } from './views';
+import { azimuthOf, CAMERA_VIEWS, glidePosition, viewPosition } from './views';
 
 const framing = computeFraming(new Box3(new Vector3(-1, 0, -1), new Vector3(1, 2, 1)), {
   fov: 35,
@@ -43,5 +43,23 @@ describe('glidePosition', () => {
     };
     const mid = glidePosition([0, 1, 0], at(350), at(10), 0.5);
     expect(mid[2]).toBeGreaterThan(4.5); // near the front (+Z), not the back
+  });
+});
+
+describe('front direction', () => {
+  const framing = { target: [0, 0, 0], position: [0, 0, 10] } as unknown as Parameters<
+    typeof viewPosition
+  >[0];
+
+  it('measures views from the model’s front', () => {
+    const turned = viewPosition(framing, 'front', 90);
+    expect(azimuthOf([0, 0, 0], turned)).toBeCloseTo(90);
+    expect(azimuthOf([0, 0, 0], viewPosition(framing, 'side', 90))).toBeCloseTo(180);
+  });
+
+  it('reads the camera angle back', () => {
+    expect(azimuthOf([0, 0, 0], [0, 0, 5])).toBe(0);
+    expect(azimuthOf([0, 0, 0], [5, 0, 0])).toBe(90);
+    expect(azimuthOf([0, 0, 0], [-5, 0, -0.0001])).toBeCloseTo(-90, 0);
   });
 });

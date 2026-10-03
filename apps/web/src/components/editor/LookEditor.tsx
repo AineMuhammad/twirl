@@ -7,6 +7,7 @@ import { ScenePanel } from '@/components/demo/ScenePanel';
 
 import { CheckIcon } from './icons';
 import {
+  Button,
   ColorInput,
   Field,
   focusRing,
@@ -19,6 +20,8 @@ import {
 export interface LookEditorProps {
   config: ProductConfig;
   onChange: (config: ProductConfig) => void;
+  /** The preview camera's current angle (degrees), to use as the model's front. */
+  onCaptureFront: () => number | null;
 }
 
 type Layout = ProductConfig['presentation']['layout'];
@@ -115,7 +118,7 @@ function Tile({
 }
 
 /** How the configurator looks: layout, brand colour, font, logo, first camera view and scene. */
-export function LookEditor({ config, onChange }: LookEditorProps) {
+export function LookEditor({ config, onChange, onCaptureFront }: LookEditorProps) {
   const presentation = config.presentation;
   const setPresentation = (patch: Partial<ProductConfig['presentation']>) =>
     onChange({ ...config, presentation: { ...presentation, ...patch } });
@@ -221,8 +224,37 @@ export function LookEditor({ config, onChange }: LookEditorProps) {
             label="First camera view"
             value={presentation.camera.initialView}
             options={VIEWS}
-            onChange={(initialView) => setPresentation({ camera: { initialView } })}
+            onChange={(initialView) =>
+              setPresentation({ camera: { ...presentation.camera, initialView } })
+            }
           />
+        </Subsection>
+
+        <Subsection
+          title="Front of the model"
+          help="Some 3D files face sideways. Turn the preview so you're looking at the front of your product, then set it. All preset views use it."
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              onClick={() => {
+                const azimuth = onCaptureFront();
+                if (azimuth !== null)
+                  setPresentation({ camera: { ...presentation.camera, frontAzimuth: azimuth } });
+              }}
+            >
+              Set current view as front
+            </Button>
+            {presentation.camera.frontAzimuth !== 0 && (
+              <Button
+                variant="ghost"
+                onClick={() =>
+                  setPresentation({ camera: { ...presentation.camera, frontAzimuth: 0 } })
+                }
+              >
+                Reset
+              </Button>
+            )}
+          </div>
         </Subsection>
       </div>
 
