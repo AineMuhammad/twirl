@@ -95,7 +95,7 @@ export function OptionsPanel({ config, evaluation, onChange, className = '' }: O
 
 function Reason({ text }: { text: string | undefined }) {
   if (!text) return null;
-  return <span className="mt-1 block text-xs text-amber-700 dark:text-amber-400">{text}</span>;
+  return <span className="mt-1 block text-[13px] text-amber-700 dark:text-amber-400">{text}</span>;
 }
 
 const cardClass = (open: boolean, disabled: boolean) =>
@@ -155,8 +155,8 @@ function ColorCard({
           style={{ background: color ?? CHECKER }}
         />
         <span className="min-w-0 flex-1">
-          <span className="block truncate text-sm font-medium text-ink">{group.label}</span>
-          <span className="block truncate text-xs text-ink-muted">
+          <span className="block truncate text-[14px] font-medium text-ink">{group.label}</span>
+          <span className="block truncate text-[13px] text-ink-muted">
             {current.label}
             {current.price !== 0 && ` · ${priceDelta(current.price, currency)}`}
           </span>
@@ -169,7 +169,9 @@ function ColorCard({
 
       {open && !state.disabled && (
         <div id={panelId} className="border-t border-line px-3 pt-3 pb-3">
-          {group.description && <p className="mb-3 text-xs text-ink-muted">{group.description}</p>}
+          {group.description && (
+            <p className="mb-3 text-[13px] text-ink-muted">{group.description}</p>
+          )}
           <div role="group" aria-label={group.label} className="grid grid-cols-6 gap-2">
             {options.map((option) => {
               const active = selected === option.id;
@@ -264,8 +266,8 @@ function VisibilityRow({
       className={`${cardClass(false, state.disabled)} flex w-full items-center justify-between gap-4 px-4 py-3 text-left ${focusRing}`}
     >
       <span className="min-w-0">
-        <span className="block text-sm font-medium text-ink">{group.label}</span>
-        <span className="block text-xs text-ink-muted">
+        <span className="block text-[14px] font-medium text-ink">{group.label}</span>
+        <span className="block text-[13px] text-ink-muted">
           {group.description ?? (value ? 'Included' : 'Not included')}
           {group.price !== 0 && ` · ${priceDelta(group.price, currency)}`}
         </span>
@@ -301,17 +303,19 @@ function DimensionRow({
   return (
     <div className={`${cardClass(false, state.disabled)} px-4 py-3`}>
       <div className="flex items-baseline justify-between gap-3">
-        <label htmlFor={id} className="text-sm font-medium text-ink">
+        <label htmlFor={id} className="text-[14px] font-medium text-ink">
           {group.label}
         </label>
-        <span className="text-sm text-ink tabular-nums">
+        <span className="text-[14px] text-ink tabular-nums">
           {value} {group.unit}
           {delta !== 0 && (
-            <span className="ml-1.5 text-xs text-ink-muted">{priceDelta(delta, currency)}</span>
+            <span className="ml-1.5 text-[13px] text-ink-muted">{priceDelta(delta, currency)}</span>
           )}
         </span>
       </div>
-      {group.description && <p className="mt-0.5 text-xs text-ink-muted">{group.description}</p>}
+      {group.description && (
+        <p className="mt-0.5 text-[13px] text-ink-muted">{group.description}</p>
+      )}
       <input
         id={id}
         type="range"
@@ -323,7 +327,7 @@ function DimensionRow({
         onChange={(e) => onChange(Number(e.target.value))}
         className="mt-3 w-full accent-brand-600"
       />
-      <div className="mt-1 flex justify-between text-xs text-ink-faint tabular-nums">
+      <div className="mt-1 flex justify-between text-[13px] text-ink-faint tabular-nums">
         <span>
           {group.min} {group.unit}
         </span>
