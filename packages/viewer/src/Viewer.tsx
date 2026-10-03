@@ -55,6 +55,8 @@ export interface ViewerHandle {
   replayAnimations: () => void;
   /** Glide the camera to a preset view of the current model. */
   setView: (view: CameraView) => void;
+  /** The camera's current angle around the model in degrees (0 = +Z), or null before load. */
+  getCameraAzimuth: () => number | null;
 }
 
 export interface ViewerProps {
@@ -96,6 +98,8 @@ export interface ViewerProps {
   idleRotate?: boolean;
   /** Camera view the model opens on (after the intro). Defaults to the automatic framing. */
   initialView?: CameraView;
+  /** Where the model's front faces (degrees, 0 = +Z); preset views are measured from it. */
+  frontAzimuth?: number;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -162,6 +166,7 @@ export function Viewer({
   decoderPaths,
   enablePan = false,
   initialView,
+  frontAzimuth = 0,
   effects = 'auto',
   idleRotate = true,
   playAnimationsOnLoad = true,
@@ -197,6 +202,7 @@ export function Viewer({
     () => ({
       replayAnimations: () => modelController.current?.replayAnimations(),
       setView: (view) => rigController.current?.goTo(view),
+      getCameraAzimuth: () => rigController.current?.azimuth() ?? null,
     }),
     [],
   );
@@ -359,6 +365,7 @@ export function Viewer({
           maxPolarAngle={Math.PI / 2 - 0.05}
           idleRotate={idleRotate}
           initialView={initialView}
+          frontAzimuth={frontAzimuth}
           controllerRef={rigController}
         />
       </Canvas>

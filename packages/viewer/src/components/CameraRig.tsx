@@ -14,6 +14,7 @@ import type { Framing } from '../internal/framing';
 import { INTRO_SECONDS, introPosition } from '../internal/intro';
 import { prefersReducedMotion } from '../internal/motion';
 import {
+  azimuthOf,
   type CameraView,
   glidePosition,
   VIEW_GLIDE_SECONDS,
@@ -23,6 +24,8 @@ import {
 export interface CameraRigController {
   /** Glide to a named view (jumps for reduced motion). */
   goTo: (view: CameraView) => void;
+  /** The camera's current angle around the model, in degrees (0 = +Z). */
+  azimuth: () => number | null;
 }
 
 export interface CameraRigProps {
@@ -35,6 +38,8 @@ export interface CameraRigProps {
   intro?: boolean;
   /** Where the camera settles when a model is framed. Defaults to the framing's own position. */
   initialView?: CameraView | undefined;
+  /** Where the model's front faces (degrees); preset views are measured from it. */
+  frontAzimuth?: number;
   /** Slowly orbit the product after a few idle seconds (skipped for reduced motion). */
   idleRotate?: boolean;
   controllerRef?: RefObject<CameraRigController | null>;
@@ -53,6 +58,7 @@ export function CameraRig({
   maxPolarAngle,
   intro = true,
   initialView,
+  frontAzimuth = 0,
   idleRotate = true,
   controllerRef,
 }: CameraRigProps) {
@@ -65,9 +71,11 @@ export function CameraRig({
   const introEnd = useRef<[number, number, number]>([0, 0, 0]);
   // Read at framing time only, so changing it later doesn't re-run the intro.
   const initialViewRef = useRef(initialView);
+  const frontAzimuthRef = useRef(frontAzimuth);
   useLayoutEffect(() => {
     initialViewRef.current = initialView;
-  }, [initialView]);
+    frontAzimuthRef.current = frontAzimuth;
+  }, [initialView, frontAzimuth]);
   /** Seconds since the last interaction (or since the model was framed). */
   const idleTime = useRef(0);
   const interacting = useRef(false);
@@ -81,10 +89,15 @@ export function CameraRig({
   useImperativeHandle(
     controllerRef,
     () => ({
+      azimuth: () => {
+        if (!framing) return null;
+        const target = controls.current?.target.toArray() ?? framing.target;
+        return azimuthOf(target, getState().camera.position.toArray());
+      },
       goTo: (view) => {
         if (!framing) return;
         const camera = getState().camera;
-        const to = viewPosition(framing, view);
+        const to = viewPosition(framing, view, frontAzimuth);
         introTime.current = null;
         idleTime.current = 0;
         if (prefersReducedMotion()) {
@@ -96,7 +109,7 @@ export function CameraRig({
         glide.current = { from: camera.position.toArray(), to, time: 0 };
       },
     }),
-    [framing, getState],
+    [framing, getState, frontAzimuth],
   );
 
   // Layout effect so the first rendered frame already uses the new framing.
@@ -108,7 +121,7 @@ export function CameraRig({
     idleTime.current = 0;
     glide.current = null;
     const view = initialViewRef.current;
-    const end = view ? viewPosition(framing, view) : framing.position;
+    const end = view ? viewPosition(framing, view, frontAzimuthRef.current) : framing.position;
     introEnd.current = end;
     camera.position.fromArray(animate ? introPosition(framing.target, end, 0) : end);
     camera.near = framing.near;

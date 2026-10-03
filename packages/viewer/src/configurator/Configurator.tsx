@@ -43,7 +43,14 @@ export interface ConfiguratorProps {
   /** Extra viewer props (environment sources, decoder paths, effects…). */
   viewerProps?: Omit<
     ViewerProps,
-    'ref' | 'modelUrl' | 'meshOverrides' | 'deformations' | 'scene' | 'onLoad' | 'initialView'
+    | 'ref'
+    | 'modelUrl'
+    | 'meshOverrides'
+    | 'deformations'
+    | 'scene'
+    | 'onLoad'
+    | 'initialView'
+    | 'frontAzimuth'
   >;
   /** Overrides `config.scene` (e.g. a demo's scene controls). */
   scene?: SceneSettings;
@@ -217,7 +224,10 @@ export function Configurator({
           scene={scene}
           meshOverrides={meshOverrides}
           deformations={deformations}
-          {...(presentation && { initialView: presentation.camera.initialView })}
+          {...(presentation && {
+            initialView: presentation.camera.initialView,
+            frontAzimuth: presentation.camera.frontAzimuth,
+          })}
           onLoad={(next) => {
             setLoaded({ url: modelUrl, info: next });
             onLoad?.(next);
