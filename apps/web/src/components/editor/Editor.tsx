@@ -613,7 +613,20 @@ export function Editor({
             {section === 'rules' && (
               <RulesEditor config={config} issues={issues} onChange={setConfig} />
             )}
-            {section === 'look' && <LookEditor config={config} onChange={setConfig} />}
+            {section === 'look' && (
+              <LookEditor
+                config={config}
+                onChange={(next) => {
+                  const turned =
+                    next.presentation.camera.frontAzimuth !==
+                    config.presentation.camera.frontAzimuth;
+                  setConfig(next);
+                  // Show the new front once the preview has the new setting.
+                  if (turned) setTimeout(() => viewer.current?.setView('front'), 60);
+                }}
+                onCaptureFront={() => viewer.current?.getCameraAzimuth() ?? null}
+              />
+            )}
           </div>
         </aside>
 
@@ -628,6 +641,7 @@ export function Editor({
             deformations={deformations}
             highlightedMeshId={highlighted}
             initialView={previewConfig.presentation.camera.initialView}
+            frontAzimuth={previewConfig.presentation.camera.frontAzimuth}
             onLoad={setInfo}
           />
           <div className="pointer-events-none absolute inset-x-0 top-0 flex items-start justify-between gap-3 p-4">
