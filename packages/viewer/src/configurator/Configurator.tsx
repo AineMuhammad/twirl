@@ -23,7 +23,7 @@ import {
 import type { CameraView } from '../camera-views';
 import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '../scene';
 import type { Deformation, MeshOverrides, ModelInfo } from '../types';
-import { CloseIcon, PlayIcon, ResetIcon, ShareIcon } from '../ui/icons';
+import { CloseIcon, CubeArIcon, DownloadIcon, PlayIcon, ResetIcon, ShareIcon } from '../ui/icons';
 import { type Tab, Tabs } from '../ui/Tabs';
 import { focusRing, glass } from '../ui/ui';
 import type { ViewerHandle, ViewerProps } from '../Viewer';
@@ -76,6 +76,10 @@ export interface ConfiguratorProps {
    * Reject with an Error whose message is safe to show.
    */
   onShare?: (evaluation: Evaluation) => Promise<string>;
+  /** Show a "Download image" button; `watermark` text is stamped on the image (Free plans). */
+  imageDownload?: { watermark?: string };
+  /** Show a disabled "View in your room" button marked as coming soon. */
+  arComingSoon?: boolean;
 }
 
 const NO_OVERRIDES: MeshOverrides = {};
@@ -141,6 +145,8 @@ export function Configurator({
   onEvaluationChange,
   initialSelections,
   onShare,
+  imageDownload,
+  arComingSoon = false,
 }: ConfiguratorProps) {
   const viewer = useRef<ViewerHandle>(null);
   const [loaded, setLoaded] = useState<{ url: string | null; info: ModelInfo } | null>(null);
@@ -253,6 +259,35 @@ export function Configurator({
                 {label}
               </button>
             ))}
+          </div>
+        )}
+        {info && (imageDownload || arComingSoon) && (
+          <div className="absolute top-3 right-3 flex flex-col gap-2">
+            {imageDownload && (
+              <DownloadImageButton
+                viewer={viewer}
+                filename={heading}
+                {...(imageDownload.watermark && { watermark: imageDownload.watermark })}
+              />
+            )}
+            {arComingSoon && (
+              <span className="group relative">
+                <button
+                  type="button"
+                  disabled
+                  aria-label="View in your room (coming soon)"
+                  className={`grid size-10 cursor-not-allowed place-items-center rounded-full text-ink-faint ${glass}`}
+                >
+                  <CubeArIcon width={18} height={18} />
+                </button>
+                <span
+                  role="tooltip"
+                  className="pointer-events-none absolute top-1/2 right-full mr-2 -translate-y-1/2 rounded-lg bg-ink px-2.5 py-1.5 text-[13px] whitespace-nowrap text-surface opacity-0 transition-opacity group-hover:opacity-100"
+                >
+                  View in your room · coming soon
+                </span>
+              </span>
+            )}
           </div>
         )}
         {info && hintVisible && (
@@ -561,5 +596,49 @@ function ShareButton({
           document.body,
         )}
     </div>
+  );
+}
+
+/** Saves a high-resolution PNG of the current view. */
+function DownloadImageButton({
+  viewer,
+  filename,
+  watermark,
+}: {
+  viewer: React.RefObject<ViewerHandle | null>;
+  filename: string;
+  watermark?: string;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const download = async () => {
+    setBusy(true);
+    setFailed(false);
+    try {
+      const blob = await viewer.current?.captureImage(watermark ? { watermark } : {});
+      if (!blob) throw new Error('no image');
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${filename.replace(/[^\w\- ]+/g, '').trim() || 'design'}.png`;
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch {
+      setFailed(true);
+    } finally {
+      setBusy(false);
+    }
+  };
+  return (
+    <button
+      type="button"
+      onClick={() => void download()}
+      disabled={busy}
+      aria-label={failed ? 'Download failed, try again' : 'Download image'}
+      title={failed ? 'Download failed, try again' : 'Download image'}
+      className={`grid size-10 place-items-center rounded-full text-ink-soft hover:text-ink disabled:opacity-60 ${failed ? 'text-red-600' : ''} ${glass} ${focusRing}`}
+    >
+      <DownloadIcon width={18} height={18} />
+    </button>
   );
 }
