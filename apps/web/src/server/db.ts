@@ -19,6 +19,9 @@ function createClient() {
   return new PrismaClient({ adapter: new PrismaPg({ connectionString }) });
 }
 
+/** Whether a database is configured (public pages degrade gracefully without one). */
+export const databaseEnabled = Boolean(serverEnv.DATABASE_URL);
+
 // Reuse one client across hot reloads in development instead of opening a new pool each time.
 const globalForPrisma = globalThis as unknown as { twirlPrisma?: PrismaClient };
 
