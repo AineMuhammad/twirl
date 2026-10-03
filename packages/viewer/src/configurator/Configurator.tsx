@@ -9,6 +9,7 @@ import {
   type ProductConfig,
   type SelectionValue,
 } from '@twirl/config-schema/engine';
+import { createPortal } from 'react-dom';
 import {
   type ComponentType,
   type HTMLAttributes,
@@ -437,6 +438,23 @@ function ShareButton({
     | { phase: 'error'; message: string }
   >({ phase: 'idle' });
   const open = state.phase !== 'idle';
+  const close = () => setState({ phase: 'idle' });
+
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setState({ phase: 'idle' });
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open]);
+
+  const copyAgain = async (url: string) => {
+    try {
+      await navigator.clipboard.writeText(url);
+      setState({ phase: 'ready', url, copied: true });
+    } catch {
+      // Blocked clipboard: the link stays selected in the field to copy by hand.
+    }
+  };
 
   const share = async () => {
     setState({ phase: 'saving' });
@@ -462,39 +480,76 @@ function ShareButton({
     <div className="relative">
       <button
         type="button"
-        onClick={() => (open ? setState({ phase: 'idle' }) : void share())}
+        onClick={() => void share()}
         aria-expanded={open}
         className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[14px] font-medium text-ink-soft hover:bg-tint ${focusRing}`}
       >
         <ShareIcon width={14} height={14} /> Share
       </button>
-      {open && (
-        <div
-          role="dialog"
-          aria-label="Share your design"
-          className="absolute right-0 bottom-full z-30 mb-2 w-[min(86vw,20rem)] rounded-2xl bg-surface p-4 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-line"
-        >
-          {state.phase === 'saving' && <p className="text-[14px] text-ink-soft">Creating link…</p>}
-          {state.phase === 'error' && (
-            <p className="text-[14px] text-red-600 dark:text-red-400">{state.message}</p>
-          )}
-          {state.phase === 'ready' && (
-            <>
-              <p className="text-[14px] font-medium text-ink">
-                {state.copied ? 'Link copied' : 'Your link'}
-              </p>
-              <p className="mt-0.5 text-[13px] text-ink-muted">Anyone with it sees your design.</p>
-              <input
-                readOnly
-                aria-label="Share link"
-                value={state.url}
-                onFocus={(e) => e.target.select()}
-                className="mt-3 h-10 w-full rounded-lg border border-line bg-tint px-3 font-mono text-[13px] text-ink"
-              />
-            </>
-          )}
-        </div>
-      )}
+      {open &&
+        createPortal(
+          // Rendered on <body> so the panel's clipping and the 3D stage can't cover it.
+          <div className="fixed inset-0 z-[1000] flex items-end justify-center bg-black/30 p-4 sm:items-center">
+            {/* Clicking outside closes. Esc does too; keyboard users have the Close button. */}
+            <button
+              type="button"
+              tabIndex={-1}
+              aria-hidden
+              onClick={close}
+              className="absolute inset-0 cursor-default"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="twirl-share-title"
+              className="relative w-full max-w-sm rounded-2xl bg-surface p-5 text-ink shadow-[0_24px_64px_-16px_rgba(0,0,0,0.45)] ring-1 ring-line"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <h2 id="twirl-share-title" className="text-[16px] font-semibold">
+                  {state.phase === 'ready' && state.copied ? 'Link copied' : 'Share your design'}
+                </h2>
+                <button
+                  type="button"
+                  onClick={close}
+                  aria-label="Close"
+                  className={`-mt-1 -mr-1 rounded-full p-1.5 text-ink-muted hover:bg-tint hover:text-ink ${focusRing}`}
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              {state.phase === 'saving' && (
+                <p className="mt-2 text-[14px] text-ink-soft">Creating your link…</p>
+              )}
+              {state.phase === 'error' && (
+                <p className="mt-2 text-[14px] text-red-600 dark:text-red-400">{state.message}</p>
+              )}
+              {state.phase === 'ready' && (
+                <>
+                  <p className="mt-1 text-[14px] text-ink-muted">
+                    Anyone with this link sees your design.
+                  </p>
+                  <div className="mt-4 flex gap-2">
+                    <input
+                      readOnly
+                      aria-label="Share link"
+                      value={state.url}
+                      onFocus={(e) => e.target.select()}
+                      className="h-10 min-w-0 flex-1 rounded-lg border border-line bg-tint px-3 font-mono text-[13px] text-ink"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => void copyAgain(state.url)}
+                      className={`h-10 shrink-0 rounded-lg bg-ink px-4 text-[14px] font-medium text-surface hover:opacity-90 ${focusRing}`}
+                    >
+                      Copy
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          </div>,
+          document.body,
+        )}
     </div>
   );
 }
