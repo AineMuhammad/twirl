@@ -1,12 +1,12 @@
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { APP_NAME } from '@/config/app';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countNewQuotes } from '@/server/quotes';
 
 import { signOutAction } from '../actions';
+import { Logo } from '@/components/brand/Logo';
 
 const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
@@ -25,8 +25,7 @@ export default async function DashboardShellLayout({ children }: { children: Rea
               href="/dashboard"
               className={`rounded-md font-display text-[28px] leading-none tracking-tight text-ink ${focusRing}`}
             >
-              {APP_NAME}
-              <span className="text-brand-600 italic">.</span>
+              <Logo />
             </Link>
             <span className="hidden truncate rounded-full bg-tint-strong px-3 py-1 text-[13px] font-medium text-ink-soft lg:inline">
               {workspace.name}

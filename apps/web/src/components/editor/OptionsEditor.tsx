@@ -151,7 +151,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
               <li
                 key={part.id}
                 id={`part-options-${part.id}`}
-                className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${problems ? 'border-red-300 dark:border-red-500/50' : customisable ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
+                className={`overflow-hidden rounded-xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${problems ? 'border-red-300 dark:border-red-500/50' : customisable ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
               >
                 <div className="flex items-center gap-3 p-4">
                   <div className="min-w-0 flex-1">
@@ -167,7 +167,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                         </Badge>
                       ) : (
                         <>
-                          <Badge tone={color ? 'violet' : 'neutral'}>
+                          <Badge tone={color ? 'brand' : 'neutral'}>
                             <PaletteIcon size={12} />
                             {!color
                               ? 'No colour choice'
@@ -175,7 +175,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                                 ? 'No colours added'
                                 : `Colour: ${color.swatches.length + 1} choices${color.allowCustom ? ' + any' : ''}`}
                           </Badge>
-                          <Badge tone={visibility ? 'sky' : 'neutral'}>
+                          <Badge tone={visibility ? 'emerald' : 'neutral'}>
                             <EyeIcon size={12} />
                             {visibility ? 'Removable' : 'Always shown'}
                           </Badge>
@@ -204,7 +204,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                   <div className="space-y-4 border-t border-line bg-tint/40 p-4">
                     <OptionPanel
                       icon={<PaletteIcon size={17} />}
-                      iconClass="bg-violet-50 text-violet-600 dark:bg-violet-500/15 dark:text-violet-300"
+                      iconClass="bg-brand-50 text-brand-700 dark:bg-brand-500/15 dark:text-brand-300"
                       title="Colour"
                       toggleLabel="Let shoppers change the colour"
                       on={Boolean(color)}
@@ -241,7 +241,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
 
                     <OptionPanel
                       icon={<EyeIcon size={17} />}
-                      iconClass="bg-sky-50 text-sky-600 dark:bg-sky-500/15 dark:text-sky-300"
+                      iconClass="bg-emerald-50 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300"
                       title="Show / hide"
                       toggleLabel="Let shoppers remove this part"
                       on={Boolean(visibility)}
@@ -318,7 +318,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
           </Button>
         </div>
         {sizes.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-line px-4 py-5 text-center text-[14px] text-ink-muted">
+          <p className="rounded-xl border border-dashed border-line px-4 py-5 text-center text-[14px] text-ink-muted">
             No sizes yet.
           </p>
         ) : (
@@ -332,7 +332,7 @@ export function OptionsEditor({ config, issues, onChange, openId, onOpen }: Opti
                 <li
                   key={group.id}
                   id={`option-${group.id}`}
-                  className={`overflow-hidden rounded-2xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${groupIssues.length ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
+                  className={`overflow-hidden rounded-xl border bg-surface shadow-[0_1px_2px_rgba(0,0,0,0.04)] ${groupIssues.length ? 'border-red-300 dark:border-red-500/50' : open ? 'border-brand-300 dark:border-brand-500/50' : 'border-line'}`}
                 >
                   <div className="flex items-center gap-3 p-4">
                     <span

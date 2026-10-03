@@ -30,7 +30,7 @@ describe('productConfigSchema: samples', () => {
     expect(config.rules).toEqual([]);
     expect(config.presentation).toEqual({
       layout: 'sidebar',
-      theme: { accent: '#4f46e5', font: 'geist' },
+      theme: { accent: '#c2552d', font: 'geist' },
       camera: { initialView: 'threeQuarter', frontAzimuth: 0 },
     });
     const parsedFabric = config.groups[0];

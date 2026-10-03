@@ -105,7 +105,7 @@ export function ModelUploader({ enabled }: { enabled: boolean }) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors ${dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line'}`}
+        className={`flex flex-col items-center gap-3 rounded-xl border-2 border-dashed px-6 py-12 text-center transition-colors ${dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line'}`}
       >
         {!enabled ? (
           <p className="text-[15px] text-ink-muted">

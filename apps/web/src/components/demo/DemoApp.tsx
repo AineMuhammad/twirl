@@ -7,7 +7,6 @@ import {
   Configurator,
   focusRing,
   glass,
-  LogoMark,
   MoonIcon,
   SunIcon,
   UploadIcon,
@@ -15,7 +14,7 @@ import {
 import Link from 'next/link';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
-import { APP_NAME } from '@/config/app';
+import { Logo } from '@/components/brand/Logo';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
@@ -109,8 +108,7 @@ export function DemoApp() {
             href="/"
             className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass} ${focusRing}`}
           >
-            <LogoMark className="text-brand-600" />
-            <span className="font-semibold tracking-tight">{APP_NAME}</span>
+            <Logo size="sm" />
             <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-[13px] font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
               Demo
             </span>
@@ -162,7 +160,7 @@ export function DemoApp() {
               type="button"
               onClick={() => fileInput.current?.click()}
               aria-label="Upload a model"
-              className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-[14px] font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
+              className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-[14px] font-medium text-white shadow-sm transition-colors hover:bg-brand-700 ${focusRing}`}
             >
               <UploadIcon />
               <span className="hidden sm:inline">Upload</span>
@@ -200,7 +198,7 @@ export function DemoApp() {
       {local.error && (
         <div
           role="alert"
-          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-[14px] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-xl bg-surface px-4 py-3 text-[14px] shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20"
         >
           <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
           <p className="flex-1 text-ink-soft">{local.error}</p>
@@ -217,7 +215,7 @@ export function DemoApp() {
 
       {local.dragging && (
         <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-brand-900/30 backdrop-blur-md">
-          <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
+          <div className="flex flex-col items-center gap-3 rounded-xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
             <UploadIcon width={28} height={28} />
             <p className="text-lg font-semibold">Drop to view your model</p>
             <p className="text-[14px] text-white/80">

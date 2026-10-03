@@ -49,7 +49,7 @@ export default async function WorkspacesPage({
         </form>
       </div>
 
-      <div className="overflow-x-auto rounded-2xl bg-surface ring-1 ring-line">
+      <div className="overflow-x-auto rounded-xl bg-surface ring-1 ring-line">
         <table className="w-full text-left text-[14px]">
           <thead className="border-b border-line text-[13px] text-ink-muted">
             <tr>

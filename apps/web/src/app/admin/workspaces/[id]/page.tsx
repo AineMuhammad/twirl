@@ -40,14 +40,14 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
             ['Quotes (30 days)', String(quotes30d)],
           ] as const
         ).map(([label, value]) => (
-          <div key={label} className="rounded-2xl bg-surface p-4 ring-1 ring-line">
+          <div key={label} className="rounded-xl bg-surface p-4 ring-1 ring-line">
             <p className="text-[13px] text-ink-muted">{label}</p>
             <p className="mt-1 text-[22px] font-semibold text-ink tabular-nums">{value}</p>
           </div>
         ))}
       </div>
 
-      <section className="rounded-2xl bg-surface p-5 ring-1 ring-line" aria-labelledby="plan">
+      <section className="rounded-xl bg-surface p-5 ring-1 ring-line" aria-labelledby="plan">
         <h2 id="plan" className="text-[16px] font-semibold text-ink">
           Plan
         </h2>
@@ -65,7 +65,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
         </p>
       </section>
 
-      <section className="rounded-2xl bg-surface p-5 ring-1 ring-line" aria-labelledby="people">
+      <section className="rounded-xl bg-surface p-5 ring-1 ring-line" aria-labelledby="people">
         <h2 id="people" className="text-[16px] font-semibold text-ink">
           People
         </h2>
@@ -89,7 +89,7 @@ export default async function WorkspaceDetailPage({ params }: { params: Promise<
         </ul>
       </section>
 
-      <section className="rounded-2xl bg-surface p-5 ring-1 ring-line" aria-labelledby="products">
+      <section className="rounded-xl bg-surface p-5 ring-1 ring-line" aria-labelledby="products">
         <h2 id="products" className="text-[16px] font-semibold text-ink">
           Products
         </h2>

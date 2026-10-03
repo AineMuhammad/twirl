@@ -65,7 +65,7 @@ export function VersionsDrawer({
         </header>
         <div className="min-h-0 flex-1 overflow-y-auto p-6">
           {versions.length === 0 ? (
-            <p className="rounded-2xl border border-dashed border-line px-4 py-8 text-center text-[14px] text-ink-muted">
+            <p className="rounded-xl border border-dashed border-line px-4 py-8 text-center text-[14px] text-ink-muted">
               Nothing published yet. Use <strong className="text-ink">Publish</strong> when your
               product is ready for shoppers.
             </p>
@@ -74,7 +74,7 @@ export function VersionsDrawer({
               {versions.map((v) => (
                 <li
                   key={v.id}
-                  className={`rounded-2xl p-4 ring-1 ${v.live ? 'bg-emerald-50/50 ring-emerald-200 dark:bg-emerald-500/5 dark:ring-emerald-500/30' : 'bg-surface ring-line'}`}
+                  className={`rounded-xl p-4 ring-1 ${v.live ? 'bg-emerald-50/50 ring-emerald-200 dark:bg-emerald-500/5 dark:ring-emerald-500/30' : 'bg-surface ring-line'}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <p className="text-[15px] font-semibold text-ink">Version {v.number}</p>

@@ -48,7 +48,7 @@ export default async function QuotesPage({
       </div>
 
       {quotes.length === 0 ? (
-        <div className="rounded-2xl border-2 border-dashed border-line bg-surface/50 px-6 py-12 text-center">
+        <div className="rounded-xl border-2 border-dashed border-line bg-surface/50 px-6 py-12 text-center">
           <p className="text-[15px] font-medium text-ink">
             {archived ? 'No archived quotes' : 'No quote requests yet'}
           </p>
@@ -59,7 +59,7 @@ export default async function QuotesPage({
           )}
         </div>
       ) : (
-        <ul className="divide-y divide-line overflow-hidden rounded-2xl bg-surface ring-1 ring-line">
+        <ul className="divide-y divide-line overflow-hidden rounded-xl bg-surface ring-1 ring-line">
           {quotes.map((q) => {
             const isNew = q.status === 'NEW';
             return (

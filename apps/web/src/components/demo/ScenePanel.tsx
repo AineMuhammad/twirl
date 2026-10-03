@@ -50,7 +50,7 @@ function LightingTile({
       aria-pressed={pressed}
       aria-busy={loading}
       onClick={onClick}
-      className={`group relative aspect-[5/3] overflow-hidden rounded-2xl text-left transition-shadow ${focusRing} ${pressed ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : 'ring-1 ring-line hover:ring-ink-faint/50'}`}
+      className={`group relative aspect-[5/3] overflow-hidden rounded-xl text-left transition-shadow ${focusRing} ${pressed ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : 'ring-1 ring-line hover:ring-ink-faint/50'}`}
       style={{ background: `radial-gradient(120% 90% at 25% 15%, ${tones[0]}, ${tones[1]})` }}
     >
       <span className="absolute inset-x-2 bottom-2 flex items-center justify-between">
@@ -166,7 +166,7 @@ export function ScenePanel({ scene, onChange, lightingLoading }: ScenePanelProps
 
       <section>
         <SectionTitle>Ground</SectionTitle>
-        <div className="rounded-2xl border border-line bg-surface p-1">
+        <div className="rounded-xl border border-line bg-surface p-1">
           <Switch
             label="Studio cyclorama"
             description="A curved photo-studio backdrop in 3D"

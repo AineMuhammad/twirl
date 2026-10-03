@@ -31,18 +31,18 @@ export default async function AdminOverviewPage() {
               {t.href ? (
                 <Link
                   href={t.href}
-                  className="hover:ring-brand-300 block rounded-2xl bg-surface p-4 ring-1 ring-line"
+                  className="block rounded-xl bg-surface p-4 ring-1 ring-line hover:ring-brand-300"
                 >
                   {body}
                 </Link>
               ) : (
-                <div className="rounded-2xl bg-surface p-4 ring-1 ring-line">{body}</div>
+                <div className="rounded-xl bg-surface p-4 ring-1 ring-line">{body}</div>
               )}
             </li>
           );
         })}
       </ul>
-      <section className="rounded-2xl bg-surface p-5 ring-1 ring-line" aria-labelledby="plans">
+      <section className="rounded-xl bg-surface p-5 ring-1 ring-line" aria-labelledby="plans">
         <h2 id="plans" className="text-[16px] font-semibold text-ink">
           Workspaces by plan
         </h2>

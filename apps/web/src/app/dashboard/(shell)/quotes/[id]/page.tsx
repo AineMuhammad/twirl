@@ -62,7 +62,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
       </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-        <section className="rounded-2xl bg-surface p-6 ring-1 ring-line" aria-labelledby="design">
+        <section className="rounded-xl bg-surface p-6 ring-1 ring-line" aria-labelledby="design">
           <h2 id="design" className="text-[17px] font-semibold text-ink">
             Their design
           </h2>
@@ -99,10 +99,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
         </section>
 
         <aside className="space-y-6">
-          <section
-            className="rounded-2xl bg-surface p-6 ring-1 ring-line"
-            aria-labelledby="contact"
-          >
+          <section className="rounded-xl bg-surface p-6 ring-1 ring-line" aria-labelledby="contact">
             <h2 id="contact" className="text-[17px] font-semibold text-ink">
               Contact
             </h2>
@@ -135,7 +132,7 @@ export default async function QuotePage({ params }: { params: Promise<{ id: stri
           </section>
           {quote.message && (
             <section
-              className="rounded-2xl bg-surface p-6 ring-1 ring-line"
+              className="rounded-xl bg-surface p-6 ring-1 ring-line"
               aria-labelledby="message"
             >
               <h2 id="message" className="text-[17px] font-semibold text-ink">

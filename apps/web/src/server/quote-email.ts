@@ -31,7 +31,7 @@ export function quoteEmail(quote: QuoteForEmail, quoteUrl: string) {
 <p style="margin:0 0 8px;font-size:20px;font-weight:600">${escapeHtml(quote.price)}</p>
 <table style="border-collapse:collapse;margin:0 0 16px">${rows}</table>
 ${quote.message ? `<p style="margin:0 0 4px;color:#737373">Message</p><p style="margin:0 0 16px;white-space:pre-wrap">${escapeHtml(quote.message)}</p>` : ''}
-<p style="margin:0"><a href="${escapeHtml(quoteUrl)}" style="color:#4f46e5">Open it in ${APP_NAME}</a> · Reply to this email to answer the customer directly.</p>
+<p style="margin:0"><a href="${escapeHtml(quoteUrl)}" style="color:#a2441f">Open it in ${APP_NAME}</a> · Reply to this email to answer the customer directly.</p>
 </div>`;
   return { subject, text, html };
 }

@@ -7,9 +7,8 @@ import type { ReactNode } from 'react';
 export const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
 
-/** Frosted floating surface (top bar, phone sheet). */
-export const glass =
-  'bg-surface/80 backdrop-blur-xl ring-1 ring-line shadow-[0_12px_48px_-12px_rgba(0,0,0,0.25)]';
+/** Floating surface over the 3D stage (top bar, view pills, phone sheet): solid, softly raised. */
+export const glass = 'bg-surface ring-1 ring-line shadow-[0_8px_24px_-12px_rgba(28,25,23,0.28)]';
 
 /** Rainbow fill for "custom color" swatches. */
 export const RAINBOW =

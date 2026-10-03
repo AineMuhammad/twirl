@@ -99,7 +99,7 @@ function Reason({ text }: { text: string | undefined }) {
 }
 
 const cardClass = (open: boolean, disabled: boolean) =>
-  `rounded-2xl border bg-surface transition-shadow ${disabled ? 'opacity-60' : ''} ${open ? 'border-brand-200 shadow-[0_0_0_3px_var(--color-brand-100)] dark:border-brand-500/60 dark:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-brand-500)_25%,transparent)]' : 'border-line hover:border-ink-faint/40'}`;
+  `rounded-xl border bg-surface transition-shadow ${disabled ? 'opacity-60' : ''} ${open ? 'border-brand-200 shadow-[0_0_0_3px_var(--color-brand-100)] dark:border-brand-500/60 dark:shadow-[0_0_0_3px_color-mix(in_oklab,var(--color-brand-500)_25%,transparent)]' : 'border-line hover:border-ink-faint/40'}`;
 
 function ColorCard({
   group,
@@ -147,7 +147,7 @@ function ColorCard({
           onToggle();
           setCustomOpen(false);
         }}
-        className={`flex w-full items-center gap-3 rounded-2xl py-3 pr-3 pl-3 text-left ${focusRing}`}
+        className={`flex w-full items-center gap-3 rounded-xl py-3 pr-3 pl-3 text-left ${focusRing}`}
       >
         <span
           aria-hidden
@@ -232,7 +232,7 @@ function ColorCard({
           {customOpen && (
             <ColorPicker
               label={group.label}
-              color={color ?? '#4f46e5'}
+              color={color ?? '#c2552d'}
               onChange={(hex) => onChange({ custom: hex.toLowerCase() })}
               onDone={() => setCustomOpen(false)}
             />

@@ -3,12 +3,12 @@ import Link from 'next/link';
 import { redirect } from 'next/navigation';
 
 import { authEnabled, emailEnabled, googleEnabled } from '@/auth';
-import { APP_NAME } from '@/config/app';
 import { getCurrentUser } from '@/server/auth/session';
 import { safeReturnPath, signInErrorMessage } from '@/server/auth/redirect';
 
 import { signInWithGoogle } from './actions';
 import { EmailForm } from './EmailForm';
+import { Logo } from '@/components/brand/Logo';
 
 export const metadata: Metadata = { title: 'Sign in' };
 
@@ -24,10 +24,9 @@ export default async function SignInPage({
 
   return (
     <main className="grid min-h-dvh place-items-center bg-tint px-4 py-12">
-      <div className="w-full max-w-md rounded-3xl bg-surface p-8 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.25)] ring-1 ring-line">
+      <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.25)] ring-1 ring-line">
         <Link href="/" className="font-display text-3xl tracking-tight text-ink">
-          {APP_NAME}
-          <span className="text-brand-600 italic">.</span>
+          <Logo />
         </Link>
         <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">Sign in</h1>
         <p className="mt-1 text-[15px] text-ink-muted">
