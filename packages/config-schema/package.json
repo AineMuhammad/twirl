@@ -6,7 +6,8 @@
   "type": "module",
   "sideEffects": false,
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./samples": "./src/samples/index.ts"
   },
   "scripts": {
     "lint": "eslint .",
@@ -20,5 +21,8 @@
     "eslint": "9.39.5",
     "typescript": "6.0.3",
     "vitest": "5.0.3"
+  },
+  "dependencies": {
+    "zod": "4.6.5"
   }
 }
