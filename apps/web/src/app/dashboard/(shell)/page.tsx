@@ -257,6 +257,12 @@ export default async function DashboardPage() {
                 ? 'Your configurators show a small watermark on this plan.'
                 : 'No watermark on this plan.'}
             </p>
+            <Link
+              href="/pricing"
+              className="mt-4 inline-flex text-[14px] font-medium text-brand-700 hover:underline dark:text-brand-200"
+            >
+              See plans →
+            </Link>
           </section>
         </aside>
       </div>

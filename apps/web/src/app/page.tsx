@@ -19,12 +19,20 @@ export default function HomePage() {
           {APP_NAME}
           <span className="text-brand-600 italic">.</span>
         </span>
-        <Link
-          href="/dashboard"
-          className={`flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-[15px] font-medium text-ink shadow-sm hover:bg-tint ${focusRing}`}
-        >
-          Sign in
-        </Link>
+        <nav className="flex items-center gap-2">
+          <Link
+            href="/pricing"
+            className={`flex h-10 items-center rounded-lg px-4 text-[15px] font-medium text-ink-soft hover:text-ink ${focusRing}`}
+          >
+            Pricing
+          </Link>
+          <Link
+            href="/dashboard"
+            className={`flex h-10 items-center rounded-lg border border-line bg-surface px-4 text-[15px] font-medium text-ink shadow-sm hover:bg-tint ${focusRing}`}
+          >
+            Sign in
+          </Link>
+        </nav>
       </header>
 
       <main className="mx-auto max-w-6xl px-5 pt-16 pb-24 sm:pt-24">
