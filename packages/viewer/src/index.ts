@@ -34,3 +34,4 @@ export {
   isEnvironmentId,
 } from './environments';
 export type { EffectsSetting } from './internal/effects';
+export { CAMERA_VIEWS, type CameraView } from './camera-views';

@@ -14,7 +14,7 @@ import {
 import { type Box3, NeutralToneMapping, type WebGLRendererParameters } from 'three';
 
 import { AdaptiveQuality } from './components/AdaptiveQuality';
-import { CameraRig } from './components/CameraRig';
+import { CameraRig, type CameraRigController } from './components/CameraRig';
 import { Cyclorama } from './components/Cyclorama';
 import { EnvironmentIndicator } from './components/EnvironmentIndicator';
 import { Floor } from './components/Floor';
@@ -33,6 +33,7 @@ import { effectsEnabled, type EffectsSetting } from './internal/effects';
 import { progressFromEvent, toViewerError } from './internal/errors';
 import { cycloramaColor } from './internal/cyclorama';
 import { floorColorFor } from './internal/floor-color';
+import type { CameraView } from './internal/views';
 import { computeFraming, type Framing } from './internal/framing';
 import { qualitySettings } from './internal/quality';
 import { type Stage, stageFromBounds } from './internal/stage';
@@ -50,6 +51,8 @@ import {
 export interface ViewerHandle {
   /** Restart the model's built-in animations from the beginning. No-op if it has none. */
   replayAnimations: () => void;
+  /** Glide the camera to a preset view of the current model. */
+  setView: (view: CameraView) => void;
 }
 
 export interface ViewerProps {
@@ -179,9 +182,13 @@ export function Viewer({
   const decoders = useMemo(() => ({ draco: dracoPath, basis: basisPath }), [dracoPath, basisPath]);
 
   const modelController = useRef<ModelController | null>(null);
+  const rigController = useRef<CameraRigController | null>(null);
   useImperativeHandle(
     ref,
-    () => ({ replayAnimations: () => modelController.current?.replayAnimations() }),
+    () => ({
+      replayAnimations: () => modelController.current?.replayAnimations(),
+      setView: (view) => rigController.current?.goTo(view),
+    }),
     [],
   );
 
@@ -334,6 +341,7 @@ export function Viewer({
           enablePan={enablePan}
           maxPolarAngle={Math.PI / 2 - 0.05}
           idleRotate={idleRotate}
+          controllerRef={rigController}
         />
       </Canvas>
       <LoadingOverlay state={overlayState} />

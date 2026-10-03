@@ -3,7 +3,7 @@ import type { CSSProperties } from 'react';
 const pill: CSSProperties = {
   position: 'absolute',
   left: '50%',
-  bottom: 16,
+  top: 16,
   transform: 'translateX(-50%)',
   display: 'flex',
   alignItems: 'center',
@@ -19,7 +19,8 @@ const pill: CSSProperties = {
   pointerEvents: 'none',
 };
 
-/** Shown while an HDRI environment loads (studio light stands in meanwhile). */
+/** Shown while an HDRI environment loads (studio light stands in meanwhile). Sits at the top so
+ * it doesn't collide with hosts' bottom controls (e.g. camera view buttons). */
 export function EnvironmentIndicator() {
   return (
     <div style={pill} role="status" aria-live="polite">

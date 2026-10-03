@@ -7,7 +7,12 @@ import type {
   ViewerError,
   ViewerHandle,
 } from '@twirl/viewer';
-import { backgroundCss, DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
+import {
+  backgroundCss,
+  type CameraView,
+  DEFAULT_SCENE,
+  type SceneSettings,
+} from '@twirl/viewer/settings';
 import Link from 'next/link';
 import { useCallback, useRef, useState } from 'react';
 
@@ -23,6 +28,13 @@ import { focusRing, glass } from './ui';
 import { useLocalModel } from './useLocalModel';
 
 const NO_OVERRIDES: MeshOverrides = {};
+const VIEW_BUTTONS: { view: CameraView; label: string }[] = [
+  { view: 'front', label: 'Front' },
+  { view: 'threeQuarter', label: '¾' },
+  { view: 'side', label: 'Side' },
+  { view: 'back', label: 'Back' },
+  { view: 'top', label: 'Top' },
+];
 const PANEL_WIDTH = 'lg:w-[400px]';
 
 export function DemoApp() {
@@ -76,6 +88,28 @@ export function DemoApp() {
           onEnvironmentStatus={setLighting}
           onError={onError}
         />
+        {info && (
+          <div
+            role="group"
+            aria-label="Camera view"
+            className={`absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full p-1 lg:bottom-5 ${glass}`}
+          >
+            {VIEW_BUTTONS.map(({ view, label }) => (
+              <button
+                key={view}
+                type="button"
+                aria-label={view === 'threeQuarter' ? 'Three-quarter view' : `${label} view`}
+                onClick={() => {
+                  setHintVisible(false);
+                  viewer.current?.setView(view);
+                }}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium text-neutral-600 transition-colors hover:bg-neutral-900/[0.06] hover:text-neutral-900 ${focusRing}`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        )}
         {info && hintVisible && (
           <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-white/70 px-3 py-1.5 text-xs text-neutral-600 ring-1 ring-black/5 backdrop-blur lg:block">
             Drag to rotate · Scroll to zoom
