@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 
-import { clientEnv } from '@/env/client';
 import { embedSnippet } from '@/lib/embed-protocol';
 
 import { XIcon } from './icons';
@@ -24,7 +23,9 @@ function useCopy() {
 
 /** The code to paste into a website, plus a direct link to the configurator. */
 export function EmbedDialog({ publicId, onClose }: { publicId: string; onClose: () => void }) {
-  const appUrl = clientEnv.NEXT_PUBLIC_APP_URL ?? window.location.origin;
+  // The site the merchant is using right now: localhost in development, the live domain once
+  // deployed. (NEXT_PUBLIC_APP_URL can point at a deployment that doesn't exist yet.)
+  const appUrl = window.location.origin;
   const snippet = embedSnippet(appUrl, publicId);
   const link = `${appUrl.replace(/\/+$/, '')}/embed/${publicId}`;
   const { copied, copy } = useCopy();
