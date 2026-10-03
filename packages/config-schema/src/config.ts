@@ -43,7 +43,8 @@ export const colorGroupSchema = z.object({
   ...groupBase,
   type: z.literal('color'),
   parts: z.array(idSchema).min(1),
-  swatches: z.array(swatchSchema).min(1),
+  /** Colours besides the model's own finish (which is always offered). May start empty. */
+  swatches: z.array(swatchSchema).default([]),
   /** A swatch id, or null to keep the model's original finish. */
   default: idSchema.nullable(),
   /** Name of the model's original finish, shown as its own choice (e.g. "Matte black"). */
@@ -199,6 +200,8 @@ export const productConfigSchema = z
       description: z.string().trim().max(2000).optional(),
     }),
     parts: z.array(partSchema),
+    /** Meshes (names or `#path`) hidden from the model entirely, e.g. props from the source file. */
+    hiddenMeshes: z.array(z.string().min(1)).default([]),
     groups: z.array(optionGroupSchema),
     pricing: pricingSchema,
     rules: z.array(ruleSchema).default([]),
@@ -209,8 +212,13 @@ export const productConfigSchema = z
     const issue = (path: (string | number)[], message: string) =>
       ctx.addIssue({ code: 'custom', path, message });
 
+    const hidden = new Set(config.hiddenMeshes);
     const partIds = new Set<string>();
     config.parts.forEach((part, i) => {
+      for (const mesh of part.meshes) {
+        if (hidden.has(mesh))
+          issue(['parts', i, 'meshes'], `"${mesh}" is hidden, so it can't be in a part.`);
+      }
       if (partIds.has(part.id)) issue(['parts', i, 'id'], `Duplicate part id "${part.id}".`);
       partIds.add(part.id);
     });

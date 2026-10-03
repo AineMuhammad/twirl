@@ -77,3 +77,15 @@ describe('slugify', () => {
     expect(slugify('x'.repeat(100))).toHaveLength(48);
   });
 });
+
+describe('starterConfig without options', () => {
+  it('creates parts only', () => {
+    const config = starterConfig({
+      name: 'Chair',
+      meshTree: [{ id: '0', name: 'Seat', hasName: true, kind: 'mesh', children: [] }],
+      withOptions: false,
+    });
+    expect(config.parts).toHaveLength(1);
+    expect(config.groups).toEqual([]);
+  });
+});

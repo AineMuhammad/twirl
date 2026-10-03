@@ -23,7 +23,7 @@ describe('productConfigSchema: samples', () => {
     const input = chair();
     const fabric = input.groups[0];
     if (fabric?.type !== 'color') throw new Error('fixture');
-    fabric.swatches[0] = { id: 'oat-linen', label: 'Oat linen', color: '#D8CCB6' };
+    (fabric.swatches ??= [])[0] = { id: 'oat-linen', label: 'Oat linen', color: '#D8CCB6' };
     delete input.rules;
     delete input.presentation;
     const config = productConfigSchema.parse(input);
@@ -77,7 +77,7 @@ describe('productConfigSchema: cross-references', () => {
     const g = input.groups[1];
     if (g?.type !== 'color') throw new Error('fixture');
     g.default = 'gold';
-    g.swatches.push({ id: 'custom', label: 'Nope', color: '#000000' });
+    (g.swatches ??= []).push({ id: 'custom', label: 'Nope', color: '#000000' });
     const found = issues(input);
     expect(found).toContainEqual(expect.stringContaining('Default "gold"'));
     expect(found).toContainEqual(expect.stringContaining('"custom" is reserved'));
@@ -181,10 +181,39 @@ describe('productConfigSchema: cross-references', () => {
     input.parts[0] = { id: 'Frame Part', label: 'Frame', meshes: ['iron'] };
     const g = input.groups[0];
     if (g?.type !== 'color') throw new Error('fixture');
-    g.swatches[0] = { id: 'x', label: 'X', color: 'red', price: 1.5 };
+    (g.swatches ??= [])[0] = { id: 'x', label: 'X', color: 'red', price: 1.5 };
     const found = issues(input).join('\n');
     expect(found).toMatch(/lowercase letters/);
     expect(found).toMatch(/hex colour/);
     expect(found).toMatch(/whole minor units/);
+  });
+});
+
+describe('hidden meshes and empty colour lists', () => {
+  it('accepts colour options with only the original finish, and hidden meshes outside parts', () => {
+    const parsed = productConfigSchema.safeParse({
+      schemaVersion: 1,
+      product: { name: 'Chair' },
+      parts: [{ id: 'seat', label: 'Seat', meshes: ['Seat'] }],
+      hiddenMeshes: ['Floor_Prop'],
+      groups: [
+        { type: 'color', id: 'seat-color', label: 'Seat colour', parts: ['seat'], default: null },
+      ],
+      pricing: { currency: 'USD', base: 0 },
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) expect(parsed.data.groups[0]).toMatchObject({ swatches: [] });
+  });
+
+  it('rejects a hidden mesh that is also in a part', () => {
+    const parsed = productConfigSchema.safeParse({
+      schemaVersion: 1,
+      product: { name: 'Chair' },
+      parts: [{ id: 'seat', label: 'Seat', meshes: ['Seat'] }],
+      hiddenMeshes: ['Seat'],
+      groups: [],
+      pricing: { currency: 'USD', base: 0 },
+    });
+    expect(parsed.success).toBe(false);
   });
 });
