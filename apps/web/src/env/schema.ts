@@ -13,6 +13,11 @@ const DEPLOYED_REQUIRED = [
   'AUTH_GOOGLE_SECRET',
   'RESEND_API_KEY',
   'EMAIL_FROM',
+  'R2_ACCOUNT_ID',
+  'R2_ACCESS_KEY_ID',
+  'R2_SECRET_ACCESS_KEY',
+  'R2_BUCKET',
+  'R2_PUBLIC_URL',
 ] as const;
 
 export const serverSchema = z
@@ -40,6 +45,16 @@ export const serverSchema = z
     RESEND_API_KEY: z.string().optional(),
     /** Sender for sign-in links and notifications, e.g. "Twirl <hello@example.com>". */
     EMAIL_FROM: z.string().optional(),
+    /** Cloudflare R2 (S3-compatible) for uploaded models. Token: Object Read & Write. */
+    R2_ACCOUNT_ID: z.string().optional(),
+    R2_ACCESS_KEY_ID: z.string().optional(),
+    R2_SECRET_ACCESS_KEY: z.string().optional(),
+    R2_BUCKET: z.string().optional(),
+    /** Public base URL serving the bucket (custom domain or r2.dev), without a trailing slash. */
+    R2_PUBLIC_URL: z
+      .url()
+      .transform((url) => url.replace(/\/+$/, ''))
+      .optional(),
     /** Set by Vercel ('production' | 'preview' | 'development'). */
     VERCEL_ENV: z.string().optional(),
   })
