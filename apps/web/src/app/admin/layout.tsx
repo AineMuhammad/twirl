@@ -2,8 +2,8 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import type { ReactNode } from 'react';
 
-import { APP_NAME } from '@/config/app';
 import { requireAdmin } from '@/server/auth/session';
+import { Logo } from '@/components/brand/Logo';
 
 export const metadata: Metadata = { title: 'Admin', robots: { index: false } };
 
@@ -15,8 +15,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
           <div className="flex items-center gap-3">
             <Link href="/admin" className="font-display text-2xl tracking-tight text-ink">
-              {APP_NAME}
-              <span className="text-brand-600 italic">.</span>
+              <Logo />
             </Link>
             <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[13px] font-medium text-brand-700 dark:bg-brand-500/20 dark:text-brand-200">
               Admin

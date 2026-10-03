@@ -30,7 +30,7 @@ export default async function SharedDesignPage({ params }: Params) {
         <div>
           <p className="text-[17px] font-semibold text-ink">This link doesn&apos;t work any more</p>
           <p className="mt-1 text-[15px] text-ink-muted">The product may have been removed.</p>
-          <Link href="/" className="mt-4 inline-block text-[15px] font-medium text-brand-600">
+          <Link href="/" className="mt-4 inline-block text-[15px] font-medium text-brand-700">
             Go to {APP_NAME}
           </Link>
         </div>

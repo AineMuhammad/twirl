@@ -37,7 +37,7 @@ export function EmbedDialog({ publicId, onClose }: { publicId: string; onClose: 
         aria-modal="true"
         aria-labelledby="embed-title"
         onClick={(e) => e.stopPropagation()}
-        className="w-full max-w-xl rounded-2xl bg-surface shadow-2xl"
+        className="w-full max-w-xl rounded-xl bg-surface shadow-2xl"
       >
         <header className="flex items-start justify-between gap-4 border-b border-line p-6">
           <div>

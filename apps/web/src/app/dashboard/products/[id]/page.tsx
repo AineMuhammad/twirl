@@ -31,7 +31,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           </p>
           <Link
             href="/dashboard"
-            className="mt-4 inline-block text-[15px] font-medium text-brand-600"
+            className="mt-4 inline-block text-[15px] font-medium text-brand-700"
           >
             Back to dashboard
           </Link>

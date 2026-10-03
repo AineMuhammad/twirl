@@ -14,7 +14,7 @@ export function RequestModelForm({ name, email }: { name: string; email: string 
     return (
       <div
         role="status"
-        className="rounded-2xl bg-emerald-50 p-6 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100"
+        className="rounded-xl bg-emerald-50 p-6 text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-100"
       >
         <p className="text-[17px] font-semibold">Request sent</p>
         <p className="mt-1 text-[15px]">

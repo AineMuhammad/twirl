@@ -182,7 +182,7 @@ export const presentationSchema = z.object({
   layout: z.enum(LAYOUTS).default('sidebar'),
   theme: z
     .object({
-      accent: hexColorSchema.default('#4f46e5'),
+      accent: hexColorSchema.default('#c2552d'),
       font: z.enum(FONTS).default('geist'),
       logoUrl: z.url().optional(),
     })

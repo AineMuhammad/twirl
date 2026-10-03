@@ -83,7 +83,7 @@ export default async function DashboardPage() {
       {gettingStarted && (
         <section
           aria-labelledby="getting-started"
-          className="rounded-2xl bg-surface p-6 ring-1 ring-line"
+          className="rounded-xl bg-surface p-6 ring-1 ring-line"
         >
           <h2 id="getting-started" className="text-[17px] font-semibold text-ink">
             Getting started
@@ -128,7 +128,7 @@ export default async function DashboardPage() {
               </div>
             </div>
             {products.length === 0 ? (
-              <div className="rounded-2xl border-2 border-dashed border-line bg-surface/50 px-6 py-10 text-center">
+              <div className="rounded-xl border-2 border-dashed border-line bg-surface/50 px-6 py-10 text-center">
                 <p className="text-[15px] font-medium text-ink">No products yet</p>
                 <p className="mt-1 text-[14px] text-ink-muted">
                   {readyModels.length > 0
@@ -142,7 +142,7 @@ export default async function DashboardPage() {
                   <li key={product.id}>
                     <Link
                       href={`/dashboard/products/${product.id}`}
-                      className="group hover:ring-brand-300 flex h-full flex-col justify-between gap-4 rounded-2xl bg-surface p-5 ring-1 ring-line transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.25)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 dark:hover:ring-brand-500/50"
+                      className="group flex h-full flex-col justify-between gap-4 rounded-xl bg-surface p-5 ring-1 ring-line transition-shadow hover:shadow-[0_8px_24px_-12px_rgba(0,0,0,0.25)] hover:ring-brand-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 dark:hover:ring-brand-500/50"
                     >
                       <div>
                         <div className="flex items-start justify-between gap-3">
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
                 Upload a model once, then create one or more products from it.
               </p>
             </div>
-            <div className="rounded-2xl bg-surface p-5 ring-1 ring-line">
+            <div className="rounded-xl bg-surface p-5 ring-1 ring-line">
               <ModelUploader enabled={storageEnabled} />
               <p className="mt-1 text-[14px] text-ink-muted">
                 No 3D model yet?{' '}
@@ -236,7 +236,7 @@ export default async function DashboardPage() {
 
         {/* Plan */}
         <aside className="space-y-4 lg:sticky lg:top-24 lg:self-start" aria-label="Your plan">
-          <section className="rounded-2xl bg-surface p-5 ring-1 ring-line">
+          <section className="rounded-xl bg-surface p-5 ring-1 ring-line">
             <p className="text-[13px] font-medium tracking-wide text-ink-muted uppercase">
               Your plan
             </p>

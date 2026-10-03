@@ -87,7 +87,7 @@ export function PartsEditor({ config, meshes, issues, onChange, onHighlight }: P
       </div>
 
       <ul
-        className="divide-y divide-line overflow-hidden rounded-2xl border border-line bg-surface"
+        className="divide-y divide-line overflow-hidden rounded-xl border border-line bg-surface"
         aria-label="Parts of your model"
       >
         {meshes.map((mesh, index) => {

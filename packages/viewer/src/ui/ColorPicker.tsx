@@ -28,7 +28,7 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
       ref={ref}
       role="group"
       aria-label={`Custom color for ${label}`}
-      className="twirl-color-picker mt-3 rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.2)]"
+      className="twirl-color-picker mt-3 rounded-xl border border-line bg-surface p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.2)]"
     >
       <HexColorPicker color={color} onChange={onChange} />
       <div className="mt-3 flex items-center gap-2">
