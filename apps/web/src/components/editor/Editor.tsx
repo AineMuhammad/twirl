@@ -5,6 +5,7 @@ import { evaluate, type ProductConfig } from '@twirl/config-schema/engine';
 import type { CameraView, MeshOverrides, ModelInfo, ViewerHandle } from '@twirl/viewer';
 import { Configurator, deformationsForSelections, overridesForSelections } from '@twirl/viewer/ui';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   type ComponentType,
   useCallback,
@@ -15,7 +16,13 @@ import {
   useTransition,
 } from 'react';
 
-import { saveDraftAction } from '@/app/dashboard/products/actions';
+import {
+  copyToDraftAction,
+  makeLiveAction,
+  publishAction,
+  saveDraftAction,
+  unpublishAction,
+} from '@/app/dashboard/products/actions';
 import { LazyViewer } from '@/components/demo/LazyViewer';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
 import type { ConfigIssue } from '@/server/products';
@@ -37,6 +44,7 @@ import { LookEditor } from './LookEditor';
 import { OptionsEditor } from './OptionsEditor';
 import { PartsEditor } from './PartsEditor';
 import { RulesEditor } from './RulesEditor';
+import { type VersionSummary, VersionsDrawer } from './VersionsDrawer';
 import {
   Button,
   focusRing,
@@ -51,6 +59,10 @@ export interface EditorProps {
   productId: string;
   initialConfig: ProductConfig;
   modelUrl: string;
+  /** Published versions, newest first. */
+  versions: VersionSummary[];
+  /** The live version, if the product is published (its config as JSON, to spot changes). */
+  live: { number: number; configJson: string } | null;
 }
 
 const CURRENCIES = [
@@ -162,7 +174,7 @@ function describePath(config: ProductConfig, path: string): string {
  * full shopper preview on demand. Edits stay local until saved; the config is validated as you go
  * and again on the server.
  */
-export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
+export function Editor({ productId, initialConfig, modelUrl, versions, live }: EditorProps) {
   const [config, setConfig] = useState(initialConfig);
   const [savedJson, setSavedJson] = useState(() => JSON.stringify(initialConfig));
   const [info, setInfo] = useState<ModelInfo | null>(null);
@@ -172,6 +184,10 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
   const [previewing, setPreviewing] = useState(false);
   const [problemsOpen, setProblemsOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [confirmPublish, setConfirmPublish] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [notice, setNotice] = useState<string | null>(null);
+  const router = useRouter();
   const [saving, startSaving] = useTransition();
   const viewer = useRef<ViewerHandle>(null);
   const content = useRef<HTMLDivElement>(null);
@@ -221,6 +237,58 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
     });
   }, [config, productId, saving, valid]);
 
+  const nextVersion = (versions[0]?.number ?? 0) + 1;
+  const unpublished = live ? JSON.stringify(config) !== live.configJson : true;
+
+  useEffect(() => {
+    if (!notice) return;
+    const timer = setTimeout(() => setNotice(null), 5000);
+    return () => clearTimeout(timer);
+  }, [notice]);
+
+  /** Saves the current edits and publishes them as the next version. */
+  const publish = () => {
+    if (!valid || saving) return;
+    const json = JSON.stringify(config);
+    setConfirmPublish(false);
+    startSaving(async () => {
+      const result = await publishAction(productId, config);
+      if (result.ok) {
+        setSavedJson(json);
+        setSaveError(null);
+        setNotice(`Version ${result.number} is live. Shoppers now see these changes.`);
+        router.refresh();
+      } else {
+        setSaveError(result.error);
+      }
+    });
+  };
+
+  const runVersionAction = (action: () => Promise<{ ok: boolean; error?: string }>, done: string) =>
+    startSaving(async () => {
+      const result = await action();
+      if (result.ok) {
+        setSaveError(null);
+        setNotice(done);
+        router.refresh();
+      } else {
+        setSaveError(result.error ?? 'Something went wrong.');
+      }
+    });
+
+  const copyVersion = (versionId: string) =>
+    startSaving(async () => {
+      const result = await copyToDraftAction(productId, versionId);
+      if (result.ok) {
+        setConfig(result.config);
+        setSavedJson(JSON.stringify(result.config));
+        setHistoryOpen(false);
+        setNotice('The draft now matches that version. Publish to make it live.');
+      } else {
+        setSaveError(result.error);
+      }
+    });
+
   const goToSection = (id: SectionId) => {
     setSection(id);
     content.current?.scrollTo({ top: 0 });
@@ -255,6 +323,8 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
       } else if (e.key === 'Escape') {
         setPreviewing(false);
         setProblemsOpen(false);
+        setConfirmPublish(false);
+        setHistoryOpen(false);
       }
     };
     window.addEventListener('keydown', onKey);
@@ -289,9 +359,15 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
             {config.product.name || 'Untitled product'}
           </h1>
           <p className="flex items-center gap-1.5 text-[13px]" role="status">
-            <span className="rounded bg-tint-strong px-1.5 py-px text-[11px] font-semibold tracking-wide text-ink-soft uppercase">
-              Draft
-            </span>
+            {live ? (
+              <span className="rounded bg-emerald-100 px-1.5 py-px text-[11px] font-semibold tracking-wide text-emerald-800 uppercase dark:bg-emerald-500/20 dark:text-emerald-200">
+                Live · v{live.number}
+              </span>
+            ) : (
+              <span className="rounded bg-amber-100 px-1.5 py-px text-[11px] font-semibold tracking-wide text-amber-900 uppercase dark:bg-amber-500/20 dark:text-amber-100">
+                Not live
+              </span>
+            )}
             {saving ? (
               <span className="text-ink-muted">Saving…</span>
             ) : saveError ? (
@@ -300,9 +376,15 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
               <span className="flex items-center gap-1.5 text-amber-700 dark:text-amber-400">
                 <span aria-hidden className="size-1.5 rounded-full bg-amber-500" /> Unsaved changes
               </span>
-            ) : (
+            ) : live && unpublished ? (
+              <span className="text-ink-muted">Saved · not published yet</span>
+            ) : live ? (
               <span className="flex items-center gap-1 text-emerald-700 dark:text-emerald-400">
-                <CheckIcon size={13} /> All changes saved
+                <CheckIcon size={13} /> Shoppers see the latest version
+              </span>
+            ) : (
+              <span className="flex items-center gap-1 text-ink-muted">
+                <CheckIcon size={13} /> Saved as a draft
               </span>
             )}
           </p>
@@ -352,14 +434,48 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
         >
           <EyeIcon /> <span className="hidden md:inline">Try as a shopper</span>
         </Button>
-        <Button
-          variant="primary"
-          onClick={save}
-          disabled={!valid || !dirty || saving}
-          title={saveTitle}
-        >
-          {saving ? 'Saving…' : 'Save changes'}
+        <Button onClick={() => setHistoryOpen(true)} title="Published versions">
+          <span className="hidden md:inline">Versions</span>
+          <span className="md:hidden">v</span>
         </Button>
+        <Button onClick={save} disabled={!valid || !dirty || saving} title={saveTitle}>
+          {saving ? 'Saving…' : 'Save'}
+        </Button>
+        <div className="relative">
+          <Button
+            variant="primary"
+            onClick={() => setConfirmPublish((v) => !v)}
+            disabled={!valid || saving || (!unpublished && !dirty)}
+            title={
+              !valid
+                ? 'Fix the problems first'
+                : !unpublished && !dirty
+                  ? 'Shoppers already see the latest version'
+                  : 'Make these changes live for shoppers'
+            }
+            aria-expanded={confirmPublish}
+          >
+            Publish
+          </Button>
+          {confirmPublish && (
+            <div className="absolute top-12 right-0 w-80 rounded-xl bg-surface p-4 shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-line">
+              <p className="text-[15px] font-semibold text-ink">Publish version {nextVersion}?</p>
+              <p className="mt-1 text-[14px] text-ink-muted">
+                {live
+                  ? `Shoppers will see these changes straight away, replacing version ${live.number}.`
+                  : 'Your product goes live for shoppers. It counts towards your plan’s live products.'}
+              </p>
+              <div className="mt-4 flex justify-end gap-2">
+                <Button size="sm" variant="ghost" onClick={() => setConfirmPublish(false)}>
+                  Cancel
+                </Button>
+                <Button size="sm" variant="primary" onClick={publish}>
+                  Publish now
+                </Button>
+              </div>
+            </div>
+          )}
+        </div>
       </header>
 
       <div className="flex min-h-0 flex-1 flex-col-reverse lg:flex-row">
@@ -537,6 +653,37 @@ export function Editor({ productId, initialConfig, modelUrl }: EditorProps) {
           )}
         </section>
       </div>
+
+      {notice && (
+        <div
+          role="status"
+          className="fixed bottom-5 left-1/2 z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-ink px-4 py-2.5 text-[14px] text-surface shadow-lg"
+        >
+          <CheckIcon size={15} /> {notice}
+        </div>
+      )}
+
+      {historyOpen && (
+        <VersionsDrawer
+          versions={versions}
+          dirty={dirty}
+          busy={saving}
+          onClose={() => setHistoryOpen(false)}
+          onUnpublish={() =>
+            runVersionAction(
+              () => unpublishAction(productId),
+              'Unpublished. Shoppers can no longer see this product.',
+            )
+          }
+          onMakeLive={(versionId) =>
+            runVersionAction(
+              () => makeLiveAction(productId, versionId),
+              'That version is live again.',
+            )
+          }
+          onCopyToDraft={copyVersion}
+        />
+      )}
 
       {previewing && (
         <div
