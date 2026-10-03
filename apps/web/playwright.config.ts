@@ -8,7 +8,10 @@ const PORT = 3200;
  */
 export default defineConfig({
   testDir: './e2e',
-  timeout: 60_000,
+  // Software WebGL (SwiftShader) renders the full studio scene on the CPU: slow, and two
+  // browsers in parallel starve each other. Run one at a time with generous timeouts.
+  workers: 1,
+  timeout: 120_000,
   expect: { timeout: 20_000 },
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 1 : 0,
