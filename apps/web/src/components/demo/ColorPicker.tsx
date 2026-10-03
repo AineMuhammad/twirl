@@ -28,7 +28,7 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
       ref={ref}
       role="group"
       aria-label={`Custom color for ${label}`}
-      className="twirl-color-picker mt-3 rounded-2xl border border-black/[0.06] bg-white p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.2)]"
+      className="twirl-color-picker mt-3 rounded-2xl border border-line bg-surface p-3 shadow-[0_8px_30px_-12px_rgba(0,0,0,0.2)]"
     >
       <HexColorPicker color={color} onChange={onChange} />
       <div className="mt-3 flex items-center gap-2">
@@ -37,8 +37,8 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
           className="size-9 shrink-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
           style={{ background: color }}
         />
-        <label className="flex min-w-0 flex-1 items-center rounded-xl border border-neutral-200 bg-neutral-50 px-3 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
-          <span className="text-sm text-neutral-400">#</span>
+        <label className="flex min-w-0 flex-1 items-center rounded-xl border border-line bg-tint px-3 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
+          <span className="text-sm text-ink-faint">#</span>
           <HexColorInput
             color={color}
             onChange={onChange}
@@ -49,7 +49,7 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
         <button
           type="button"
           onClick={onDone}
-          className={`rounded-xl bg-neutral-900 px-3.5 py-2 text-sm font-medium text-white hover:bg-neutral-700 ${focusRing}`}
+          className={`rounded-xl bg-ink px-3.5 py-2 text-sm font-medium text-surface hover:opacity-90 ${focusRing}`}
         >
           Done
         </button>

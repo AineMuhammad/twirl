@@ -9,7 +9,7 @@ export const focusRing =
 
 /** Frosted floating surface (top bar, phone sheet). */
 export const glass =
-  'bg-white/80 backdrop-blur-xl ring-1 ring-black/[0.06] shadow-[0_12px_48px_-12px_rgba(0,0,0,0.25)]';
+  'bg-surface/80 backdrop-blur-xl ring-1 ring-line shadow-[0_12px_48px_-12px_rgba(0,0,0,0.25)]';
 
 /** Rainbow fill for "custom color" swatches. */
 export const RAINBOW =
@@ -18,8 +18,8 @@ export const RAINBOW =
 export function SectionTitle({ children, hint }: { children: ReactNode; hint?: ReactNode }) {
   return (
     <div className="mb-3 flex items-baseline justify-between gap-3">
-      <h3 className="text-sm font-semibold text-neutral-900">{children}</h3>
-      {hint && <p className="text-xs text-neutral-500">{hint}</p>}
+      <h3 className="text-sm font-semibold text-ink">{children}</h3>
+      {hint && <p className="text-xs text-ink-muted">{hint}</p>}
     </div>
   );
 }
@@ -41,18 +41,18 @@ export function Switch({
       role="switch"
       aria-checked={checked}
       onClick={() => onChange(!checked)}
-      className={`flex w-full items-center justify-between gap-4 rounded-xl px-3 py-3 text-left hover:bg-neutral-900/[0.03] ${focusRing}`}
+      className={`flex w-full items-center justify-between gap-4 rounded-xl px-3 py-3 text-left hover:bg-tint ${focusRing}`}
     >
       <span>
-        <span className="block text-sm font-medium text-neutral-900">{label}</span>
-        {description && <span className="block text-xs text-neutral-500">{description}</span>}
+        <span className="block text-sm font-medium text-ink">{label}</span>
+        {description && <span className="block text-xs text-ink-muted">{description}</span>}
       </span>
       <span
         aria-hidden
-        className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-brand-600' : 'bg-neutral-200'}`}
+        className={`relative h-6 w-10 shrink-0 rounded-full transition-colors duration-200 ${checked ? 'bg-brand-600' : 'bg-tint-strong'}`}
       >
         <span
-          className={`absolute top-0.5 left-0.5 size-5 rounded-full bg-white shadow-sm transition-transform duration-200 ${checked ? 'translate-x-4' : ''}`}
+          className={`absolute top-0.5 left-0.5 size-5 rounded-full bg-surface shadow-sm transition-transform duration-200 ${checked ? 'translate-x-4' : ''}`}
         />
       </span>
     </button>
@@ -64,7 +64,7 @@ export function CheckBadge({ dark = false }: { dark?: boolean }) {
   return (
     <span
       aria-hidden
-      className={`grid size-5 place-items-center rounded-full ${dark ? 'bg-white text-neutral-900' : 'bg-brand-600 text-white'} shadow-sm`}
+      className={`grid size-5 place-items-center rounded-full ${dark ? 'bg-surface text-ink' : 'bg-brand-600 text-white'} shadow-sm`}
     >
       <svg
         width="12"

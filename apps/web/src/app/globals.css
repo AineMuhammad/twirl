@@ -1,15 +1,35 @@
 @import 'tailwindcss';
 
+/* Theme: light by default; dark via data-theme="dark" on <html> (set before paint, see layout). */
+@custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  /* Semantic UI tokens */
+  --surface: #ffffff;
+  --ink: #171717;
+  --ink-soft: #404040;
+  --ink-muted: #737373;
+  --ink-faint: #a3a3a3;
+  --line: rgb(0 0 0 / 0.08);
+  --tint: rgb(0 0 0 / 0.045);
+  --tint-strong: rgb(0 0 0 / 0.08);
+  color-scheme: light;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+[data-theme='dark'] {
+  --background: #0b0b0d;
+  --foreground: #ededed;
+  --surface: #121215;
+  --ink: #f4f4f5;
+  --ink-soft: #d4d4d8;
+  --ink-muted: #a1a1aa;
+  --ink-faint: #71717a;
+  --line: rgb(255 255 255 / 0.1);
+  --tint: rgb(255 255 255 / 0.06);
+  --tint-strong: rgb(255 255 255 / 0.11);
+  color-scheme: dark;
 }
 
 @theme inline {
@@ -18,6 +38,14 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --font-display: var(--font-instrument-serif);
+  --color-surface: var(--surface);
+  --color-ink: var(--ink);
+  --color-ink-soft: var(--ink-soft);
+  --color-ink-muted: var(--ink-muted);
+  --color-ink-faint: var(--ink-faint);
+  --color-line: var(--line);
+  --color-tint: var(--tint);
+  --color-tint-strong: var(--tint-strong);
 }
 
 body {
