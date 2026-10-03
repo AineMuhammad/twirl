@@ -7,6 +7,7 @@ import { Editor } from '@/components/editor/Editor';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { getProductForEditor, validateConfig } from '@/server/products';
+import { eventCounts } from '@/server/events';
 import { listVersions } from '@/server/versions';
 import { publicUrl } from '@/server/storage/r2';
 
@@ -40,12 +41,14 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
     );
   }
   const versions = await listVersions(db(), workspace.id, product.id);
+  const stats = (await eventCounts(db(), workspace.id, [product.id])).get(product.id) ?? null;
   const liveVersion = versions.find((v) => v.live);
   const liveConfig = liveVersion ? validateConfig(liveVersion.config) : null;
   return (
     <Editor
       productId={product.id}
       publicId={product.publicId}
+      stats={stats}
       initialConfig={parsed.config}
       modelUrl={publicUrl(asset.key)}
       versions={versions.map((v) => ({

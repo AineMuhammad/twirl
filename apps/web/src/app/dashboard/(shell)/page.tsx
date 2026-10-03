@@ -4,6 +4,7 @@ import { PLANS } from '@/config/plans';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
+import { eventCounts } from '@/server/events';
 import { listProducts } from '@/server/products';
 import { storageEnabled } from '@/server/storage/r2';
 import { DeleteModelButton } from '@/components/dashboard/DeleteModelButton';
@@ -39,6 +40,11 @@ export default async function DashboardPage() {
     }),
   ]);
 
+  const stats = await eventCounts(
+    db(),
+    workspace.id,
+    products.map((p) => p.id),
+  );
   const firstName = user.name?.split(' ')[0];
   const readyModels = models.filter((m) => m.status === 'READY');
   const usage = Math.min(100, (published / plan.maxPublishedProducts) * 100);
@@ -147,6 +153,13 @@ export default async function DashboardPage() {
                               : 'Draft · not live'}
                           </span>
                         </div>
+                        {product.publishedVersion && (
+                          <p className="mt-2 text-[13px] text-ink-soft">
+                            {stats.get(product.id)?.visitors ?? 0} visitors ·{' '}
+                            {stats.get(product.id)?.quote_request ?? 0} quotes{' '}
+                            <span className="text-ink-faint">(30 days)</span>
+                          </p>
+                        )}
                         <p className="mt-1 text-[13px] text-ink-muted">
                           Last edited{' '}
                           {product.updatedAt.toLocaleDateString('en-US', { dateStyle: 'medium' })}

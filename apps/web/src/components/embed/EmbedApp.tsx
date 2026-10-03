@@ -1,13 +1,14 @@
 'use client';
 
 import type { Evaluation, ProductConfig } from '@twirl/config-schema/engine';
-import { Configurator, type QuoteContact } from '@twirl/viewer/ui';
-import { useCallback, useEffect } from 'react';
+import { type ConfiguratorAction, Configurator, type QuoteContact } from '@twirl/viewer/ui';
+import { useCallback, useEffect, useRef } from 'react';
 
 import { LazyViewer } from '@/components/demo/LazyViewer';
 import { APP_NAME } from '@/config/app';
 import { EMBED_SOURCE, type EmbedMessage, preferredHeight } from '@/lib/embed-protocol';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
+import { changedGroups, createTracker } from '@/lib/tracker';
 
 const VIEWER_PROPS = { environmentSources: ENVIRONMENT_SOURCES };
 
@@ -90,15 +91,37 @@ export function EmbedApp({
     return () => window.removeEventListener('resize', resize);
   }, [publicId]);
 
+  // Anonymous usage counts for the merchant: a view now, then changes and actions.
+  const tracker = useRef<ReturnType<typeof createTracker> | null>(null);
+  const lastSelections = useRef<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    const t = createTracker({ publicId, versionId });
+    tracker.current = t;
+    t.track('view');
+    return () => {
+      t.stop();
+      tracker.current = null;
+    };
+  }, [publicId, versionId]);
+  const onAction = useCallback((action: ConfiguratorAction) => tracker.current?.track(action), []);
+
   const onEvaluationChange = useCallback(
-    (evaluation: Evaluation) =>
+    (evaluation: Evaluation) => {
+      const previous = lastSelections.current;
+      lastSelections.current = evaluation.selections;
+      if (previous) {
+        for (const group of changedGroups(previous, evaluation.selections)) {
+          tracker.current?.track('option_change', group);
+        }
+      }
       post({
         source: EMBED_SOURCE,
         type: 'change',
         productId: publicId,
         selections: evaluation.selections,
         price: { total: evaluation.price.total, currency: evaluation.price.currency },
-      }),
+      });
+    },
     [publicId],
   );
 
@@ -122,6 +145,7 @@ export function EmbedApp({
       onEvaluationChange={onEvaluationChange}
       onShare={onShare}
       onRequestQuote={onRequestQuote}
+      onAction={onAction}
       imageDownload={watermark ? { watermark: `Made with ${APP_NAME}` } : {}}
       arComingSoon
       {...(initialSelections && { initialSelections })}
