@@ -80,11 +80,22 @@ export const CloseIcon = (p: IconProps) => (
 );
 
 /** The Twirl mark: a rotating cube corner. */
+/**
+ * Twirl's mark: a body orbiting a centre, as a product turns on a turntable. The tile takes the
+ * current text colour (ink in light mode, sand in dark); the centre matches the page.
+ */
 export const LogoMark = (p: IconProps) => (
-  <svg width={22} height={22} viewBox="0 0 24 24" aria-hidden {...p}>
-    <path d="M12 2.5 20.5 7v10L12 21.5 3.5 17V7z" fill="currentColor" opacity="0.18" />
-    <path d="M12 2.5 20.5 7 12 11.5 3.5 7z" fill="currentColor" />
-    <path d="M12 11.5v10L3.5 17V7z" fill="currentColor" opacity="0.55" />
+  <svg width={28} height={28} viewBox="0 0 32 32" aria-hidden {...p}>
+    <rect width="32" height="32" rx="8" fill="currentColor" />
+    <path
+      d="M16 7a9 9 0 1 1-9 9"
+      fill="none"
+      stroke="#c2552d"
+      strokeWidth="2.6"
+      strokeLinecap="round"
+    />
+    <circle cx="7" cy="16" r="2.6" fill="#c2552d" />
+    <circle cx="16" cy="16" r="3.2" fill="var(--background, #f5f0e8)" />
   </svg>
 );
 
