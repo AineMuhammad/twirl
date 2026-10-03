@@ -15,3 +15,4 @@ To add one, copy [`template.md`](template.md) to `NNNN-short-title.md` with the 
 | [0005](0005-product-config-schema.md)          | Product config schema and engine           | Accepted                     |
 | [0006](0006-dimension-behaviours.md)           | Dimension behaviours                       | Accepted                     |
 | [0007](0007-data-model.md)                     | Data model and database access             | Accepted                     |
+| [0008](0008-authentication.md)                 | Authentication and authorization           | Accepted                     |
