@@ -60,5 +60,16 @@ export interface MeshOverride {
 
 export type MeshOverrides = Record<string, MeshOverride>;
 
+/**
+ * A size change for some nodes, from a dimension option. `scale` is per axis in model space
+ * (1 = unchanged). 'stretch' resizes the nodes; 'anchor' moves them with the resize but keeps
+ * their size (e.g. cushions on a growing seat).
+ */
+export interface Deformation {
+  nodeIds: string[];
+  mode: 'stretch' | 'anchor';
+  scale: [number, number, number];
+}
+
 /** HDRI environment loading state ('ready' also covers procedural presets, which are instant). */
 export type EnvironmentStatus = 'loading' | 'ready' | 'error';

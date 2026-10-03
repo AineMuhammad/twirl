@@ -6,6 +6,7 @@ import {
   useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from 'react';
 import { AnimationMixer, type Box3 } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
@@ -18,7 +19,8 @@ import { indexNodes, type NodeId } from '../internal/mesh-tree';
 import { describeModel } from '../internal/model-info';
 import { prefersReducedMotion } from '../internal/motion';
 import { MeshOverrideApplier } from '../internal/overrides';
-import type { DecoderPaths, MeshOverrides, ModelInfo } from '../types';
+import { DeformationApplier } from '../internal/deform';
+import type { DecoderPaths, Deformation, MeshOverrides, ModelInfo } from '../types';
 import { MeshHighlight } from './MeshHighlight';
 import { MeshPicker } from './MeshPicker';
 
@@ -33,6 +35,7 @@ export interface ModelProps {
   decoders: DecoderPaths;
   playAnimationsOnLoad: boolean;
   meshOverrides: MeshOverrides;
+  deformations: readonly Deformation[];
   highlightedMeshId: NodeId | null;
   onMeshSelect: ((id: NodeId | null) => void) | undefined;
   controllerRef: RefObject<ModelController | null>;
@@ -49,6 +52,7 @@ export function Model({
   decoders,
   playAnimationsOnLoad,
   meshOverrides,
+  deformations,
   highlightedMeshId,
   onMeshSelect,
   controllerRef,
@@ -90,6 +94,13 @@ export function Model({
   useLayoutEffect(() => {
     overrides.apply(meshOverrides);
   }, [overrides, meshOverrides]);
+
+  const deformer = useMemo(() => new DeformationApplier(scene, index), [scene, index]);
+  // Parts are measured when applied; re-measure once built-in animations settle.
+  const [settled, setSettled] = useState(0);
+  useLayoutEffect(() => {
+    deformer.apply(deformations);
+  }, [deformer, deformations, settled]);
 
   useEffect(() => {
     onLoaded(describeModel(scene, clips), settledBounds(scene, clips));
@@ -144,6 +155,7 @@ export function Model({
     if (running !== animating.current) {
       animating.current = running;
       onAnimatingChange(running);
+      if (!running && deformations.length > 0) setSettled((n) => n + 1);
     }
   });
 

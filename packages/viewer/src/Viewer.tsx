@@ -43,6 +43,7 @@ import {
   DEFAULT_DECODER_PATHS,
   type DecoderPaths,
   type EnvironmentStatus,
+  type Deformation,
   type MeshOverrides,
   type ModelInfo,
   type ViewerError,
@@ -65,6 +66,8 @@ export interface ViewerProps {
    * (memoize it); a new object re-applies every override.
    */
   meshOverrides?: MeshOverrides;
+  /** Size changes (from dimension options), applied in order. Pass a stable array. */
+  deformations?: readonly Deformation[];
   /** Outline this node (e.g. while hovering it in a mesh tree). */
   highlightedMeshId?: string | null;
   /**
@@ -129,6 +132,7 @@ const GL: Partial<WebGLRendererParameters> & { toneMapping: number; toneMappingE
     toneMappingExposure: 1,
   };
 const NO_OVERRIDES: MeshOverrides = {};
+const NO_DEFORMATIONS: readonly Deformation[] = [];
 const DEFAULT_STAGE: Stage = { center: [0, 0, 0], radius: 1, floorY: 0 };
 
 const rootStyle: CSSProperties = {
@@ -150,6 +154,7 @@ export function Viewer({
   ref,
   modelUrl,
   meshOverrides = NO_OVERRIDES,
+  deformations = NO_DEFORMATIONS,
   highlightedMeshId = null,
   onMeshSelect,
   scene: sceneOverrides,
@@ -272,6 +277,7 @@ export function Viewer({
     .map(([id]) => id)
     .sort()
     .join(',');
+  const shapeSignature = `${hiddenSignature}|${JSON.stringify(deformations.map((d) => d.scale))}`;
 
   const [environmentStatus, setEnvironmentStatus] = useState<EnvironmentStatus>('ready');
   const handleEnvironmentStatus = useCallback(
@@ -312,6 +318,7 @@ export function Viewer({
                 decoders={decoders}
                 playAnimationsOnLoad={playAnimationsOnLoad}
                 meshOverrides={meshOverrides}
+                deformations={deformations}
                 highlightedMeshId={highlightedMeshId}
                 onMeshSelect={onMeshSelect}
                 controllerRef={modelController}
@@ -327,7 +334,7 @@ export function Viewer({
         )}
         {current && scene.shadows && (
           <SoftShadow
-            key={`${current.url}|${hiddenSignature}|${animating}`}
+            key={`${current.url}|${shapeSignature}|${animating}`}
             stage={stage}
             live={animating}
           />

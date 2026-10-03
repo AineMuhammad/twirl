@@ -1,6 +1,6 @@
 import type { ProductConfig, Selections } from '@twirl/config-schema/engine';
 
-import type { MeshOverrides, MeshTreeNode } from '../types';
+import type { Deformation, MeshOverrides, MeshTreeNode } from '../types';
 
 /**
  * Node ids for each mesh reference: a node name matches every named node with that name; `#path`
@@ -70,4 +70,32 @@ export function overridesForSelections(
     }
   }
   return overrides;
+}
+
+/**
+ * The viewer's size changes for (rule-corrected) selections: each dimension group scales its
+ * axes by `value / nativeSize`; listed parts stretch or stay anchored, the rest stay fixed.
+ */
+export function deformationsForSelections(
+  config: ProductConfig,
+  selections: Selections,
+  meshTree: readonly MeshTreeNode[],
+): Deformation[] {
+  const nodes = partNodeIds(config, meshTree);
+  const deformations: Deformation[] = [];
+  for (const group of config.groups) {
+    if (group.type !== 'dimension') continue;
+    const value = selections[group.id];
+    const factor = (typeof value === 'number' ? value : group.default) / group.nativeSize;
+    const scale: [number, number, number] = [
+      group.axes.includes('x') ? factor : 1,
+      group.axes.includes('y') ? factor : 1,
+      group.axes.includes('z') ? factor : 1,
+    ];
+    for (const behavior of group.behaviors) {
+      const nodeIds = nodes.get(behavior.part) ?? [];
+      if (nodeIds.length > 0) deformations.push({ nodeIds, mode: behavior.mode, scale });
+    }
+  }
+  return deformations;
 }
