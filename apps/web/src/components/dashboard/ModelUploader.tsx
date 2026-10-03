@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { type DragEvent, useRef, useState } from 'react';
 
 import { checkLocalModel } from '@/lib/local-model';
+import { inspectModel } from '@/lib/model-report';
 
 type State =
   | { phase: 'idle' }
@@ -43,8 +44,8 @@ function putFile(
 }
 
 /**
- * Upload a .glb/.gltf (up to 15 MB). Checked in the browser first, then sent directly to
- * storage with a short-lived signed URL, then confirmed with the server.
+ * Upload a .glb/.gltf (up to 15 MB). Checked and inspected in the browser first, then sent
+ * directly to storage with a short-lived signed URL, then validated again by the server.
  */
 export function ModelUploader({ enabled }: { enabled: boolean }) {
   const router = useRouter();
@@ -56,6 +57,11 @@ export function ModelUploader({ enabled }: { enabled: boolean }) {
   async function upload(file: File) {
     const check = await checkLocalModel(file);
     if (!check.ok) return setState({ phase: 'error', message: check.message });
+    // Read the model first so obvious problems show before anything is uploaded.
+    const report = inspectModel(new Uint8Array(await file.arrayBuffer()), file.name);
+    if (report.errors.length > 0) {
+      return setState({ phase: 'error', message: report.errors.join(' ') });
+    }
     setState({ phase: 'uploading', name: file.name, progress: 0 });
     try {
       const start = await fetch('/api/assets', {
