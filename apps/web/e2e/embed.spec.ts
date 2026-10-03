@@ -32,3 +32,13 @@ test('unknown share links explain themselves; sharing rejects other sites', asyn
   });
   expect(crossSite.status()).toBe(403);
 });
+
+test('quote requests reject other sites and need sign-in to read', async ({ page, request }) => {
+  const crossSite = await request.post('/api/quotes', {
+    headers: { origin: 'https://evil.example' },
+    data: { publicId: 'abcdefgh', versionId: 'x', selections: {}, name: 'A', email: 'a@b.co' },
+  });
+  expect(crossSite.status()).toBe(403);
+  await page.goto('/dashboard/quotes');
+  await expect(page).toHaveURL(/\/signin/);
+});
