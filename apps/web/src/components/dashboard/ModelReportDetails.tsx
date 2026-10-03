@@ -25,7 +25,7 @@ export function ModelReportDetails({ validation }: { validation: unknown }) {
   const hasDetails = warnings.length > 0 || (report?.textures.length ?? 0) > 0;
 
   return (
-    <div className="mt-1 text-xs">
+    <div className="mt-1.5 text-[13px]">
       {summary && <p className="text-ink-muted">{summary}</p>}
       {errors.length > 0 && (
         <ul className="mt-1 space-y-0.5 text-red-600 dark:text-red-400">

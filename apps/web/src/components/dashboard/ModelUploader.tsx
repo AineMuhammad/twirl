@@ -105,13 +105,15 @@ export function ModelUploader({ enabled }: { enabled: boolean }) {
         }}
         onDragLeave={() => setDragging(false)}
         onDrop={onDrop}
-        className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-10 text-center transition-colors ${dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line'}`}
+        className={`flex flex-col items-center gap-3 rounded-2xl border-2 border-dashed px-6 py-12 text-center transition-colors ${dragging ? 'border-brand-500 bg-brand-50 dark:bg-brand-500/10' : 'border-line'}`}
       >
         {!enabled ? (
-          <p className="text-sm text-ink-muted">Uploads aren&apos;t configured on this server.</p>
+          <p className="text-[15px] text-ink-muted">
+            Uploads aren&apos;t configured on this server.
+          </p>
         ) : busy ? (
           <div className="w-full max-w-xs" aria-live="polite">
-            <p className="truncate text-sm font-medium text-ink">Uploading {state.name}…</p>
+            <p className="truncate text-[15px] font-medium text-ink">Uploading {state.name}…</p>
             <div
               className="mt-3 h-2 overflow-hidden rounded-full bg-tint-strong"
               role="progressbar"
@@ -128,16 +130,14 @@ export function ModelUploader({ enabled }: { enabled: boolean }) {
           </div>
         ) : (
           <>
-            <p className="text-sm text-ink-soft">
-              Drop a <span className="font-medium">.glb</span> or{' '}
-              <span className="font-medium">.gltf</span> here, up to 15 MB
-            </p>
+            <p className="text-[16px] font-medium text-ink">Drag your 3D model here</p>
+            <p className="-mt-2 text-[14px] text-ink-muted">.glb or .gltf, up to 15 MB</p>
             <button
               type="button"
               onClick={() => input.current?.click()}
-              className="rounded-xl bg-brand-600 px-4 py-2 text-sm font-medium text-white hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
+              className="inline-flex h-10 items-center rounded-lg bg-brand-600 px-4 text-[14px] font-medium text-white shadow-sm hover:bg-brand-700 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600"
             >
-              Choose a file
+              Or choose a file
             </button>
           </>
         )}
@@ -155,7 +155,7 @@ export function ModelUploader({ enabled }: { enabled: boolean }) {
           }}
         />
       </div>
-      <div role="status" aria-live="polite" className="mt-2 min-h-5 text-sm">
+      <div role="status" aria-live="polite" className="mt-2 min-h-5 text-[14px]">
         {state.phase === 'error' && (
           <span className="text-red-600 dark:text-red-400">{state.message}</span>
         )}
