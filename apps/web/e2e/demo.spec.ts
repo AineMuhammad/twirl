@@ -14,55 +14,68 @@ function trackErrors(page: Page) {
   return errors;
 }
 
-const parts = (page: Page) => page.getByRole('list', { name: 'Parts' });
+const options = (page: Page) => page.getByRole('list', { name: 'Options' });
+const total = (page: Page) => page.getByTestId('price-total');
 
-test('home links to the demo, which loads the sample with its parts', async ({ page }) => {
+test('home links to the demo, which loads the sample with its options', async ({ page }) => {
   const errors = trackErrors(page);
   await page.goto('/');
   await page.getByRole('link', { name: 'Try the demo' }).click();
   await expect(page).toHaveURL(/\/demo$/);
   await expect(page.locator('canvas')).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Halo Lounge Chair' })).toBeVisible();
 
-  // The sample is Draco-compressed: listing its parts proves the decoders are served.
-  for (const name of ['Chair', 'Iron', 'Pillow 01', 'Pillow 02']) {
-    await expect(parts(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
+  for (const name of ['Seat fabric', 'Frame finish']) {
+    await expect(options(page).getByRole('button', { name: new RegExp(`^${name}`) })).toBeVisible();
   }
-  await expect(page.getByText(/4 parts · 35,350 triangles/)).toBeVisible();
+  await expect(options(page).getByRole('switch', { name: /Navy cushion/ })).toBeVisible();
+  // Base price plus the two cushions included by default.
+  await expect(total(page)).toHaveText('$987.00');
   expect(errors).toEqual([]);
 });
 
-test('parts can be hidden and recolored, including a custom color', async ({ page }) => {
+test('options update the price, rules correct conflicts, custom colours work', async ({ page }) => {
   await page.goto('/demo');
-  await page.getByRole('button', { name: 'Hide Pillow 01' }).click();
-  await expect(page.getByRole('button', { name: 'Show Pillow 01' })).toHaveAttribute(
-    'aria-pressed',
-    'false',
+  const fabric = page.getByRole('group', { name: 'Seat fabric' });
+  await fabric.getByRole('button', { name: /^Teal velvet/ }).click();
+  await expect(total(page)).toHaveText('$1,047.00');
+
+  await options(page)
+    .getByRole('switch', { name: /Navy cushion/ })
+    .click();
+  await expect(total(page)).toHaveText('$1,008.00');
+
+  // Brass and terracotta are exclusive: choosing brass replaces the terracotta fabric.
+  await fabric.getByRole('button', { name: 'Terracotta' }).click();
+  await options(page)
+    .getByRole('button', { name: /^Frame finish/ })
+    .click();
+  await page
+    .getByRole('group', { name: 'Frame finish' })
+    .getByRole('button', { name: /^Brushed brass/ })
+    .click();
+  await expect(page.getByRole('status')).toContainText("Brushed brass isn't offered");
+  await expect(options(page).getByRole('button', { name: /^Seat fabric/ })).not.toContainText(
+    'Terracotta',
   );
 
-  await parts(page).getByRole('button', { name: /^Iron/ }).click();
-  const swatch = page
-    .getByRole('group', { name: 'Color for Iron' })
-    .getByRole('button', { name: 'Terracotta' });
-  await swatch.click();
-  await expect(swatch).toHaveAttribute('aria-pressed', 'true');
-  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('Terracotta');
-
-  // The custom picker opens inline, right under the swatches.
-  await page.getByRole('button', { name: 'Custom color' }).click();
-  const hex = page.getByRole('textbox', { name: 'Hex color for Iron' });
-  await expect(hex).toBeVisible();
+  await options(page)
+    .getByRole('button', { name: /^Seat fabric/ })
+    .click();
+  await page.getByRole('button', { name: /^Custom color/ }).click();
+  const hex = page.getByRole('textbox', { name: 'Hex color for Seat fabric' });
   await hex.fill('12AB34');
-  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('#12AB34');
+  await expect(options(page).getByRole('button', { name: /^Seat fabric/ })).toContainText('Custom');
   await page.getByRole('button', { name: 'Done' }).click();
   await expect(hex).toBeHidden();
 
-  await page.getByRole('button', { name: 'Original', exact: true }).click();
-  await expect(parts(page).getByRole('button', { name: /^Iron/ })).toContainText('Original finish');
+  await page.getByRole('button', { name: 'Reset' }).click();
+  await expect(total(page)).toHaveText('$987.00');
 });
 
 test('scene tab is keyboard reachable and switches lighting', async ({ page }) => {
   await page.goto('/demo');
-  await page.getByRole('tab', { name: 'Parts' }).focus();
+  await page.getByRole('tab', { name: 'Options' }).focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Scene' })).toHaveAttribute('aria-selected', 'true');
 
@@ -91,7 +104,8 @@ test('uploading a local model replaces the sample; bad files are explained', asy
   await page.getByRole('button', { name: 'Dismiss' }).click();
 
   await input.setInputFiles(resolve(SAMPLES, 'jeep_2021.glb'));
-  await expect(parts(page).getByRole('button', { name: /^Body Exterior/ })).toBeVisible();
+  // Uploads get a generated config: a colour and a show/hide option per part.
+  await expect(options(page).getByRole('button', { name: /^Body Exterior/ })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Your file' })).toHaveAttribute(
     'aria-pressed',
     'true',

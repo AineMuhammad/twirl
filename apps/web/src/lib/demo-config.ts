@@ -1,5 +1,6 @@
+import type { ProductConfigInput } from '@twirl/config-schema';
+import { jeepConfig, loungeChairConfig } from '@twirl/config-schema/samples';
 import type { EnvironmentSources } from '@twirl/viewer';
-import type { SceneSettings } from '@twirl/viewer/settings';
 
 import { clientEnv } from '@/env/client';
 
@@ -7,36 +8,13 @@ export interface SampleModel {
   id: string;
   label: string;
   url: string;
-  /**
-   * The product's default look (lighting, backdrop, studio). In the product editor (M4) merchants
-   * set this per product; the demo hard-codes it per sample.
-   */
-  look: Partial<SceneSettings>;
+  /** The product config, as a merchant would save it (parsed when the sample opens). */
+  config: ProductConfigInput;
 }
 
 export const SAMPLE_MODELS: SampleModel[] = [
-  {
-    id: 'sofa',
-    label: 'Lounge chair',
-    url: '/samples/sofa.glb',
-    // Warm, homely light flatters fabric and dark metal.
-    look: {
-      lighting: 'warm',
-      background: { type: 'radial', inner: '#fffaf3', outer: '#eadbc8' },
-      cyclorama: true,
-    },
-  },
-  {
-    id: 'jeep',
-    label: 'Jeep',
-    url: '/samples/jeep_2021.glb',
-    // Crisp studio light on a cool sweep: clean reflections on paint and chrome.
-    look: {
-      lighting: 'studio',
-      background: { type: 'radial', inner: '#f8fbff', outer: '#d5dfec' },
-      cyclorama: true,
-    },
-  },
+  { id: 'sofa', label: 'Lounge chair', url: '/samples/sofa.glb', config: loungeChairConfig },
+  { id: 'jeep', label: 'Jeep', url: '/samples/jeep_2021.glb', config: jeepConfig },
 ];
 
 /** 1k HDRIs ship with the app; 2k come from the asset bucket when it's configured. */

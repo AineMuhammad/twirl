@@ -1,66 +1,73 @@
 'use client';
 
-import type {
-  EnvironmentStatus,
-  MeshOverrides,
-  ModelInfo,
-  ViewerError,
-  ViewerHandle,
-} from '@twirl/viewer';
+import type { ModelInfo, ViewerError, ViewerProps } from '@twirl/viewer';
+import { DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
 import {
-  backgroundCss,
-  type CameraView,
-  DEFAULT_SCENE,
-  type SceneSettings,
-} from '@twirl/viewer/settings';
+  CloseIcon,
+  Configurator,
+  focusRing,
+  glass,
+  LogoMark,
+  MoonIcon,
+  SunIcon,
+  UploadIcon,
+} from '@twirl/viewer/ui';
 import Link from 'next/link';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
 import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
-import { CloseIcon, LogoMark, MoonIcon, PlayIcon, ResetIcon, SunIcon, UploadIcon } from './icons';
 import { LazyViewer } from './LazyViewer';
-import { PartsPanel } from './PartsPanel';
 import { ScenePanel } from './ScenePanel';
-import { Tabs } from './Tabs';
-import { focusRing, glass } from './ui';
+import { type ConfigSource, useProductConfig } from './useProductConfig';
 import { useLocalModel } from './useLocalModel';
 import { useTheme } from './useTheme';
 
-const NO_OVERRIDES: MeshOverrides = {};
-const VIEW_BUTTONS: { view: CameraView; label: string }[] = [
-  { view: 'front', label: 'Front' },
-  { view: 'threeQuarter', label: '¾' },
-  { view: 'side', label: 'Side' },
-  { view: 'back', label: 'Back' },
-  { view: 'top', label: 'Top' },
-];
-const PANEL_WIDTH = 'lg:w-[400px]';
+/** A sample's own look; uploads get the default look. */
+function sceneFor(url: string | null): SceneSettings {
+  const sample = SAMPLE_MODELS.find((m) => m.url === url);
+  return { ...DEFAULT_SCENE, ...sample?.config.scene } as SceneSettings;
+}
 
 export function DemoApp() {
   const [modelUrl, setModelUrl] = useState(SAMPLE_MODELS[0]?.url ?? null);
-  const [info, setInfo] = useState<ModelInfo | null>(null);
-  const [overrides, setOverrides] = useState<MeshOverrides>(NO_OVERRIDES);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [scene, setScene] = useState<SceneSettings>({
-    ...DEFAULT_SCENE,
-    ...SAMPLE_MODELS[0]?.look,
-  });
-  const [lighting, setLighting] = useState<EnvironmentStatus>('ready');
-  const [tab, setTab] = useState('parts');
-  const [sheetOpen, setSheetOpen] = useState(true);
-  const [hintVisible, setHintVisible] = useState(true);
-  const viewer = useRef<ViewerHandle>(null);
+  const [uploadTree, setUploadTree] = useState<{ url: string; info: ModelInfo } | null>(null);
+  const [scene, setScene] = useState<SceneSettings>(() => sceneFor(modelUrl));
+  const [lighting, setLighting] = useState<'loading' | 'ready' | 'error'>('ready');
   const [theme, setTheme] = useTheme();
+  const fileInput = useRef<HTMLInputElement>(null);
+
+  const loadModel = useCallback((url: string | null) => {
+    setScene(sceneFor(url));
+    setModelUrl(url);
+  }, []);
+  const local = useLocalModel(loadModel);
+  const sample = SAMPLE_MODELS.find((m) => m.url === modelUrl);
+
+  // Samples use their saved config; uploads get a starter config generated from their parts.
+  const source = useMemo<ConfigSource | null>(() => {
+    if (sample) return { kind: 'saved', key: sample.url, input: sample.config };
+    if (local.model && uploadTree?.url === local.model.url) {
+      return {
+        kind: 'starter',
+        key: uploadTree.url,
+        name: local.model.name,
+        meshTree: uploadTree.info.meshTree,
+      };
+    }
+    return null;
+  }, [sample, local.model, uploadTree]);
+  const config = useProductConfig(source);
+
   // A product's default backdrop pairs with the theme: its own backdrop in light, charcoal in
   // dark. A backdrop the shopper picked themselves is left alone.
-  const lightBackdrop =
-    SAMPLE_MODELS.find((m) => m.url === modelUrl)?.look.background ?? BACKDROP_FOR_THEME.light;
-  const pairedBackground = (current: SceneSettings['background']) =>
-    sameBackground(current, lightBackdrop) && theme === 'dark' ? BACKDROP_FOR_THEME.dark : current;
-  const sceneForTheme: SceneSettings = { ...scene, background: pairedBackground(scene.background) };
+  const lightBackdrop = sceneFor(modelUrl).background;
+  const sceneForTheme: SceneSettings =
+    theme === 'dark' && sameBackground(scene.background, lightBackdrop)
+      ? { ...scene, background: BACKDROP_FOR_THEME.dark }
+      : scene;
   const toggleTheme = () => {
     const next = theme === 'dark' ? 'light' : 'dark';
     // Going light again restores the product's own backdrop if the dark default was showing.
@@ -69,162 +76,131 @@ export function DemoApp() {
     }
     setTheme(next);
   };
-  const fileInput = useRef<HTMLInputElement>(null);
-
-  const loadModel = useCallback((url: string | null) => {
-    // Each product opens in its own look (uploads get the default look).
-    const look = SAMPLE_MODELS.find((m) => m.url === url)?.look ?? {};
-    setScene({ ...DEFAULT_SCENE, ...look });
-    setInfo(null);
-    setOverrides(NO_OVERRIDES);
-    setSelectedId(null);
-    setModelUrl(url);
-  }, []);
-  const local = useLocalModel(loadModel);
 
   const onError = useCallback((error: ViewerError) => {
     console.error('[demo] viewer error', error.kind, error.cause);
   }, []);
-
-  const current = SAMPLE_MODELS.find((m) => m.url === modelUrl);
-  const title = current?.label ?? local.model?.name ?? 'Your model';
-  const changes = Object.keys(overrides).length;
+  const viewerProps = useMemo<Partial<ViewerProps>>(
+    () => ({ environmentSources: ENVIRONMENT_SOURCES, onEnvironmentStatus: setLighting, onError }),
+    [onError],
+  );
+  const onLoad = useCallback(
+    (info: ModelInfo) => {
+      if (modelUrl && !SAMPLE_MODELS.some((m) => m.url === modelUrl)) {
+        setUploadTree({ url: modelUrl, info });
+      }
+    },
+    [modelUrl],
+  );
 
   return (
-    <div
-      className="relative h-dvh overflow-hidden text-ink"
-      style={{ background: backgroundCss(sceneForTheme.background) }}
-      {...local.dropHandlers}
+    <Configurator
+      config={config}
+      modelUrl={modelUrl}
+      Viewer={LazyViewer}
+      viewerProps={viewerProps}
+      scene={sceneForTheme}
+      title={local.model?.name ?? 'Your model'}
+      onLoad={onLoad}
+      rootProps={local.dropHandlers}
+      topBar={
+        <>
+          <Link
+            href="/"
+            className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass} ${focusRing}`}
+          >
+            <LogoMark className="text-brand-600" />
+            <span className="font-semibold tracking-tight">{APP_NAME}</span>
+            <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
+              Demo
+            </span>
+          </Link>
+
+          <div className="pointer-events-auto flex items-center gap-2">
+            <div
+              role="group"
+              aria-label="Model"
+              className={`flex items-center gap-1 rounded-full p-1 ${glass}`}
+            >
+              {SAMPLE_MODELS.map((m) => (
+                <button
+                  key={m.id}
+                  type="button"
+                  aria-pressed={modelUrl === m.url}
+                  onClick={() => loadModel(m.url)}
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
+                >
+                  {m.label}
+                </button>
+              ))}
+              {local.model && (
+                <button
+                  type="button"
+                  aria-pressed={modelUrl === local.model.url}
+                  title={local.model.name}
+                  onClick={() => local.model && loadModel(local.model.url)}
+                  className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
+                >
+                  Your file
+                </button>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={toggleTheme}
+              aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
+              title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
+              className={`grid size-10 place-items-center rounded-full text-ink-soft hover:text-ink ${glass} ${focusRing}`}
+            >
+              {theme === 'dark' ? (
+                <SunIcon width={18} height={18} />
+              ) : (
+                <MoonIcon width={18} height={18} />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={() => fileInput.current?.click()}
+              aria-label="Upload a model"
+              className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
+            >
+              <UploadIcon />
+              <span className="hidden sm:inline">Upload</span>
+            </button>
+            <input
+              ref={fileInput}
+              type="file"
+              accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
+              className="sr-only"
+              tabIndex={-1}
+              aria-hidden
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) void local.open(file);
+                e.target.value = ''; // allow picking the same file again
+              }}
+            />
+          </div>
+        </>
+      }
+      extraTabs={[
+        {
+          id: 'scene',
+          label: 'Scene',
+          content: (
+            <ScenePanel
+              scene={sceneForTheme}
+              onChange={setScene}
+              lightingLoading={lighting === 'loading'}
+            />
+          ),
+        },
+      ]}
     >
-      {/* Stage: left of the full-height panel on desktop, above the bottom sheet on phones. */}
-      <div
-        className={`absolute inset-x-0 top-16 transition-[bottom] duration-300 lg:top-0 lg:right-[400px] lg:bottom-0 ${sheetOpen ? 'bottom-[calc(50svh-28px)]' : 'bottom-[124px]'}`}
-        onPointerDown={() => setHintVisible(false)}
-        onWheel={() => setHintVisible(false)}
-      >
-        <LazyViewer
-          ref={viewer}
-          modelUrl={modelUrl}
-          scene={sceneForTheme}
-          environmentSources={ENVIRONMENT_SOURCES}
-          meshOverrides={overrides}
-          onLoad={setInfo}
-          onEnvironmentStatus={setLighting}
-          onError={onError}
-        />
-        {info && (
-          <div
-            role="group"
-            aria-label="Camera view"
-            className={`absolute bottom-3 left-1/2 flex -translate-x-1/2 items-center gap-0.5 rounded-full p-1 lg:bottom-5 ${glass}`}
-          >
-            {VIEW_BUTTONS.map(({ view, label }) => (
-              <button
-                key={view}
-                type="button"
-                aria-label={view === 'threeQuarter' ? 'Three-quarter view' : `${label} view`}
-                onClick={() => {
-                  setHintVisible(false);
-                  viewer.current?.setView(view);
-                }}
-                className={`rounded-full px-3 py-1.5 text-xs font-medium text-ink-soft transition-colors hover:bg-tint-strong hover:text-ink ${focusRing}`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        )}
-        {info && hintVisible && (
-          <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-surface/70 px-3 py-1.5 text-xs text-ink-soft ring-1 ring-line backdrop-blur lg:block">
-            Drag to rotate · Scroll to zoom
-          </p>
-        )}
-      </div>
-
-      {/* Top bar, floating over the stage. */}
-      <header className="pointer-events-none absolute inset-x-0 top-0 z-10 flex items-center justify-between gap-2 p-3 lg:right-[400px] lg:p-5">
-        <Link
-          href="/"
-          className={`pointer-events-auto flex items-center gap-2 rounded-full py-2 pr-4 pl-3 ${glass} ${focusRing}`}
-        >
-          <LogoMark className="text-brand-600" />
-          <span className="font-semibold tracking-tight">{APP_NAME}</span>
-          <span className="hidden rounded-full bg-brand-50 px-2 py-0.5 text-xs font-medium text-brand-700 sm:inline dark:bg-brand-500/20 dark:text-brand-200">
-            Demo
-          </span>
-        </Link>
-
-        <div className="pointer-events-auto flex items-center gap-2">
-          <div
-            role="group"
-            aria-label="Model"
-            className={`flex items-center gap-1 rounded-full p-1 ${glass}`}
-          >
-            {SAMPLE_MODELS.map((m) => (
-              <button
-                key={m.id}
-                type="button"
-                aria-pressed={modelUrl === m.url}
-                onClick={() => loadModel(m.url)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
-              >
-                {m.label}
-              </button>
-            ))}
-            {local.model && (
-              <button
-                type="button"
-                aria-pressed={modelUrl === local.model.url}
-                title={local.model.name}
-                onClick={() => local.model && loadModel(local.model.url)}
-                className={`rounded-full px-3.5 py-1.5 text-sm font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
-              >
-                Your file
-              </button>
-            )}
-          </div>
-          <button
-            type="button"
-            onClick={toggleTheme}
-            aria-label={theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'}
-            title={theme === 'dark' ? 'Light theme' : 'Dark theme'}
-            className={`grid size-10 place-items-center rounded-full text-ink-soft hover:text-ink ${glass} ${focusRing}`}
-          >
-            {theme === 'dark' ? (
-              <SunIcon width={18} height={18} />
-            ) : (
-              <MoonIcon width={18} height={18} />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => fileInput.current?.click()}
-            aria-label="Upload a model"
-            className={`flex items-center gap-2 rounded-full bg-brand-600 px-4 py-2.5 text-sm font-medium text-white shadow-[0_8px_24px_-8px_var(--color-brand-600)] transition-colors hover:bg-brand-700 ${focusRing}`}
-          >
-            <UploadIcon />
-            <span className="hidden sm:inline">Upload</span>
-          </button>
-          <input
-            ref={fileInput}
-            type="file"
-            accept=".glb,.gltf,model/gltf-binary,model/gltf+json"
-            className="sr-only"
-            tabIndex={-1}
-            aria-hidden
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) void local.open(file);
-              e.target.value = ''; // allow picking the same file again
-            }}
-          />
-        </div>
-      </header>
-
       {local.error && (
         <div
           role="alert"
-          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20 lg:left-[calc((100%-400px)/2)]"
+          className="absolute top-20 left-1/2 z-20 flex w-[min(92vw,28rem)] -translate-x-1/2 items-start gap-3 rounded-2xl bg-surface px-4 py-3 text-sm shadow-[0_16px_48px_-12px_rgba(0,0,0,0.35)] ring-1 ring-red-500/20"
         >
           <span aria-hidden className="mt-1.5 size-2 shrink-0 rounded-full bg-red-500" />
           <p className="flex-1 text-ink-soft">{local.error}</p>
@@ -239,99 +215,6 @@ export function DemoApp() {
         </div>
       )}
 
-      {/* Control panel: full-height sidebar flush right on desktop; bottom sheet on phones. */}
-      <aside
-        aria-label="Configure"
-        className={`absolute inset-x-0 bottom-0 z-10 flex flex-col overflow-hidden rounded-t-3xl bg-surface pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_48px_-16px_rgba(0,0,0,0.3)] transition-[height] duration-300 lg:inset-y-0 lg:right-0 lg:left-auto lg:h-full lg:rounded-none lg:border-l lg:border-line lg:pb-0 lg:shadow-none ${PANEL_WIDTH} ${sheetOpen ? 'h-[50svh]' : 'h-[148px]'}`}
-      >
-        <button
-          type="button"
-          onClick={() => setSheetOpen((open) => !open)}
-          aria-expanded={sheetOpen}
-          aria-label={sheetOpen ? 'Collapse panel' : 'Expand panel'}
-          className={`flex shrink-0 justify-center pt-2 lg:hidden ${focusRing}`}
-        >
-          <span aria-hidden className="h-1.5 w-10 rounded-full bg-ink-faint/50" />
-        </button>
-        <Tabs
-          active={tab}
-          onChange={(id) => {
-            setTab(id);
-            setSheetOpen(true);
-          }}
-          header={
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="hidden text-xs font-semibold tracking-wider text-brand-600 uppercase lg:block">
-                  Configure
-                </p>
-                <h1 className="truncate font-display text-2xl leading-tight lg:mt-1 lg:text-3xl">
-                  {title}
-                </h1>
-                <p className="mt-0.5 text-xs text-ink-muted">
-                  {info
-                    ? `${info.meshCount} parts · ${info.triangleCount.toLocaleString()} triangles`
-                    : 'Loading model…'}
-                </p>
-              </div>
-              {info && info.animationNames.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => viewer.current?.replayAnimations()}
-                  aria-label="Replay animation"
-                  title="Replay animation"
-                  className={`grid size-9 shrink-0 place-items-center rounded-full bg-tint text-ink-soft hover:bg-tint-strong ${focusRing}`}
-                >
-                  <PlayIcon width={14} height={14} />
-                </button>
-              )}
-            </div>
-          }
-          tabs={[
-            {
-              id: 'parts',
-              label: 'Parts',
-              content: (
-                <PartsPanel
-                  nodes={info?.meshTree ?? []}
-                  overrides={overrides}
-                  selectedId={selectedId}
-                  onSelect={setSelectedId}
-                  onOverridesChange={setOverrides}
-                />
-              ),
-            },
-            {
-              id: 'scene',
-              label: 'Scene',
-              content: (
-                <ScenePanel
-                  scene={sceneForTheme}
-                  onChange={setScene}
-                  lightingLoading={lighting === 'loading'}
-                />
-              ),
-            },
-          ]}
-        />
-        <footer className="hidden shrink-0 items-center justify-between gap-3 border-t border-line px-5 py-3.5 lg:flex">
-          <p className="text-xs text-ink-muted">
-            {changes === 0 ? 'Original design' : `${changes} change${changes === 1 ? '' : 's'}`}
-          </p>
-          <button
-            type="button"
-            disabled={changes === 0}
-            onClick={() => {
-              setOverrides(NO_OVERRIDES);
-              setSelectedId(null);
-            }}
-            className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium text-ink-soft hover:bg-tint disabled:opacity-40 disabled:hover:bg-transparent ${focusRing}`}
-          >
-            <ResetIcon width={14} height={14} /> Reset all
-          </button>
-        </footer>
-      </aside>
-
       {local.dragging && (
         <div className="pointer-events-none absolute inset-0 z-30 grid place-items-center bg-brand-900/30 backdrop-blur-md">
           <div className="flex flex-col items-center gap-3 rounded-3xl border-2 border-dashed border-white/80 px-12 py-10 text-white">
@@ -343,6 +226,6 @@ export function DemoApp() {
           </div>
         </div>
       )}
-    </div>
+    </Configurator>
   );
 }

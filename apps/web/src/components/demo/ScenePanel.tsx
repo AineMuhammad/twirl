@@ -7,6 +7,14 @@ import {
   LIGHTING_PRESETS,
   type SceneSettings,
 } from '@twirl/viewer/settings';
+import {
+  CheckBadge,
+  ColorPicker,
+  focusRing,
+  RAINBOW,
+  SectionTitle,
+  Switch,
+} from '@twirl/viewer/ui';
 import { useState } from 'react';
 
 import {
@@ -15,9 +23,6 @@ import {
   PROCEDURAL_LABELS,
   sameBackground,
 } from '@/lib/scene-presets';
-
-import { ColorPicker } from './ColorPicker';
-import { CheckBadge, focusRing, RAINBOW, SectionTitle, Switch } from './ui';
 
 export interface ScenePanelProps {
   scene: SceneSettings;

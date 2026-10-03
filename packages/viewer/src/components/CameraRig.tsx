@@ -33,6 +33,8 @@ export interface CameraRigProps {
   maxPolarAngle: number;
   /** Glide the camera in when a model is framed (skipped for reduced motion). */
   intro?: boolean;
+  /** Where the camera settles when a model is framed. Defaults to the framing's own position. */
+  initialView?: CameraView | undefined;
   /** Slowly orbit the product after a few idle seconds (skipped for reduced motion). */
   idleRotate?: boolean;
   controllerRef?: RefObject<CameraRigController | null>;
@@ -50,6 +52,7 @@ export function CameraRig({
   enablePan,
   maxPolarAngle,
   intro = true,
+  initialView,
   idleRotate = true,
   controllerRef,
 }: CameraRigProps) {
@@ -58,6 +61,13 @@ export function CameraRig({
   const controls = useRef<ComponentRef<typeof OrbitControls>>(null);
   /** Seconds elapsed in the current intro, or null when none is running. */
   const introTime = useRef<number | null>(null);
+  /** Where the current intro ends. */
+  const introEnd = useRef<[number, number, number]>([0, 0, 0]);
+  // Read at framing time only, so changing it later doesn't re-run the intro.
+  const initialViewRef = useRef(initialView);
+  useLayoutEffect(() => {
+    initialViewRef.current = initialView;
+  }, [initialView]);
   /** Seconds since the last interaction (or since the model was framed). */
   const idleTime = useRef(0);
   const interacting = useRef(false);
@@ -97,9 +107,10 @@ export function CameraRig({
     introTime.current = animate ? 0 : null;
     idleTime.current = 0;
     glide.current = null;
-    camera.position.fromArray(
-      animate ? introPosition(framing.target, framing.position, 0) : framing.position,
-    );
+    const view = initialViewRef.current;
+    const end = view ? viewPosition(framing, view) : framing.position;
+    introEnd.current = end;
+    camera.position.fromArray(animate ? introPosition(framing.target, end, 0) : end);
     camera.near = framing.near;
     camera.far = framing.far;
     camera.updateProjectionMatrix();
@@ -151,7 +162,7 @@ export function CameraRig({
     if (introTime.current === null || !framing) return;
     introTime.current = Math.min(INTRO_SECONDS, introTime.current + delta);
     const t = introTime.current / INTRO_SECONDS;
-    getState().camera.position.fromArray(introPosition(framing.target, framing.position, t));
+    getState().camera.position.fromArray(introPosition(framing.target, introEnd.current, t));
     controls.current?.update();
     if (t >= 1) introTime.current = null;
   });

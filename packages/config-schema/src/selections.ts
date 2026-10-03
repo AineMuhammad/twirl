@@ -1,25 +1,29 @@
-import { z } from 'zod';
-
 import type { ColorGroup, DimensionGroup, OptionGroup, ProductConfig } from './config';
-import { hexColorSchema } from './primitives';
 
 /**
  * A shopper's choice for one group:
  * - colour: a swatch id, 'original' (the model's own finish) or `{ custom: '#rrggbb' }`
  * - visibility: true / false
  * - dimension: a number in the group's unit
+ *
+ * This module is zod-free so the engine can run in the storefront without the schema library;
+ * the matching zod schemas live in `selections-schema.ts`.
  */
-export const selectionValueSchema = z.union([
-  z.string(),
-  z.boolean(),
-  z.number(),
-  z.object({ custom: hexColorSchema }).strict(),
-]);
-export type SelectionValue = z.output<typeof selectionValueSchema>;
+export type SelectionValue = string | boolean | number | { custom: string };
 
 /** Choices keyed by group id. */
-export const selectionsSchema = z.record(z.string(), selectionValueSchema);
-export type Selections = z.output<typeof selectionsSchema>;
+export type Selections = Record<string, SelectionValue>;
+
+const HEX = /^#[0-9a-f]{6}$/i;
+
+/** `{ custom: '#rrggbb' }` with nothing else, normalised to lowercase. */
+export function parseCustomColor(value: unknown): { custom: string } | null {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return null;
+  const keys = Object.keys(value);
+  const custom = (value as { custom?: unknown }).custom;
+  if (keys.length !== 1 || typeof custom !== 'string' || !HEX.test(custom)) return null;
+  return { custom: custom.toLowerCase() };
+}
 
 export type SelectionAdjustment =
   | { group: string; reason: 'unknown-group' }
@@ -57,9 +61,9 @@ export function snapDimension(group: DimensionGroup, value: number): number {
 function resolveColor(group: ColorGroup, value: unknown, adjustments: SelectionAdjustment[]) {
   if (value === 'original') return value;
   if (typeof value === 'string' && group.swatches.some((s) => s.id === value)) return value;
-  const custom = z.object({ custom: hexColorSchema }).strict().safeParse(value);
-  if (custom.success) {
-    if (group.allowCustom) return custom.data;
+  const custom = parseCustomColor(value);
+  if (custom) {
+    if (group.allowCustom) return custom;
     adjustments.push({ group: group.id, reason: 'custom-not-allowed' });
     return defaultValue(group);
   }

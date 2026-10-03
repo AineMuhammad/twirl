@@ -7,6 +7,7 @@ import {
   useCallback,
   useEffect,
   useImperativeHandle,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -90,6 +91,8 @@ export interface ViewerProps {
    * Defaults to true; disabled for users who prefer reduced motion.
    */
   idleRotate?: boolean;
+  /** Camera view the model opens on (after the intro). Defaults to the automatic framing. */
+  initialView?: CameraView;
   /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
   enablePan?: boolean;
   /**
@@ -153,6 +156,7 @@ export function Viewer({
   environmentSources,
   decoderPaths,
   enablePan = false,
+  initialView,
   effects = 'auto',
   idleRotate = true,
   playAnimationsOnLoad = true,
@@ -231,6 +235,12 @@ export function Viewer({
       }),
     [modelUrl],
   );
+  // The latest onLoad, read when a model loads: an inline callback must not re-run loading
+  // (which would re-frame the camera on every parent render).
+  const onLoadRef = useRef(onLoad);
+  useLayoutEffect(() => {
+    onLoadRef.current = onLoad;
+  }, [onLoad]);
   const handleLoaded = useCallback(
     (info: ModelInfo, bounds: Box3) => {
       if (modelUrl) {
@@ -240,9 +250,9 @@ export function Viewer({
         setPlacement({ url: modelUrl, framing, stage: stageFromBounds(bounds, framing.radius) });
       }
       setOverlay({ url: modelUrl, state: { phase: 'ready' } });
-      onLoad?.(info);
+      onLoadRef.current?.(info);
     },
-    [modelUrl, onLoad],
+    [modelUrl],
   );
   const handleError = useCallback(
     (cause: unknown) => {
@@ -341,6 +351,7 @@ export function Viewer({
           enablePan={enablePan}
           maxPolarAngle={Math.PI / 2 - 0.05}
           idleRotate={idleRotate}
+          initialView={initialView}
           controllerRef={rigController}
         />
       </Canvas>

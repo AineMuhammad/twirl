@@ -5,5 +5,6 @@ export * from './migrations';
 export * from './names';
 export * from './primitives';
 export * from './selections';
+export * from './selections-schema';
 export * from './starter';
 export { CURRENT_SCHEMA_VERSION, isSupportedSchemaVersion } from './version';

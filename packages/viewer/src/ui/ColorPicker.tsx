@@ -37,7 +37,7 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
           className="size-9 shrink-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
           style={{ background: color }}
         />
-        <label className="flex min-w-0 flex-1 items-center rounded-xl border border-line bg-tint px-3 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
+        <div className="flex min-w-0 flex-1 items-center rounded-xl border border-line bg-tint px-3 focus-within:border-brand-500 focus-within:ring-2 focus-within:ring-brand-500/20">
           <span className="text-sm text-ink-faint">#</span>
           <HexColorInput
             color={color}
@@ -45,7 +45,7 @@ export function ColorPicker({ color, onChange, onDone, label }: ColorPickerProps
             aria-label={`Hex color for ${label}`}
             className="w-full bg-transparent py-2 pl-1 font-mono text-sm uppercase outline-none"
           />
-        </label>
+        </div>
         <button
           type="button"
           onClick={onDone}

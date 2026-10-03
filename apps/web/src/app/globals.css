@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+/* The configurator UI lives in the viewer package. */
+@source '../../../../packages/viewer/src';
 
 /* Theme: light by default; dark via data-theme="dark" on <html> (set before paint, see layout). */
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
