@@ -79,6 +79,8 @@ export function CameraRig({
   /** Seconds since the last interaction (or since the model was framed). */
   const idleTime = useRef(0);
   const interacting = useRef(false);
+  /** A preset view was chosen: hold it (no turntable) until the shopper moves the camera. */
+  const holdView = useRef(false);
   /** A glide between views in progress. */
   const glide = useRef<{
     from: [number, number, number];
@@ -100,6 +102,7 @@ export function CameraRig({
         const to = viewPosition(framing, view, frontAzimuth);
         introTime.current = null;
         idleTime.current = 0;
+        holdView.current = true;
         if (prefersReducedMotion()) {
           camera.position.fromArray(to);
           controls.current?.update();
@@ -120,6 +123,7 @@ export function CameraRig({
     introTime.current = animate ? 0 : null;
     idleTime.current = 0;
     glide.current = null;
+    holdView.current = false;
     const view = initialViewRef.current;
     const end = view ? viewPosition(framing, view, frontAzimuthRef.current) : framing.position;
     introEnd.current = end;
@@ -140,6 +144,7 @@ export function CameraRig({
       glide.current = null;
       interacting.current = true;
       idleTime.current = 0;
+      holdView.current = false;
     };
     const end = () => {
       interacting.current = false;
@@ -160,7 +165,8 @@ export function CameraRig({
       if (!interacting.current && introTime.current === null && glide.current === null) {
         idleTime.current += delta;
       }
-      c.autoRotate = canRotate && !interacting.current && idleTime.current >= IDLE_SECONDS;
+      c.autoRotate =
+        canRotate && !interacting.current && !holdView.current && idleTime.current >= IDLE_SECONDS;
     }
     const g = glide.current;
     if (g && framing) {
