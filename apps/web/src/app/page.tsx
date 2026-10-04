@@ -1,14 +1,19 @@
 import Link from 'next/link';
-import type { ReactNode } from 'react';
+import type { CSSProperties, ReactNode } from 'react';
 
-import { HeroScene } from '@/components/marketing/HeroScene';
+import { CountUp } from '@/components/marketing/CountUp';
+import { Magnetic } from '@/components/marketing/Magnetic';
+import { Reveal } from '@/components/marketing/Reveal';
+import { ScrollProgressBar } from '@/components/marketing/ScrollProgressBar';
 import { SiteFooter } from '@/components/marketing/SiteFooter';
 import { SiteHeader } from '@/components/marketing/SiteHeader';
+import { Story } from '@/components/marketing/story/Story';
 
 const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
 const primaryButton = `inline-flex h-12 items-center rounded-lg bg-brand-600 px-6 text-[16px] font-medium text-white shadow-sm hover:bg-brand-700 ${focusRing}`;
-const secondaryButton = `inline-flex h-12 items-center rounded-lg border border-line bg-surface px-6 text-[16px] font-medium text-ink hover:bg-tint ${focusRing}`;
+const container = 'mx-auto max-w-[1440px] px-5 sm:px-8 lg:px-12';
+const sectionTitle = 'font-display text-[36px] leading-[1.05] tracking-tight sm:text-[48px]';
 
 const PLATFORMS = ['Shopify', 'WordPress', 'Webflow', 'Squarespace', 'Wix', 'Any HTML site'];
 
@@ -36,7 +41,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
         one?{' '}
         <Link
           href="/request-model"
-          className="font-medium text-brand-700 underline-offset-4 hover:underline"
+          className="font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-200"
         >
           We can make it for you
         </Link>
@@ -67,7 +72,7 @@ const FAQ: { q: string; a: ReactNode }[] = [
         Yes. One live product, free, with a small “Made with Twirl” mark.{' '}
         <Link
           href="/pricing"
-          className="font-medium text-brand-700 underline-offset-4 hover:underline"
+          className="font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-200"
         >
           See all plans
         </Link>
@@ -77,84 +82,99 @@ const FAQ: { q: string; a: ReactNode }[] = [
   },
 ];
 
-/** A feature tile: copy on top, a small slice of the real product UI underneath. */
-function Feature({
-  title,
-  text,
-  children,
-  className = '',
-}: {
-  title: string;
-  text: string;
-  children: ReactNode;
-  className?: string;
-}) {
-  return (
-    <article className={`flex flex-col rounded-xl bg-surface p-7 ring-1 ring-line ${className}`}>
-      <h3 className="text-[19px] font-semibold tracking-tight text-ink">{title}</h3>
-      <p className="mt-2 max-w-md text-[15px] leading-relaxed text-ink-muted">{text}</p>
-      <div className="mt-6 flex flex-1 items-end">{children}</div>
-    </article>
-  );
-}
+const card = 'rounded-2xl bg-surface ring-1 ring-line';
+const delay = (ms: number) => ({ '--delay': `${ms}ms` }) as CSSProperties;
 
-function Swatches() {
-  const colours = [
-    ['Lagoon weave', null],
-    ['Oat linen', '#d8ccb6'],
-    ['Sage', '#8fa58a'],
-    ['Terracotta', '#b5532f'],
-    ['Teal velvet', '#2f6f6a'],
-    ['Ink velvet', '#232b4a'],
-  ] as const;
+/* ---- Insight ------------------------------------------------------------------------------- */
+
+function InsightCard() {
+  const stats = [
+    { label: 'Visitors', value: 1284 },
+    { label: 'Designs shared', value: 212 },
+    { label: 'Quote requests', value: 37 },
+  ];
   return (
-    <div className="w-full rounded-lg bg-tint p-4">
-      <p className="text-[13px] font-medium text-ink">Seat fabric</p>
-      <p className="text-[13px] text-ink-muted">Teal velvet · +$60.00</p>
-      <div className="mt-3 flex flex-wrap gap-2.5">
-        {colours.map(([name, hex]) => (
-          <span
-            key={name}
-            title={name}
-            className={`size-9 rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] ${name === 'Teal velvet' ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-tint' : ''}`}
-            style={{
-              background:
-                hex ?? 'repeating-conic-gradient(#e5ded3 0 25%, #fffdf9 0 50%) 50% / 8px 8px',
-            }}
-          />
-        ))}
+    <div className={`${card} p-6`}>
+      <div className="flex items-baseline justify-between gap-4">
+        <p className="text-[15px] font-semibold text-ink">Halo Lounge Chair</p>
+        <p className="text-[13px] text-ink-muted">Example · last 30 days</p>
       </div>
+      <dl className="mt-5 grid grid-cols-3 gap-4">
+        {stats.map((s) => (
+          <div key={s.label}>
+            <dt className="text-[13px] text-ink-muted">{s.label}</dt>
+            <dd className="mt-1 text-[28px] font-semibold tracking-tight text-ink">
+              <CountUp value={s.value} />
+            </dd>
+          </div>
+        ))}
+      </dl>
+      <svg viewBox="0 0 300 80" className="mt-6 h-24 w-full" aria-hidden preserveAspectRatio="none">
+        <defs>
+          <linearGradient id="spark-fill" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stopColor="#1f4272" stopOpacity="0.22" />
+            <stop offset="100%" stopColor="#1f4272" stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path
+          d="M0 66 C 30 60, 45 62, 70 52 S 110 50, 130 40 S 170 44, 190 30 S 240 26, 260 16 S 290 12, 300 8 L300 80 L0 80 Z"
+          fill="url(#spark-fill)"
+        />
+        <path
+          className="draw-path"
+          pathLength={1}
+          d="M0 66 C 30 60, 45 62, 70 52 S 110 50, 130 40 S 170 44, 190 30 S 240 26, 260 16 S 290 12, 300 8"
+          fill="none"
+          stroke="#1f4272"
+          strokeWidth="2.5"
+          strokeLinecap="round"
+          vectorEffect="non-scaling-stroke"
+        />
+      </svg>
+      <p className="mt-3 text-[13px] text-ink-muted">
+        Most chosen fabric: <span className="font-medium text-ink">Teal velvet</span>
+      </p>
     </div>
   );
 }
 
-function PriceCard() {
-  const lines = [
-    ['Halo Lounge Chair', '$899.00'],
-    ['Seat fabric: Teal velvet', '+$60.00'],
-    ['Diamond cushion', '+$49.00'],
-    ['Diameter: 130 cm', '+$80.00'],
-  ];
+function QuoteCard() {
   return (
-    <dl className="w-full rounded-lg bg-tint p-4 text-[14px]">
-      {lines.map(([label, amount]) => (
-        <div key={label} className="flex justify-between gap-4 py-1">
-          <dt className="text-ink-muted">{label}</dt>
-          <dd className="text-ink tabular-nums">{amount}</dd>
+    <div className={`${card} p-5 text-[14px] shadow-[0_24px_50px_-28px_rgba(60,30,10,0.5)]`}>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <p className="font-semibold text-ink">New quote request</p>
+          <p className="text-[13px] text-ink-muted">Maya Okafor · maya@studio-ok.com</p>
         </div>
-      ))}
-      <div className="mt-2 flex justify-between gap-4 border-t border-line pt-2 text-[16px] font-semibold">
-        <dt className="text-ink">Total</dt>
-        <dd className="text-ink tabular-nums">$1,088.00</dd>
+        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[12px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+          $1,008
+        </span>
       </div>
-    </dl>
+      <ul className="mt-3 space-y-1 text-[13px] text-ink-soft">
+        <li>Seat fabric: Teal velvet</li>
+        <li>Frame finish: Matte black</li>
+        <li>Back and lumbar cushions</li>
+      </ul>
+    </div>
+  );
+}
+
+/* ---- Feature tiles ------------------------------------------------------------------------- */
+
+function Tile({ title, text, children }: { title: string; text: string; children: ReactNode }) {
+  return (
+    <article className={`flex h-full flex-col p-7 ${card}`}>
+      <h3 className="text-[19px] font-semibold tracking-tight text-ink">{title}</h3>
+      <p className="mt-2 text-[15px] leading-relaxed text-ink-muted">{text}</p>
+      <div className="mt-6 flex flex-1 items-end">{children}</div>
+    </article>
   );
 }
 
 function RuleCard() {
   return (
     <div className="w-full rounded-lg bg-tint p-4 text-[14px]">
-      <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[12px] font-medium text-brand-700">
+      <span className="rounded-full bg-brand-50 px-2 py-0.5 text-[12px] font-medium text-brand-700 dark:bg-brand-500/15 dark:text-brand-200">
         Requires
       </span>
       <p className="mt-2 text-ink">
@@ -168,158 +188,212 @@ function RuleCard() {
   );
 }
 
-function EmbedCard() {
+function VersionsCard() {
+  const versions = [
+    { v: 3, note: 'Added Teal velvet', live: true },
+    { v: 2, note: 'New cushion prices', live: false },
+    { v: 1, note: 'First launch', live: false },
+  ];
   return (
-    <pre className="w-full rounded-lg bg-ink p-4 font-mono text-[13px] leading-relaxed break-all whitespace-pre-wrap text-[#e7e0d5]">
-      <span className="text-[#d6a58e]">&lt;div</span> data-twirl-product=
-      <span className="text-[#a3bfa6]">&quot;Hq8dKs2mPz4A&quot;</span>
-      <span className="text-[#d6a58e]">&gt;&lt;/div&gt;</span>
-      {'\n'}
-      <span className="text-[#d6a58e]">&lt;script</span> src=
-      <span className="text-[#a3bfa6]">&quot;…/embed.js&quot;</span> async
-      <span className="text-[#d6a58e]">&gt;&lt;/script&gt;</span>
-    </pre>
+    <ol className="w-full space-y-2 text-[14px]">
+      {versions.map((item) => (
+        <li
+          key={item.v}
+          className="flex items-center justify-between gap-3 rounded-lg bg-tint px-4 py-2.5"
+        >
+          <span className="text-ink">
+            <span className="font-semibold tabular-nums">v{item.v}</span>
+            <span className="text-ink-muted"> · {item.note}</span>
+          </span>
+          {item.live ? (
+            <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[12px] font-medium text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
+              Live
+            </span>
+          ) : (
+            <span className="text-[13px] font-medium text-ink-muted">Roll back</span>
+          )}
+        </li>
+      ))}
+    </ol>
   );
 }
 
-function QuoteCard() {
+function ShareCard() {
   return (
-    <div className="w-full rounded-lg bg-tint p-4 text-[14px]">
-      <div className="flex items-start justify-between gap-3">
-        <div>
-          <p className="font-semibold text-ink">New quote request</p>
-          <p className="text-[13px] text-ink-muted">Maya Okafor · maya@studio-ok.com</p>
-        </div>
-        <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[12px] font-medium text-emerald-700">
-          $1,088.00
-        </span>
+    <div className="w-full space-y-2 text-[14px]">
+      <div className="flex items-center gap-2 rounded-lg bg-tint px-4 py-2.5">
+        <span className="min-w-0 flex-1 truncate text-ink-muted">…/s/Hq8dKs2m</span>
+        <span className="font-medium text-brand-700 dark:text-brand-200">Copy link</span>
       </div>
-      <ul className="mt-3 space-y-1 text-[13px] text-ink-soft">
-        <li>Seat fabric: Teal velvet</li>
-        <li>Frame finish: Matte black</li>
-        <li>Diameter: 130 cm</li>
-      </ul>
+      <div className="flex items-center gap-2 rounded-lg bg-tint px-4 py-2.5">
+        <span className="min-w-0 flex-1 text-ink-muted">halo-chair-teal.png · 2400 px</span>
+        <span className="font-medium text-brand-700 dark:text-brand-200">Download</span>
+      </div>
     </div>
   );
 }
 
+function PhoneCard() {
+  return (
+    <div className="mx-auto w-40 rounded-[26px] bg-ink p-1.5 shadow-[0_20px_40px_-24px_rgba(0,0,0,0.6)]">
+      <div className="overflow-hidden rounded-[20px] bg-[radial-gradient(120%_90%_at_50%_30%,#fffaf3,#e6d6c2)]">
+        <div className="grid h-28 place-items-center">
+          <span className="size-14 rounded-[40%] bg-[#2f6f6a] shadow-[0_10px_20px_-8px_rgba(0,0,0,0.5)]" />
+        </div>
+        <div className="space-y-1.5 rounded-t-2xl bg-[#fffdf9] p-3">
+          <span className="mx-auto block h-1 w-8 rounded-full bg-[#1c1917]/15" />
+          <span className="block text-[10px] font-semibold text-[#1c1917]">Seat fabric</span>
+          <span className="flex gap-1">
+            {['#5d8b98', '#d8ccb6', '#8fa58a', '#b5532f', '#2f6f6a'].map((c) => (
+              <span key={c} className="size-4 rounded-full" style={{ background: c }} />
+            ))}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ---- Page ---------------------------------------------------------------------------------- */
+
 export default function HomePage() {
   return (
-    <div className="min-h-dvh bg-background text-ink">
-      <SiteHeader />
+    <div className="min-h-dvh overflow-x-clip bg-background text-ink">
+      <noscript>
+        <style>
+          {'[data-reveal]{opacity:1!important;transform:none!important;filter:none!important}'}
+        </style>
+      </noscript>
+      <ScrollProgressBar />
+      <SiteHeader wide />
 
       <main>
-        {/* Hero */}
-        <section className="mx-auto grid max-w-6xl items-center gap-12 px-5 pt-12 pb-20 lg:grid-cols-[1.05fr_1fr] lg:pt-20">
-          <div>
-            <p className="text-[14px] font-medium text-brand-700">
-              3D configurators for product makers
-            </p>
-            <h1 className="mt-4 font-display text-[52px] leading-[1.02] tracking-tight sm:text-[68px]">
-              Let customers design it before they buy it
-            </h1>
-            <p className="mt-6 max-w-xl text-[18px] leading-relaxed text-ink-soft">
-              Twirl turns your product’s 3D model into a configurator for your website: colours,
-              add-ons, sizes and a live price. Quotes arrive with the exact spec attached.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link href="/dashboard" className={primaryButton}>
-                Start free
-              </Link>
-              <Link href="/demo" className={secondaryButton}>
-                Try the demo
-              </Link>
+        <Story />
+
+        {/* Insight: after the sale is set up, see what shoppers do. */}
+        <section aria-labelledby="insight" className="border-t border-line bg-surface">
+          <div
+            className={`${container} grid items-center gap-14 py-28 lg:grid-cols-[1fr_1.3fr] lg:gap-24`}
+          >
+            <Reveal>
+              <p className="text-[14px] font-medium text-brand-700 dark:text-brand-200">
+                05 · Insight
+              </p>
+              <h2 id="insight" className={`mt-3 ${sectionTitle}`}>
+                Then see what shoppers choose
+              </h2>
+              <p className="mt-5 max-w-md text-[17px] leading-relaxed text-ink-soft">
+                Every view, share, download and quote is counted per product, so you know which
+                finishes people love before you order stock.
+              </p>
+            </Reveal>
+            <div>
+              <Reveal>
+                <InsightCard />
+              </Reveal>
+              <Reveal delay={350} className="mt-4">
+                <QuoteCard />
+              </Reveal>
             </div>
-            <p className="mt-4 text-[14px] text-ink-muted">Free for one product. No card needed.</p>
           </div>
-          <HeroScene />
         </section>
 
-        {/* Works with */}
-        <section aria-labelledby="works-with" className="border-y border-line bg-surface">
-          <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-10 gap-y-3 px-5 py-6">
-            <h2 id="works-with" className="text-[14px] text-ink-muted">
-              Works on
-            </h2>
-            <ul className="flex flex-wrap gap-x-8 gap-y-2">
-              {PLATFORMS.map((p) => (
-                <li key={p} className="text-[16px] font-semibold tracking-tight text-ink-soft">
+        {/* Works on */}
+        <section aria-labelledby="works-with" className="border-y border-line py-7">
+          <h2 id="works-with" className="sr-only">
+            Works on
+          </h2>
+          <ul className="sr-only">
+            {PLATFORMS.map((p) => (
+              <li key={p}>{p}</li>
+            ))}
+          </ul>
+          <div
+            aria-hidden
+            className="marquee-wrap overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]"
+          >
+            <div className="marquee flex w-max gap-16 pr-16">
+              {[...PLATFORMS, ...PLATFORMS, ...PLATFORMS, ...PLATFORMS].map((p, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-16 font-display text-[26px] whitespace-nowrap text-ink-soft"
+                >
                   {p}
-                </li>
+                  <span className="size-1.5 rounded-full bg-brand-600" />
+                </span>
               ))}
-            </ul>
+            </div>
           </div>
         </section>
 
-        {/* Features */}
-        <section aria-labelledby="features" className="mx-auto max-w-6xl px-5 py-24">
-          <div className="max-w-2xl">
-            <h2
-              id="features"
-              className="font-display text-[42px] leading-[1.05] tracking-tight sm:text-[52px]"
-            >
-              Everything a configurable product needs
+        {/* Everything around it */}
+        <section aria-labelledby="features" className={`${container} py-28`}>
+          <Reveal className="max-w-2xl">
+            <h2 id="features" className={sectionTitle}>
+              And everything around it
             </h2>
             <p className="mt-4 text-[17px] text-ink-soft">
-              Set it up once in the editor. Customers get a configurator that feels like part of
-              your brand, and you get orders that can actually be built.
+              The details that turn a pretty 3D model into orders you can actually build.
             </p>
-          </div>
-          <div className="mt-12 grid gap-5 lg:grid-cols-6">
-            <Feature
-              className="lg:col-span-4"
-              title="Every finish, rendered in 3D"
-              text="Customers pick colours per part and see them on the product instantly, with the fabric weave and wood grain kept intact."
-            >
-              <Swatches />
-            </Feature>
-            <Feature
-              className="lg:col-span-2"
-              title="Prices that add up"
-              text="Each choice adds its own cost. The total updates as they go."
-            >
-              <PriceCard />
-            </Feature>
-            <Feature
-              className="lg:col-span-2"
-              title="Only buildable orders"
-              text="Rules stop combinations you don’t sell, and explain why."
-            >
-              <RuleCard />
-            </Feature>
-            <Feature
-              className="lg:col-span-2"
-              title="Quotes with the full spec"
-              text="No more back-and-forth emails to work out what they want."
-            >
-              <QuoteCard />
-            </Feature>
-            <Feature
-              className="lg:col-span-2"
-              title="Two lines on any site"
-              text="Paste the snippet where the configurator should go."
-            >
-              <EmbedCard />
-            </Feature>
+          </Reveal>
+          <div className="mt-14 grid gap-5 md:grid-cols-2 xl:grid-cols-4">
+            <Reveal delay={0}>
+              <Tile
+                title="Only buildable orders"
+                text="Rules stop combinations you don’t sell, and tell shoppers why."
+              >
+                <RuleCard />
+              </Tile>
+            </Reveal>
+            <Reveal delay={120}>
+              <Tile
+                title="Publish without fear"
+                text="Customers only see changes when you publish. Every version is kept, so you can roll back in a click."
+              >
+                <VersionsCard />
+              </Tile>
+            </Reveal>
+            <Reveal delay={0}>
+              <Tile
+                title="Designs that travel"
+                text="Shoppers share a link to their exact design or download a sharp image to show the family."
+              >
+                <ShareCard />
+              </Tile>
+            </Reveal>
+            <Reveal delay={120}>
+              <Tile
+                title="Made for thumbs too"
+                text="On phones, customers turn the product with a finger and pick options from a bottom panel."
+              >
+                <PhoneCard />
+              </Tile>
+            </Reveal>
           </div>
         </section>
 
         {/* How it works */}
         <section aria-labelledby="how" className="border-t border-line bg-surface">
-          <div className="mx-auto max-w-6xl px-5 py-24">
-            <h2
-              id="how"
-              className="font-display text-[42px] leading-[1.05] tracking-tight sm:text-[52px]"
-            >
-              Live in an afternoon
-            </h2>
-            <ol className="mt-12 grid gap-10 md:grid-cols-3">
+          <div className={`${container} py-28`}>
+            <Reveal>
+              <h2 id="how" className={sectionTitle}>
+                Live in an afternoon
+              </h2>
+            </Reveal>
+            <ol className="mt-14 grid gap-10 md:grid-cols-3">
               {STEPS.map((step, i) => (
-                <li key={step.title} className="border-t-2 border-ink pt-5">
-                  <p className="text-[14px] font-medium text-brand-700 tabular-nums">0{i + 1}</p>
-                  <p className="mt-2 text-[19px] font-semibold tracking-tight">{step.title}</p>
+                <Reveal as="li" key={step.title} delay={i * 180}>
+                  <span
+                    aria-hidden
+                    className="draw-line block h-0.5 bg-ink"
+                    style={delay(i * 180)}
+                  />
+                  <p className="mt-5 font-display text-[34px] leading-none text-brand-700 tabular-nums dark:text-brand-200">
+                    0{i + 1}
+                  </p>
+                  <p className="mt-3 text-[19px] font-semibold tracking-tight">{step.title}</p>
                   <p className="mt-2 text-[15px] leading-relaxed text-ink-muted">{step.text}</p>
-                </li>
+                </Reveal>
               ))}
             </ol>
           </div>
@@ -328,24 +402,23 @@ export default function HomePage() {
         {/* FAQ */}
         <section
           aria-labelledby="faq"
-          className="mx-auto grid max-w-6xl gap-10 px-5 py-24 lg:grid-cols-[1fr_1.6fr]"
+          className={`${container} grid gap-10 py-28 lg:grid-cols-[1fr_1.6fr] lg:gap-24`}
         >
-          <h2
-            id="faq"
-            className="font-display text-[42px] leading-[1.05] tracking-tight sm:text-[52px]"
-          >
-            Questions, answered
-          </h2>
-          <div className="divide-y divide-line border-y border-line">
+          <Reveal>
+            <h2 id="faq" className={sectionTitle}>
+              Questions, answered
+            </h2>
+          </Reveal>
+          <Reveal delay={150} className="divide-y divide-line border-y border-line">
             {FAQ.map((item) => (
-              <details key={item.q} className="group py-5">
+              <details key={item.q} className="faq group py-5">
                 <summary
                   className={`flex cursor-pointer list-none items-center justify-between gap-4 rounded-md text-[17px] font-medium text-ink ${focusRing}`}
                 >
                   {item.q}
                   <span
                     aria-hidden
-                    className="text-[22px] leading-none text-ink-muted transition-transform group-open:rotate-45"
+                    className="grid size-8 shrink-0 place-items-center rounded-full text-[20px] leading-none text-ink-muted ring-1 ring-line transition-transform duration-300 group-open:rotate-45"
                   >
                     +
                   </span>
@@ -355,31 +428,51 @@ export default function HomePage() {
                 </p>
               </details>
             ))}
-          </div>
+          </Reveal>
         </section>
 
         {/* Closing call to action */}
-        <section className="bg-ink text-surface">
-          <div className="mx-auto flex max-w-6xl flex-col items-start justify-between gap-8 px-5 py-20 md:flex-row md:items-center">
-            <h2 className="max-w-2xl font-display text-[40px] leading-[1.05] tracking-tight sm:text-[50px]">
-              Show customers exactly what they’re buying
-            </h2>
-            <div className="flex flex-wrap gap-3">
-              <Link href="/dashboard" className={primaryButton}>
-                Start free
-              </Link>
-              <Link
-                href="/demo"
-                className={`inline-flex h-12 items-center rounded-lg border border-surface/25 px-6 text-[16px] font-medium text-surface hover:bg-surface/10 ${focusRing}`}
-              >
-                See the demo
-              </Link>
-            </div>
+        <section className="relative isolate overflow-hidden bg-[#1c1917] text-[#f5f0e8]">
+          <div
+            aria-hidden
+            className="glow absolute -top-1/3 -left-1/4 -z-10 size-[70vmax] rounded-full bg-[radial-gradient(closest-side,rgba(70,110,180,0.42),transparent)]"
+          />
+          <div
+            aria-hidden
+            className="glow absolute -right-1/4 -bottom-1/2 -z-10 size-[60vmax] rounded-full bg-[radial-gradient(closest-side,rgba(232,170,110,0.22),transparent)] [animation-delay:-7s]"
+          />
+          <div className={`${container} py-32 text-center`}>
+            <Reveal>
+              <h2 className="mx-auto max-w-4xl font-display text-[40px] leading-[1.02] tracking-tight sm:text-[64px]">
+                Show customers exactly what they’re buying
+              </h2>
+            </Reveal>
+            <Reveal delay={200}>
+              <p className="mx-auto mt-6 max-w-xl text-[17px] text-[#d6cfc4]">
+                Set up your first product today. It’s free for one product, and there’s no card to
+                enter.
+              </p>
+              <div className="mt-10 flex flex-wrap justify-center gap-3">
+                <Magnetic>
+                  <Link href="/dashboard" className={primaryButton}>
+                    Start free
+                  </Link>
+                </Magnetic>
+                <Magnetic>
+                  <Link
+                    href="/demo"
+                    className={`inline-flex h-12 items-center rounded-lg border border-[#f5f0e8]/25 px-6 text-[16px] font-medium text-[#f5f0e8] hover:bg-[#f5f0e8]/10 ${focusRing}`}
+                  >
+                    See the demo
+                  </Link>
+                </Magnetic>
+              </div>
+            </Reveal>
           </div>
         </section>
       </main>
 
-      <SiteFooter />
+      <SiteFooter wide />
     </div>
   );
 }

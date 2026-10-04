@@ -17,7 +17,7 @@ export default async function RequestModelPage() {
     <div className="min-h-dvh bg-tint text-ink">
       <SiteHeader signedIn={Boolean(user)} />
       <main className="mx-auto max-w-3xl px-5 pt-10 pb-24">
-        <h1 className="font-display text-[44px] leading-none tracking-tight sm:text-[52px]">
+        <h1 className="font-display text-[38px] leading-none tracking-tight sm:text-[44px]">
           Need a 3D model?
         </h1>
         <p className="mt-3 max-w-2xl text-[17px] text-ink-soft">

@@ -27,7 +27,7 @@ const C = {
   soft: '#44403c',
   muted: '#57534e',
   line: '#e7e0d5',
-  accent: '#c2552d',
+  accent: '#1f4272',
 };
 
 export function escapeHtml(text: string): string {

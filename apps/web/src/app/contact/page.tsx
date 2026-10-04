@@ -19,7 +19,7 @@ export default async function ContactPage() {
       <SiteHeader signedIn={Boolean(user)} />
       <main className="mx-auto grid max-w-6xl gap-12 px-5 pt-14 pb-24 lg:grid-cols-[1fr_1.4fr]">
         <div>
-          <h1 className="font-display text-[48px] leading-[1.03] tracking-tight sm:text-[56px]">
+          <h1 className="font-display text-[40px] leading-[1.03] tracking-tight sm:text-[48px]">
             Get in touch
           </h1>
           <p className="mt-5 text-[17px] leading-relaxed text-ink-soft">
