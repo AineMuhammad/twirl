@@ -1,4 +1,4 @@
-import { type PlanDefinition, planDefinition } from '@/config/plans';
+import { type PlanDefinition, planDefinition, TRIAL_DAYS, trialState } from '@/config/plans';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import type { Plan } from '@/generated/prisma/enums';
 
@@ -10,6 +10,8 @@ export interface PublishCheck {
   used: number;
   limit: number;
   plan: Plan;
+  /** The free trial is over: nothing can be published until the workspace upgrades. */
+  trialEnded: boolean;
 }
 
 /**
@@ -34,9 +36,10 @@ export async function checkPublish(
 ): Promise<PublishCheck> {
   const workspace = await db.workspace.findUniqueOrThrow({
     where: { id: workspaceId },
-    select: { plan: true },
+    select: { plan: true, trialEndsAt: true },
   });
   const plan = planDefinition(workspace.plan);
+  const trialEnded = trialState(workspace.plan, workspace.trialEndsAt).ended;
   const used = await countPublishedProducts(db, workspaceId);
   const alreadyPublished = productId
     ? (await db.product.count({
@@ -44,18 +47,23 @@ export async function checkPublish(
       })) > 0
     : false;
   return {
-    allowed: canPublish(plan, used, alreadyPublished),
+    allowed: !trialEnded && canPublish(plan, used, alreadyPublished),
     used,
     limit: plan.maxPublishedProducts,
     plan: workspace.plan,
+    trialEnded,
   };
 }
 
 export class PlanLimitError extends Error {
   constructor(readonly check: PublishCheck) {
     super(
-      `Your ${planDefinition(check.plan).label} plan allows ${check.limit} published ` +
-        `product${check.limit === 1 ? '' : 's'}. Unpublish one or upgrade to publish more.`,
+      check.trialEnded
+        ? `Your ${TRIAL_DAYS}-day free trial has ended. Upgrade to publish.`
+        : check.plan === 'FREE'
+          ? `The free trial includes ${check.limit} live product. Unpublish it or upgrade to publish more.`
+          : `Your ${planDefinition(check.plan).label} plan allows ${check.limit} published ` +
+            `products. Unpublish one or upgrade to publish more.`,
     );
     this.name = 'PlanLimitError';
   }
@@ -71,4 +79,12 @@ export async function assertCanPublish(db: Db, workspaceId: string, productId: s
   const check = await checkPublish(db, workspaceId, productId);
   if (!check.allowed) throw new PlanLimitError(check);
   return check;
+}
+
+/**
+ * Prisma filter for workspaces whose products are fully live: a paid plan, or a free trial that
+ * hasn't ended. Products outside it show a still image and take no quotes or share links.
+ */
+export function workspaceNotLocked(now = new Date()) {
+  return { OR: [{ plan: { not: 'FREE' as const } }, { trialEndsAt: { gt: now } }] };
 }

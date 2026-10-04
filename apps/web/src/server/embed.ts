@@ -1,6 +1,6 @@
 import type { ProductConfig } from '@twirl/config-schema';
 
-import { planDefinition } from '@/config/plans';
+import { planDefinition, trialState } from '@/config/plans';
 import type { PrismaClient } from '@/generated/prisma/client';
 
 import { validateConfig } from './products';
@@ -13,6 +13,8 @@ export interface PublishedProduct {
   /** Object key of the model in storage. */
   modelKey: string;
   watermark: boolean;
+  /** The free trial ended: shoppers see a still image only (no options, quotes or sharing). */
+  locked: boolean;
 }
 
 /**
@@ -28,7 +30,7 @@ export async function getPublishedProduct(
     where: { publicId, archivedAt: null, publishedVersionId: { not: null } },
     select: {
       publicId: true,
-      workspace: { select: { plan: true } },
+      workspace: { select: { plan: true, trialEndsAt: true } },
       publishedVersion: {
         select: { id: true, config: true, modelAsset: { select: { key: true, status: true } } },
       },
@@ -48,5 +50,6 @@ export async function getPublishedProduct(
     config: parsed.config,
     modelKey: asset.key,
     watermark: planDefinition(product.workspace.plan).watermark,
+    locked: trialState(product.workspace.plan, product.workspace.trialEndsAt).ended,
   };
 }

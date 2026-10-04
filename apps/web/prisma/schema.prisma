@@ -86,6 +86,9 @@ model Workspace {
   /// Set when an admin changes the plan by hand (no billing in v1).
   planSetById   String?
   planSetAt     DateTime?
+  /// End of the 14-day free trial: 14 days after signup (or after the release that added trials,
+  /// for workspaces that existed before). Only matters on the Free plan.
+  trialEndsAt   DateTime       @default(dbgenerated("(now() + '14 days'::interval)"))
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
   memberships   Membership[]

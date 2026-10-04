@@ -66,10 +66,11 @@ const FAQ: { q: string; a: ReactNode }[] = [
     a: 'Edit as much as you like; customers only see changes when you publish. Every published version is kept, so you can roll back in a click.',
   },
   {
-    q: 'Is there a free plan?',
+    q: 'Is there a free trial?',
     a: (
       <>
-        Yes. One live product, free, with a small “Made with Twirl” mark.{' '}
+        Yes. Try Twirl free for 14 days with one live product. After that, your product shows a
+        still image until you upgrade, and nothing you’ve made is lost.{' '}
         <Link
           href="/pricing"
           className="font-medium text-brand-700 underline-offset-4 hover:underline dark:text-brand-200"
@@ -449,7 +450,7 @@ export default function HomePage() {
             </Reveal>
             <Reveal delay={200}>
               <p className="mx-auto mt-6 max-w-xl text-[17px] text-[#d6cfc4]">
-                Set up your first product today. It’s free for one product, and there’s no card to
+                Set up your first product today. It’s free for 14 days, and there’s no card to
                 enter.
               </p>
               <div className="mt-10 flex flex-wrap justify-center gap-3">

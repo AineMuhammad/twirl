@@ -2,6 +2,7 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 
 import { EmbedApp } from '@/components/embed/EmbedApp';
+import { StillProduct } from '@/components/embed/StillProduct';
 import { APP_NAME } from '@/config/app';
 import { databaseEnabled, db } from '@/server/db';
 import { getShare } from '@/server/shares';
@@ -35,6 +36,15 @@ export default async function SharedDesignPage({ params }: Params) {
           </Link>
         </div>
       </main>
+    );
+  }
+  if (share.locked) {
+    return (
+      <StillProduct
+        config={share.config}
+        modelUrl={publicUrl(share.modelKey)}
+        initialSelections={share.selections}
+      />
     );
   }
   return (

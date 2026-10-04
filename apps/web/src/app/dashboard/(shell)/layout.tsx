@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 import { AppShell } from '@/components/dashboard/AppShell';
-import { PLANS } from '@/config/plans';
+import { PLANS, trialState } from '@/config/plans';
 import { requireWorkspace } from '@/server/auth/session';
 import { db } from '@/server/db';
 import { countPublishedProducts } from '@/server/plans';
@@ -23,6 +23,7 @@ export default async function DashboardShellLayout({ children }: { children: Rea
       user={{ email: user.email, name: user.name, isAdmin: user.isAdmin }}
       newQuotes={newQuotes}
       plan={{ label: plan.label, used: live, limit: plan.maxPublishedProducts }}
+      trial={trialState(workspace.plan, workspace.trialEndsAt)}
       signOut={signOutAction}
     >
       {children}
