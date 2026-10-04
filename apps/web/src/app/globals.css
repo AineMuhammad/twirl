@@ -6,7 +6,7 @@
 @custom-variant dark (&:where([data-theme='dark'], [data-theme='dark'] *));
 
 :root {
-  /* Warm & crafted: ink on sand, terracotta accent. Text tokens meet WCAG AA on sand and white. */
+  /* Warm & crafted: ink on sand, deep navy accent. Text tokens meet WCAG AA on sand and white. */
   --background: #f5f0e8;
   --foreground: #1c1917;
   --surface: #fffdf9;
@@ -37,9 +37,10 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-jakarta);
   --font-mono: var(--font-geist-mono);
-  --font-display: var(--font-instrument-serif);
+  --font-display: var(--font-jakarta);
+  --font-serif: var(--font-instrument-serif);
   --color-surface: var(--surface);
   --color-ink: var(--ink);
   --color-ink-soft: var(--ink-soft);
@@ -55,18 +56,20 @@ body {
   color: var(--foreground);
 }
 
-/* Brand: terracotta (600 is the main accent; white text on 600 meets AA). Success uses moss,
-   by re-tinting Tailwind's emerald scale so existing emerald classes follow the brand. */
+/* Brand: deep navy, a cool counterweight to the warm sand (600 is the main accent; white text on
+   600 meets AA). Success uses moss, by re-tinting Tailwind's emerald scale so existing emerald
+   classes follow the brand. */
 @theme {
-  --color-brand-50: #fbf1ec;
-  --color-brand-100: #f6e0d5;
-  --color-brand-200: #ecc0aa;
-  --color-brand-300: #e09d7f;
-  --color-brand-500: #d1683f;
-  --color-brand-600: #c2552d;
-  --color-brand-700: #a2441f;
-  --color-brand-800: #7a3418;
-  --color-brand-900: #4a1f10;
+  --color-brand-50: #eef3f9;
+  --color-brand-100: #dae4f1;
+  --color-brand-200: #b5c8e2;
+  --color-brand-300: #86a4cc;
+  --color-brand-400: #5a7fb2;
+  --color-brand-500: #3a6198;
+  --color-brand-600: #1f4272;
+  --color-brand-700: #19365e;
+  --color-brand-800: #142a49;
+  --color-brand-900: #0e1e35;
 
   --color-emerald-50: #eef3ee;
   --color-emerald-100: #dde8de;
@@ -104,4 +107,201 @@ body {
 .twirl-color-picker .react-colorful__interactive:focus .react-colorful__pointer {
   transform: translate(-50%, -50%) scale(1.15);
   box-shadow: 0 0 0 3px var(--color-brand-500);
+}
+
+/* ---- Landing page motion ------------------------------------------------------------------ */
+
+/* Registered so the story stage's light can fade between chapters. */
+@property --stage-a {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #fffaf3;
+}
+@property --stage-b {
+  syntax: '<color>';
+  inherits: false;
+  initial-value: #ead9c4;
+}
+
+/* The light moves through the day as the story goes: dawn, morning, noon, golden hour, dusk. */
+.story-stage {
+  --stage-a: #fffaf3;
+  --stage-b: #ead9c4;
+  background: radial-gradient(120% 90% at 50% 35%, var(--stage-a) 0%, var(--stage-b) 100%);
+  transition:
+    --stage-a 1.2s ease,
+    --stage-b 1.2s ease;
+}
+.story-stage[data-chapter='1'] {
+  --stage-a: #fffdf7;
+  --stage-b: #e6dccd;
+}
+.story-stage[data-chapter='2'] {
+  --stage-a: #fbf6ee;
+  --stage-b: #dfd6c8;
+}
+.story-stage[data-chapter='3'] {
+  --stage-a: #fff6ea;
+  --stage-b: #ecc9a8;
+}
+.story-stage[data-chapter='4'] {
+  --stage-a: #f9efe6;
+  --stage-b: #d9c3b6;
+}
+[data-theme='dark'] .story-stage {
+  --stage-a: #2a231d;
+  --stage-b: #110e0c;
+}
+[data-theme='dark'] .story-stage[data-chapter='3'] {
+  --stage-a: #33251b;
+  --stage-b: #140f0b;
+}
+
+/* Film grain over the stage, so the gradients feel printed rather than digital. */
+.grain::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.07;
+  mix-blend-mode: multiply;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Headline words rise and come into focus one after another. */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+.word-in {
+  display: inline-block;
+  animation: word-in 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i, 0) * 60ms + 80ms);
+}
+
+/* Blocks fade up as they scroll into view (see Reveal). */
+[data-reveal] {
+  transition:
+    opacity 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+    filter 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  transition-delay: var(--delay, 0ms);
+}
+[data-reveal]:not([data-shown]) {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(6px);
+}
+/* Lines that draw themselves once shown. */
+.draw-line {
+  transform-origin: left;
+  transition: transform 1.2s cubic-bezier(0.65, 0, 0.35, 1);
+  transition-delay: calc(var(--delay, 0ms) + 200ms);
+}
+[data-reveal]:not([data-shown]) .draw-line {
+  transform: scaleX(0);
+}
+.draw-path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 1.8s cubic-bezier(0.65, 0, 0.35, 1) 0.3s;
+}
+[data-reveal]:not([data-shown]) .draw-path {
+  stroke-dashoffset: 1;
+}
+
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+.marquee {
+  animation: marquee 32s linear infinite;
+}
+.marquee-wrap:hover .marquee {
+  animation-play-state: paused;
+}
+
+@keyframes glow-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(6%, -8%) scale(1.15);
+  }
+}
+.glow {
+  animation: glow-drift 14s ease-in-out infinite;
+}
+
+@keyframes scroll-cue {
+  0% {
+    transform: scaleY(0);
+    transform-origin: top;
+  }
+  50% {
+    transform: scaleY(1);
+    transform-origin: top;
+  }
+  51% {
+    transform-origin: bottom;
+  }
+  100% {
+    transform: scaleY(0);
+    transform-origin: bottom;
+  }
+}
+.scroll-cue {
+  animation: scroll-cue 2.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+details.faq::details-content {
+  block-size: 0;
+  overflow-y: clip;
+  transition:
+    block-size 0.35s ease,
+    content-visibility 0.35s allow-discrete;
+}
+details.faq[open]::details-content {
+  block-size: auto;
+}
+:root {
+  interpolate-size: allow-keywords;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-in,
+  .marquee,
+  .glow,
+  .scroll-cue,
+  [data-reveal],
+  [data-reveal] .draw-line,
+  [data-reveal] .draw-path {
+    animation: none !important;
+    transition: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+}
+
+/* Keep the layout steady while the landing page briefly holds scrolling. */
+html {
+  scrollbar-gutter: stable;
+}
+
+/* Headlines: the same typeface as the text, set heavier and tighter. */
+.font-display {
+  font-weight: 650;
+  letter-spacing: -0.035em;
 }

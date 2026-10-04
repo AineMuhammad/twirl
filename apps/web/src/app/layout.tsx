@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono, Instrument_Serif } from 'next/font/google';
+import { Geist_Mono, Instrument_Serif, Plus_Jakarta_Sans } from 'next/font/google';
 
 import { APP_DESCRIPTION, APP_NAME } from '@/config/app';
 import { siteUrl } from '@/lib/site-url';
@@ -7,9 +7,10 @@ import { THEME_INIT_SCRIPT } from '@/lib/theme';
 
 import './globals.css';
 
-const geistSans = Geist({ variable: '--font-geist-sans', subsets: ['latin'] });
+// One typeface across the site and the configurator; mono only for code snippets.
+const jakarta = Plus_Jakarta_Sans({ variable: '--font-jakarta', subsets: ['latin'] });
 const geistMono = Geist_Mono({ variable: '--font-geist-mono', subsets: ['latin'] });
-// Display face for product names and headlines; Geist stays the UI face.
+// Only for merchants who pick the "Elegant" title font in their configurator.
 const instrumentSerif = Instrument_Serif({
   variable: '--font-instrument-serif',
   weight: '400',
@@ -39,7 +40,7 @@ export default function RootLayout({ children }: LayoutProps<'/'>) {
     <html
       lang="en"
       suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
+      className={`${jakarta.variable} ${geistMono.variable} ${instrumentSerif.variable} h-full antialiased`}
     >
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT_SCRIPT }} />

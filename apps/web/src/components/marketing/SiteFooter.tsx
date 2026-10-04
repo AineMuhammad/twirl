@@ -29,10 +29,11 @@ const COLUMNS: { title: string; links: [string, string][] }[] = [
 ];
 
 /** The public site's footer. */
-export function SiteFooter() {
+export function SiteFooter({ wide = false }: { wide?: boolean }) {
+  const container = wide ? 'max-w-[1440px] px-5 sm:px-8 lg:px-12' : 'max-w-6xl px-5';
   return (
     <footer className="border-t border-line bg-surface">
-      <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr]">
+      <div className={`mx-auto grid gap-10 py-14 md:grid-cols-[1.4fr_1fr_1fr_1fr] ${container}`}>
         <div>
           <Logo size="sm" />
           <p className="mt-4 max-w-xs text-[14px] leading-relaxed text-ink-muted">
@@ -58,7 +59,7 @@ export function SiteFooter() {
         ))}
       </div>
       <div className="border-t border-line">
-        <p className="mx-auto max-w-6xl px-5 py-6 text-[13px] text-ink-muted">
+        <p className={`mx-auto py-6 text-[13px] text-ink-muted ${container}`}>
           © {new Date().getFullYear()} {APP_NAME}. Made for product makers.
         </p>
       </div>

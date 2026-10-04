@@ -90,11 +90,11 @@ export const LogoMark = (p: IconProps) => (
     <path
       d="M16 7a9 9 0 1 1-9 9"
       fill="none"
-      stroke="#c2552d"
+      stroke="#1f4272"
       strokeWidth="2.6"
       strokeLinecap="round"
     />
-    <circle cx="7" cy="16" r="2.6" fill="#c2552d" />
+    <circle cx="7" cy="16" r="2.6" fill="#1f4272" />
     <circle cx="16" cy="16" r="3.2" fill="var(--background, #f5f0e8)" />
   </svg>
 );

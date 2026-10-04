@@ -20,5 +20,5 @@ export function accentVars(accent: string): CSSProperties {
 
 /** Heading classes for the configured display font. */
 export function titleFontClass(font: 'geist' | 'instrument-serif'): string {
-  return font === 'instrument-serif' ? 'font-display' : 'font-sans font-semibold tracking-tight';
+  return font === 'instrument-serif' ? 'font-serif' : 'font-sans font-semibold tracking-tight';
 }

@@ -33,7 +33,7 @@ export default async function AboutPage() {
       <main>
         <section className="mx-auto max-w-3xl px-5 pt-14 pb-16">
           <p className="text-[14px] font-medium text-brand-700">About Twirl</p>
-          <h1 className="mt-4 font-display text-[48px] leading-[1.03] tracking-tight sm:text-[60px]">
+          <h1 className="mt-4 font-display text-[40px] leading-[1.03] tracking-tight sm:text-[52px]">
             Configurable products deserve better than a dropdown
           </h1>
           <div className="mt-8 space-y-5 text-[17px] leading-relaxed text-ink-soft">
@@ -58,7 +58,7 @@ export default async function AboutPage() {
 
         <section aria-labelledby="principles" className="border-t border-line bg-surface">
           <div className="mx-auto max-w-6xl px-5 py-20">
-            <h2 id="principles" className="font-display text-[40px] leading-[1.05] tracking-tight">
+            <h2 id="principles" className="font-display text-[34px] leading-[1.05] tracking-tight">
               What we care about
             </h2>
             <ul className="mt-10 grid gap-10 md:grid-cols-3">
@@ -73,7 +73,7 @@ export default async function AboutPage() {
         </section>
 
         <section className="mx-auto max-w-3xl px-5 py-20 text-center">
-          <h2 className="font-display text-[36px] leading-tight tracking-tight">Talk to us</h2>
+          <h2 className="font-display text-[30px] leading-tight tracking-tight">Talk to us</h2>
           <p className="mt-3 text-[17px] text-ink-soft">
             Questions, a product you’d like to try it with, or a model you need made?
           </p>
