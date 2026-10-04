@@ -5,9 +5,11 @@ import { Canvas, createPortal, useFrame, useThree } from '@react-three/fiber';
 import { Fragment, memo, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 
+import { hostedSampleUrl } from '@/lib/sample-urls';
+
 import { FABRICS, fabricIndex, PARTS, type StoryProgress } from './chapters';
 
-const MODEL_URL = '/samples/sofa.glb';
+const MODEL_URL = hostedSampleUrl('sofa.glb');
 const DRACO_PATH = '/decoders/draco/';
 /** The model is scaled so its largest side is this many units. */
 const MODEL_SIZE = 1.6;

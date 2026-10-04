@@ -19,7 +19,9 @@ import {
   waterBottleConfig,
 } from '@twirl/config-schema/samples';
 
-import { clientEnv } from '@/env/client';
+import { hostedSampleUrl } from './sample-urls';
+
+export { HOSTED_SAMPLES_VERSION, hostedSampleUrl } from './sample-urls';
 
 /** Markets the demo catalogue covers, in the order the picker lists them. */
 export const SAMPLE_CATEGORIES = [
@@ -42,27 +44,12 @@ export interface SampleModel {
   config: ProductConfigInput;
 }
 
-/**
- * Folder of the hosted sample files (`sample-manifest.json`'s `version`; a test keeps them in
- * sync). Hosted files are immutable, so a rebuilt model ships in a new folder.
- */
-export const HOSTED_SAMPLES_VERSION = 'v1';
-
-/**
- * Where a hosted sample model is served from: the asset bucket (`samples/<version>/`) when it's
- * configured, otherwise the app's own `/samples/`, where `tools/sample-models` writes local
- * copies for development. See ADR 0013.
- */
-export function hostedSampleUrl(file: string, base = clientEnv.NEXT_PUBLIC_ASSETS_BASE_URL) {
-  return base ? `${base}/samples/${HOSTED_SAMPLES_VERSION}/${file}` : `/samples/${file}`;
-}
-
 export const SAMPLE_MODELS: SampleModel[] = [
   {
     id: 'sofa',
     label: 'Lounge chair',
     category: 'Furniture',
-    url: '/samples/sofa.glb',
+    url: hostedSampleUrl('sofa.glb'),
     config: loungeChairConfig,
   },
   {
@@ -160,7 +147,7 @@ export const SAMPLE_MODELS: SampleModel[] = [
     id: 'jeep',
     label: 'Jeep',
     category: 'Vehicles & toys',
-    url: '/samples/jeep_2021.glb',
+    url: hostedSampleUrl('jeep_2021.glb'),
     config: jeepConfig,
   },
   {
