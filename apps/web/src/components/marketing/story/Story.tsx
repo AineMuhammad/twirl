@@ -85,11 +85,14 @@ export function Story() {
   useEffect(() => {
     if (assembled || reducedMotion || window.scrollY > 40) return;
     const root = document.documentElement;
+    // Keep the scrollbar's space while it's hidden, so the layout doesn't jump.
+    root.style.scrollbarGutter = 'stable';
     root.style.overflow = 'hidden';
     // Never trap the visitor if the model is slow or fails to load.
     const failsafe = setTimeout(onAssembled, MAX_SCROLL_LOCK_MS);
     return () => {
       root.style.overflow = '';
+      root.style.scrollbarGutter = '';
       clearTimeout(failsafe);
     };
   }, [assembled, reducedMotion, onAssembled]);
