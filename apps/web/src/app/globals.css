@@ -295,11 +295,6 @@ details.faq[open]::details-content {
   }
 }
 
-/* Keep the layout steady while the landing page briefly holds scrolling. */
-html {
-  scrollbar-gutter: stable;
-}
-
 /* Headlines: the same typeface as the text, set heavier and tighter. */
 .font-display {
   font-weight: 650;
