@@ -161,12 +161,16 @@ form: what the product is, plus links to product pages or photos.
 
 ## Plans
 
-| Plan    | Live products | Watermark | Price      |
-| ------- | ------------- | --------- | ---------- |
-| Free    | 1             | Yes       | $0         |
-| Starter | 10            | No        | Contact us |
-| Pro     | 50            | No        | Contact us |
+| Plan                 | Live products | Watermark | Price      |
+| -------------------- | ------------- | --------- | ---------- |
+| Free trial (14 days) | 1             | Yes       | $0         |
+| Starter              | 10            | No        | Contact us |
+| Pro                  | 50            | No        | Contact us |
 
+- **Free is a 14-day trial**, counted from signup (workspaces that existed before trials got 14
+  days from that release). When it ends, live products show a still image of their default design
+  (no options, price, quotes or share links), nothing can be published, and a dashboard banner
+  explains why. Upgrading (by an admin, for now) switches everything back on; nothing is deleted.
 - **Drafts are unlimited.** Only live (published) products count towards the plan.
 - **Limits are checked when publishing.** Downgrading never takes products offline; it only
   prevents publishing more until the workspace is back under its limit.

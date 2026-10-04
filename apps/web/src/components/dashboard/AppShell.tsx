@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation';
 import { type ReactNode, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
+import { TRIAL_DAYS, type TrialState } from '@/config/plans';
 
 const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600';
@@ -53,6 +54,7 @@ export interface AppShellProps {
   user: { email: string; name: string | null; isAdmin: boolean };
   newQuotes: number;
   plan: { label: string; used: number; limit: number };
+  trial: TrialState;
   signOut: () => Promise<void>;
 }
 
@@ -66,6 +68,7 @@ export function AppShell({
   user,
   newQuotes,
   plan,
+  trial,
   signOut,
 }: AppShellProps) {
   const pathname = usePathname();
@@ -126,7 +129,10 @@ export function AppShell({
       <div className="space-y-3 p-3">
         <div className="rounded-lg bg-tint p-3.5">
           <div className="flex items-baseline justify-between text-[13px]">
-            <span className="font-semibold text-ink">{plan.label} plan</span>
+            <span className="font-semibold text-ink">
+              {plan.label}
+              {trial.active || trial.ended ? '' : ' plan'}
+            </span>
             <span className="text-ink-muted tabular-nums">
               {plan.used}/{plan.limit} live
             </span>
@@ -218,8 +224,45 @@ export function AppShell({
       )}
 
       <main className="lg:pl-64">
+        {(trial.active || trial.ended) && <TrialBanner trial={trial} />}
         <div className="mx-auto max-w-6xl px-5 py-8 lg:px-10 lg:py-10">{children}</div>
       </main>
+    </div>
+  );
+}
+
+/** Days left in the free trial, or what its end means, with the way to upgrade. */
+function TrialBanner({ trial }: { trial: TrialState }) {
+  const urgent = trial.ended || trial.daysLeft <= 3;
+  return (
+    <div
+      role="status"
+      className={`border-b px-5 py-3 lg:px-10 ${urgent ? 'border-amber-300 bg-amber-50 dark:border-amber-500/30 dark:bg-amber-500/10' : 'border-line bg-surface'}`}
+    >
+      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-6 gap-y-2 text-[14px]">
+        <p className="text-ink">
+          {trial.ended ? (
+            <>
+              <span className="font-semibold">Your free trial has ended.</span> Shoppers now see a
+              still image of your product. Upgrade to switch the configurator back on.
+            </>
+          ) : (
+            <>
+              <span className="font-semibold">
+                {trial.daysLeft} {trial.daysLeft === 1 ? 'day' : 'days'} left
+              </span>{' '}
+              in your {TRIAL_DAYS}-day free trial. After that, shoppers see a still image until you
+              upgrade.
+            </>
+          )}
+        </p>
+        <Link
+          href="/pricing"
+          className={`inline-flex h-9 shrink-0 items-center rounded-lg bg-brand-600 px-4 font-medium text-white hover:bg-brand-700 ${focusRing}`}
+        >
+          {trial.ended ? 'Upgrade' : 'See plans'}
+        </Link>
+      </div>
     </div>
   );
 }

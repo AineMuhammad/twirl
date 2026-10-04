@@ -96,7 +96,7 @@ describe.skipIf(!prisma)('publishing', () => {
     expect((await publishDraft(db, workspace.id, user.id, first, loungeChairConfig)).ok).toBe(true);
     const blocked = await publishDraft(db, workspace.id, user.id, second, loungeChairConfig);
     expect(blocked.ok).toBe(false);
-    if (!blocked.ok) expect(blocked.error).toMatch(/Free plan allows 1/);
+    if (!blocked.ok) expect(blocked.error).toMatch(/free trial includes 1 live product/);
 
     const invalid = await publishDraft(db, workspace.id, user.id, first, {
       ...loungeChairConfig,

@@ -4,6 +4,7 @@ import { z } from 'zod';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 import type { QuoteStatus } from '@/generated/prisma/enums';
 
+import { workspaceNotLocked } from './plans';
 import { validateConfig } from './products';
 import { MAX_SELECTIONS_BYTES } from './shares';
 
@@ -59,7 +60,12 @@ export async function createQuote(db: PrismaClient, input: unknown): Promise<Cre
     where: {
       id: data.versionId,
       status: 'PUBLISHED',
-      product: { publicId: data.publicId, archivedAt: null, publishedVersionId: { not: null } },
+      product: {
+        publicId: data.publicId,
+        archivedAt: null,
+        publishedVersionId: { not: null },
+        workspace: workspaceNotLocked(),
+      },
     },
     select: {
       id: true,

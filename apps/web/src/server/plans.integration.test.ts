@@ -60,6 +60,27 @@ describe.skipIf(!prisma)('publish limits', () => {
     await db.workspace.delete({ where: { id: workspace.id } });
   });
 
+  it('blocks publishing once the free trial has ended, until the workspace upgrades', async () => {
+    const { workspace, liveIds, draftId } = await workspaceWith(0);
+    expect((await checkPublish(db, workspace.id, draftId)).allowed).toBe(true);
+    await db.workspace.update({
+      where: { id: workspace.id },
+      data: { trialEndsAt: new Date(Date.now() - 1000) },
+    });
+    expect(await checkPublish(db, workspace.id, draftId)).toMatchObject({
+      allowed: false,
+      trialEnded: true,
+    });
+    await expect(
+      db.$transaction((tx) => assertCanPublish(tx, workspace.id, draftId)),
+    ).rejects.toThrow('free trial has ended');
+    expect(liveIds).toEqual([]);
+
+    await db.workspace.update({ where: { id: workspace.id }, data: { plan: 'STARTER' } });
+    expect((await checkPublish(db, workspace.id, draftId)).allowed).toBe(true);
+    await db.workspace.delete({ where: { id: workspace.id } });
+  });
+
   it("doesn't count archived products", async () => {
     const { workspace, liveIds, draftId } = await workspaceWith(1);
     await db.product.update({ where: { id: liveIds[0] ?? '' }, data: { archivedAt: new Date() } });

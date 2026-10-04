@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 
 import { EmbedApp } from '@/components/embed/EmbedApp';
+import { StillProduct } from '@/components/embed/StillProduct';
 import { APP_NAME } from '@/config/app';
 import { databaseEnabled, db } from '@/server/db';
 import { getPublishedProduct } from '@/server/embed';
@@ -32,6 +33,9 @@ export default async function EmbedPage({ params }: Params) {
         </div>
       </main>
     );
+  }
+  if (product.locked) {
+    return <StillProduct config={product.config} modelUrl={publicUrl(product.modelKey)} />;
   }
   return (
     <EmbedApp
