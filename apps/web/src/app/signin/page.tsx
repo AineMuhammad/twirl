@@ -25,7 +25,7 @@ export default async function SignInPage({
   return (
     <main className="grid min-h-dvh place-items-center bg-tint px-4 py-12">
       <div className="w-full max-w-md rounded-xl bg-surface p-8 shadow-[0_24px_64px_-24px_rgba(0,0,0,0.25)] ring-1 ring-line">
-        <Link href="/" className="font-display text-3xl tracking-tight text-ink">
+        <Link href="/" className="font-display text-[26px] tracking-tight text-ink">
           <Logo />
         </Link>
         <h1 className="mt-6 text-xl font-semibold tracking-tight text-ink">Sign in</h1>

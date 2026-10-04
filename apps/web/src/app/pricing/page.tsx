@@ -53,7 +53,7 @@ export default async function PricingPage() {
 
       <main className="mx-auto max-w-6xl px-5 pt-12 pb-24">
         <div className="max-w-2xl">
-          <h1 className="font-display text-[48px] leading-none tracking-tight sm:text-[60px]">
+          <h1 className="font-display text-[40px] leading-none tracking-tight sm:text-[52px]">
             Simple plans
           </h1>
           <p className="mt-3 text-[18px] text-ink-soft">

@@ -76,7 +76,7 @@ const ACCENTS = [
 
 const FONTS = [
   { value: 'geist', label: 'Modern', sample: 'font-sans font-semibold' },
-  { value: 'instrument-serif', label: 'Elegant', sample: 'font-display' },
+  { value: 'instrument-serif', label: 'Elegant', sample: 'font-serif' },
 ] as const;
 
 const VIEWS = [
