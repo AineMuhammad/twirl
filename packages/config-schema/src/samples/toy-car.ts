@@ -75,5 +75,5 @@ export const toyCarConfig = {
     shadows: true,
     cyclorama: true,
   },
-  presentation: { layout: 'fullscreen', theme: { accent: '#1d7a3f' } },
+  presentation: { layout: 'sidebar', theme: { accent: '#1d7a3f' } },
 } satisfies ProductConfigInput;

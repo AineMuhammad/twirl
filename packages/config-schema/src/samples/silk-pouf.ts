@@ -52,5 +52,5 @@ export const silkPoufConfig = {
     shadows: true,
     cyclorama: true,
   },
-  presentation: { layout: 'bottomBar', theme: { accent: '#8c3a5b' } },
+  presentation: { layout: 'sidebar', theme: { accent: '#8c3a5b' } },
 } satisfies ProductConfigInput;

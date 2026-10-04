@@ -176,5 +176,5 @@ export const chesterfieldSofaConfig = {
     shadows: true,
     cyclorama: true,
   },
-  presentation: { layout: 'fullscreen', theme: { accent: '#7a3b1d', font: 'instrument-serif' } },
+  presentation: { layout: 'sidebar', theme: { accent: '#7a3b1d', font: 'instrument-serif' } },
 } satisfies ProductConfigInput;

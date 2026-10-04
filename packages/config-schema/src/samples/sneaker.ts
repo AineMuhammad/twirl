@@ -107,7 +107,7 @@ export const sneakerConfig = {
     cyclorama: true,
   },
   presentation: {
-    layout: 'bottomBar',
+    layout: 'sidebar',
     theme: { accent: '#1f6fa8' },
     camera: { initialView: 'side' },
   },

@@ -87,5 +87,5 @@ export const waterBottleConfig = {
     shadows: true,
     cyclorama: true,
   },
-  presentation: { layout: 'bottomBar', theme: { accent: '#2f7a6b' } },
+  presentation: { layout: 'sidebar', theme: { accent: '#2f7a6b' } },
 } satisfies ProductConfigInput;

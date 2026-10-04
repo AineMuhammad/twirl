@@ -76,7 +76,7 @@ export const sunglassesConfig = {
     cyclorama: true,
   },
   presentation: {
-    layout: 'bottomBar',
+    layout: 'sidebar',
     theme: { accent: '#7a4ea3' },
     camera: { initialView: 'front' },
   },

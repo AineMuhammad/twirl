@@ -50,5 +50,5 @@ export const tulipLampConfig = {
     shadows: true,
     cyclorama: true,
   },
-  presentation: { layout: 'bottomBar', theme: { accent: '#5b4a34', font: 'instrument-serif' } },
+  presentation: { layout: 'sidebar', theme: { accent: '#5b4a34', font: 'instrument-serif' } },
 } satisfies ProductConfigInput;
