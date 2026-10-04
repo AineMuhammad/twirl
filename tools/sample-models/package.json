@@ -1,0 +1,24 @@
+{
+  "name": "twirl-sample-models",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "description": "Rebuilds the demo models in apps/web/public/samples from their open-licensed sources.",
+  "scripts": {
+    "fetch": "node fetch.mjs",
+    "build": "node build.mjs",
+    "upload": "node --env-file-if-exists=../../apps/web/.env.local upload.mjs",
+    "analyze": "node analyze.mjs"
+  },
+  "dependencies": {
+    "@aws-sdk/client-s3": "3.1144.0",
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "meshoptimizer": "1.3.0",
+    "sharp": "0.35.5"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

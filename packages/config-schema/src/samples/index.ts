@@ -1,2 +1,17 @@
+export { accentChairConfig } from './accent-chair';
+export { barnSconceConfig } from './barn-sconce';
+export { beverageCoolerConfig } from './beverage-cooler';
+export { boomboxConfig } from './boombox';
+export { chesterfieldSofaConfig } from './chesterfield-sofa';
+export { corsetConfig } from './corset';
+export { glamSofaConfig } from './glam-sofa';
+export { glassTableLampConfig } from './glass-table-lamp';
 export { jeepConfig } from './jeep';
 export { loungeChairConfig } from './lounge-chair';
+export { silkPoufConfig } from './silk-pouf';
+export { sneakerConfig } from './sneaker';
+export { sunglassesConfig } from './sunglasses';
+export { teacupConfig } from './teacup';
+export { toyCarConfig } from './toy-car';
+export { tulipLampConfig } from './tulip-lamp';
+export { waterBottleConfig } from './water-bottle';

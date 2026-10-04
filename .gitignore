@@ -47,3 +47,9 @@ Thumbs.db
 
 # Generated Prisma client (run `pnpm install` or `pnpm --filter @twirl/web exec prisma generate`)
 apps/web/src/generated/
+
+# Demo sample models hosted on R2 (built by tools/sample-models; see ADR 0013). The two original
+# samples ship with the app.
+apps/web/public/samples/*.glb
+!apps/web/public/samples/sofa.glb
+!apps/web/public/samples/jeep_2021.glb
