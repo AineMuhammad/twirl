@@ -109,6 +109,7 @@ export const sneakerConfig = {
   presentation: {
     layout: 'sidebar',
     theme: { accent: '#1f6fa8' },
-    camera: { initialView: 'side' },
+    // The model's toe points along +X.
+    camera: { initialView: 'side', frontAzimuth: 90 },
   },
 } satisfies ProductConfigInput;

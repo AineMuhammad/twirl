@@ -127,17 +127,19 @@ export function DemoApp() {
                 className={`max-w-[44vw] cursor-pointer appearance-none truncate rounded-full bg-transparent py-2 pr-9 pl-4 text-[14px] font-medium text-ink sm:max-w-none ${focusRing}`}
               >
                 {SAMPLE_CATEGORIES.map((category) => (
-                  <optgroup key={category} label={category}>
+                  <optgroup key={category} label={category} className="bg-surface text-ink-muted">
                     {SAMPLE_MODELS.filter((m) => m.category === category).map((m) => (
-                      <option key={m.id} value={m.url}>
+                      <option key={m.id} value={m.url} className="bg-surface text-ink">
                         {m.label}
                       </option>
                     ))}
                   </optgroup>
                 ))}
                 {local.model && (
-                  <optgroup label="Uploaded">
-                    <option value={local.model.url}>Your file</option>
+                  <optgroup label="Uploaded" className="bg-surface text-ink-muted">
+                    <option value={local.model.url} className="bg-surface text-ink">
+                      Your file
+                    </option>
                   </optgroup>
                 )}
               </select>
