@@ -1,0 +1,158 @@
+{
+  "version": "v1",
+  "files": {
+    "accent-chair.glb": {
+      "bytes": 601888,
+      "sha256": "73d5bcaff02f88b69d7155a97b49a48d6c47b26c71fb583cf7dcb8dfa54b442f",
+      "nodes": [
+        "Back_Buttons",
+        "Back_Fabric",
+        "Back_Panel",
+        "Back_Piping",
+        "Label",
+        "Leg_Hardware",
+        "Legs",
+        "Seat_Buttons",
+        "Seat_Fabric",
+        "Seat_Panel",
+        "Seat_Piping"
+      ]
+    },
+    "aviator-sunglasses.glb": {
+      "bytes": 99244,
+      "sha256": "ffb16a5d7d27eb171ce286d0efcb6608aa87d556abbe7c5594224ff411240f18",
+      "nodes": [
+        "EarhookLeft",
+        "EarhookRight",
+        "Frames",
+        "LensesExterior",
+        "LensesInterior",
+        "Nosepads",
+        "TempleLeft",
+        "TempleRight"
+      ]
+    },
+    "barn-sconce.glb": {
+      "bytes": 787080,
+      "sha256": "8cf856ace1cce3388cd2031fe523998b9067c834dd5834d3d56c12fb0b88d0ed",
+      "nodes": ["Bulb_Glass", "Filament", "Metal"]
+    },
+    "beverage-cooler.glb": {
+      "bytes": 3859100,
+      "sha256": "3424635a242e5425881745e7425441eaa16431e030d4d505bec6092d3f54a25e",
+      "nodes": ["Bottles", "Cabinet", "Door_Frame", "Door_Glass", "Door_Inner", "Interior"]
+    },
+    "boombox.glb": {
+      "bytes": 781380,
+      "sha256": "0bc2d3dc3eacd19d9c09fffb5c6d17758c0bf4e238b91d4999bfb30c56bba856",
+      "nodes": ["Antenna", "Body", "Buttons", "Handle"]
+    },
+    "chesterfield-sofa.glb": {
+      "bytes": 3752516,
+      "sha256": "89fbf0864d2b38e7d76dac234f50d1161fb06cc1a2dda46e6ed47ef905d3af1a",
+      "nodes": [
+        "Accent_Pillow-1",
+        "Accent_Pillow-1_Fringe",
+        "Accent_Pillow-2",
+        "Accent_Pillow-2_Fringe",
+        "Arm_Bolster-1",
+        "Arm_Bolster-2",
+        "Back_Cushion-1",
+        "Back_Cushion-2",
+        "Corner_Pillow-1",
+        "Corner_Pillow-1_Fringe",
+        "Corner_Pillow-2",
+        "Corner_Pillow-2_Fringe",
+        "Deck-1",
+        "Deck-2",
+        "Deck-3",
+        "Deck_Fabric",
+        "Foot-1",
+        "Foot-2",
+        "Foot-3",
+        "Foot-4",
+        "Inner_Frame",
+        "Leather_Shell",
+        "Lumbar_Pillow",
+        "Lumbar_Pillow_Fringe",
+        "Seat_Cushion-1",
+        "Seat_Cushion-2",
+        "Seat_Cushion-3"
+      ]
+    },
+    "corset-dress-form.glb": {
+      "bytes": 1398316,
+      "sha256": "16e1ee0814472f7ab5cfb7379a06f23945cf22a235d7674be7206ed4372db2df",
+      "nodes": ["Choker", "Corset", "Dress_Form", "Hardware", "Stand", "Straps"]
+    },
+    "glam-sofa.glb": {
+      "bytes": 611352,
+      "sha256": "75b82b5a3163c75b69d48d486c088295e8ee45013f7add08fa75cbb3a9f81ebe",
+      "nodes": [
+        "Foot-01",
+        "Foot-02",
+        "Foot-03",
+        "Foot-04",
+        "Foot-05",
+        "Foot-06",
+        "Foot-07",
+        "Foot-08",
+        "Foot-09",
+        "Leg-01",
+        "Leg-02",
+        "Leg-03",
+        "Leg-04",
+        "Leg-05",
+        "Leg-06",
+        "Leg-07",
+        "Leg-08",
+        "Leg-09",
+        "Leg-10",
+        "Leg-11",
+        "Leg-12",
+        "Leg-13",
+        "Leg-14",
+        "Leg-15",
+        "Leg-16",
+        "Leg-17",
+        "Leg-18",
+        "Upholstery"
+      ]
+    },
+    "glass-table-lamp.glb": {
+      "bytes": 792732,
+      "sha256": "87fde1a8bf592d8993bf03c3620804e19ffa89f80a8a7d6c6c9f0ca4ce8327ab",
+      "nodes": ["Bulb", "Glass_Base", "Glass_Inner", "Metal", "Shade"]
+    },
+    "silk-pouf.glb": {
+      "bytes": 1001992,
+      "sha256": "69b56c46585beb413f0edf27952009bbb4afc02cdf47c2e953ba9c2949187dda",
+      "nodes": ["Pouf"]
+    },
+    "sneaker.glb": {
+      "bytes": 1887952,
+      "sha256": "2d5bffb0ce38b08f68c3f1e3f1110ed969102b22b24f7e374eecad82f1c6d949",
+      "nodes": ["Eyelets", "Laces", "Side_Stripes", "Sole", "Tongue_Heel_Tab", "Upper"]
+    },
+    "teacup-set.glb": {
+      "bytes": 1426904,
+      "sha256": "20b31dc66dd791648605156f13fc878f917a86fefd5260d7e9241fae6f8b164f",
+      "nodes": ["Cup", "Saucer"]
+    },
+    "toy-car.glb": {
+      "bytes": 1158236,
+      "sha256": "b23e6c37bfa7986acfd73e6d8b8cd1b399a6475a6f37c0f9f2da55a1e64c508c",
+      "nodes": ["Body", "Chrome", "Lights", "Tires", "Windows"]
+    },
+    "tulip-lamp.glb": {
+      "bytes": 807132,
+      "sha256": "d6e9ea1a23b420afecd7c4424499b43994d630f5be3e13ad4cd5f73d41bb01f8",
+      "nodes": ["Bulb", "Shade", "Stand"]
+    },
+    "water-bottle.glb": {
+      "bytes": 550392,
+      "sha256": "a418a03a10d710969a4da3d7f54d937c792f30955a94d524543f0f89143c8b0b",
+      "nodes": ["Bottle", "Cap", "Sleeve"]
+    }
+  }
+}
