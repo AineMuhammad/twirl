@@ -1,8 +1,9 @@
 import { evaluate } from '@twirl/config-schema';
 
-import { planDefinition } from '@/config/plans';
+import { planDefinition, trialState } from '@/config/plans';
 import type { Prisma, PrismaClient } from '@/generated/prisma/client';
 
+import { workspaceNotLocked } from './plans';
 import { newPublicId, validateConfig } from './products';
 
 /**
@@ -39,7 +40,12 @@ export async function createShare(
     where: {
       id: versionId,
       status: 'PUBLISHED',
-      product: { publicId, archivedAt: null, publishedVersionId: { not: null } },
+      product: {
+        publicId,
+        archivedAt: null,
+        publishedVersionId: { not: null },
+        workspace: workspaceNotLocked(),
+      },
     },
     select: { id: true, config: true },
   });
@@ -81,7 +87,11 @@ export async function getShare(db: PrismaClient, shortId: string) {
           config: true,
           modelAsset: { select: { key: true, status: true } },
           product: {
-            select: { publicId: true, archivedAt: true, workspace: { select: { plan: true } } },
+            select: {
+              publicId: true,
+              archivedAt: true,
+              workspace: { select: { plan: true, trialEndsAt: true } },
+            },
           },
         },
       },
@@ -101,5 +111,6 @@ export async function getShare(db: PrismaClient, shortId: string) {
     selections: (share.selections ?? {}) as Record<string, unknown>,
     modelKey: asset.key,
     watermark: planDefinition(version.product.workspace.plan).watermark,
+    locked: trialState(version.product.workspace.plan, version.product.workspace.trialEndsAt).ended,
   };
 }

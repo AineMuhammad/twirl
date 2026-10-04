@@ -212,7 +212,7 @@ export function Story() {
           className="word-in mt-4 text-[14px] text-ink-muted"
           style={{ '--i': 12 } as CSSProperties}
         >
-          Free for one product. No card needed.
+          Free for 14 days. No card needed.
         </p>
       </div>
 
