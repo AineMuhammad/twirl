@@ -3,6 +3,7 @@
 import type { ModelInfo, ViewerError, ViewerProps } from '@twirl/viewer';
 import { DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
 import {
+  ChevronDownIcon,
   CloseIcon,
   Configurator,
   focusRing,
@@ -15,7 +16,7 @@ import Link from 'next/link';
 import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
-import { ENVIRONMENT_SOURCES, SAMPLE_MODELS } from '@/lib/demo-config';
+import { ENVIRONMENT_SOURCES, SAMPLE_CATEGORIES, SAMPLE_MODELS } from '@/lib/demo-config';
 import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
 import { LazyViewer } from './LazyViewer';
@@ -115,33 +116,37 @@ export function DemoApp() {
           </Link>
 
           <div className="pointer-events-auto flex items-center gap-2">
-            <div
-              role="group"
-              aria-label="Model"
-              className={`flex items-center gap-1 rounded-full p-1 ${glass}`}
-            >
-              {SAMPLE_MODELS.map((m) => (
-                <button
-                  key={m.id}
-                  type="button"
-                  aria-pressed={modelUrl === m.url}
-                  onClick={() => loadModel(m.url)}
-                  className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition-colors ${focusRing} ${modelUrl === m.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
-                >
-                  {m.label}
-                </button>
-              ))}
-              {local.model && (
-                <button
-                  type="button"
-                  aria-pressed={modelUrl === local.model.url}
-                  title={local.model.name}
-                  onClick={() => local.model && loadModel(local.model.url)}
-                  className={`rounded-full px-3.5 py-1.5 text-[14px] font-medium transition-colors ${focusRing} ${modelUrl === local.model.url ? 'bg-ink text-surface' : 'text-ink-soft hover:text-ink'}`}
-                >
-                  Your file
-                </button>
-              )}
+            <div className={`relative flex items-center rounded-full ${glass}`}>
+              <label htmlFor="demo-model" className="sr-only">
+                Model
+              </label>
+              <select
+                id="demo-model"
+                value={modelUrl ?? ''}
+                onChange={(e) => loadModel(e.target.value)}
+                className={`max-w-[44vw] cursor-pointer appearance-none truncate rounded-full bg-transparent py-2 pr-9 pl-4 text-[14px] font-medium text-ink sm:max-w-none ${focusRing}`}
+              >
+                {SAMPLE_CATEGORIES.map((category) => (
+                  <optgroup key={category} label={category}>
+                    {SAMPLE_MODELS.filter((m) => m.category === category).map((m) => (
+                      <option key={m.id} value={m.url}>
+                        {m.label}
+                      </option>
+                    ))}
+                  </optgroup>
+                ))}
+                {local.model && (
+                  <optgroup label="Uploaded">
+                    <option value={local.model.url}>Your file</option>
+                  </optgroup>
+                )}
+              </select>
+              <ChevronDownIcon
+                width={16}
+                height={16}
+                aria-hidden
+                className="pointer-events-none absolute right-3 text-ink-soft"
+              />
             </div>
             <button
               type="button"
