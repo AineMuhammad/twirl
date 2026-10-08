@@ -124,6 +124,88 @@
       "sha256": "87fde1a8bf592d8993bf03c3620804e19ffa89f80a8a7d6c6c9f0ca4ce8327ab",
       "nodes": ["Bulb", "Glass_Base", "Glass_Inner", "Metal", "Shade"]
     },
+    "industrial-coffee-table.glb": {
+      "bytes": 1880764,
+      "sha256": "b039aaf16b17ea987aef61f9b9c13108f0e796d1ad5934033146cb784e5acf8e",
+      "nodes": [
+        "Bolt-01",
+        "Bolt-02",
+        "Bolt-03",
+        "Bolt-04",
+        "Bolt-05",
+        "Bolt-06",
+        "Bolt-07",
+        "Bolt-08",
+        "Bolt-09",
+        "Bolt-10",
+        "Bolt-11",
+        "Bolt-12",
+        "Bolt-13",
+        "Bolt-14",
+        "Bolt-15",
+        "Bolt-16",
+        "Depth_Rail-Lower-Left",
+        "Depth_Rail-Lower-Right",
+        "Depth_Rail-Upper-Left",
+        "Depth_Rail-Upper-Right",
+        "Leg-Back-Left",
+        "Leg-Back-Right",
+        "Leg-Front-Left",
+        "Leg-Front-Right",
+        "Plank-Centre",
+        "Plank-Left",
+        "Plank-Right",
+        "Width_Rail-Lower-Back",
+        "Width_Rail-Lower-Front",
+        "Width_Rail-Upper-Back",
+        "Width_Rail-Upper-Front"
+      ]
+    },
+    "leather-ottoman.glb": {
+      "bytes": 2207444,
+      "sha256": "934b26d8a720875db44868e26143c9d6f974172cb2ec18722cc5ed030a2025da",
+      "nodes": [
+        "Body",
+        "Foot-Back-Left",
+        "Foot-Back-Right",
+        "Foot-Front-Left",
+        "Foot-Front-Right",
+        "Top_Cushion"
+      ]
+    },
+    "linen-loveseat.glb": {
+      "bytes": 1955920,
+      "sha256": "8b3bcf08233b5fb422d44406825bbe3d5b925d0903723faa95e5813a39664d7c",
+      "nodes": [
+        "Frame",
+        "Leg-Back-Centre",
+        "Leg-Back-Left",
+        "Leg-Back-Right",
+        "Leg-Front-Centre",
+        "Leg-Front-Left",
+        "Leg-Front-Right",
+        "Seat_Cushion",
+        "Upholstery"
+      ]
+    },
+    "mid-century-lounge-chair.glb": {
+      "bytes": 1694264,
+      "sha256": "8084294e4bf267af04fd020598f20f48fcefce2b1893e58865545beacd3b5291",
+      "nodes": ["Back_Cushion", "Back_Shell", "Base", "Seat_Cushion", "Seat_Shell", "Swivel"]
+    },
+    "oak-armchair.glb": {
+      "bytes": 1595708,
+      "sha256": "a454e3a40e0609a7bb67655f4c6de07b610525e765f11c3c77cfd9b04c143714",
+      "nodes": [
+        "Back_Cushion",
+        "Back_Rail",
+        "Front_Rail",
+        "Seat_Cushion",
+        "Seat_Rail",
+        "Side_Frame-Left",
+        "Side_Frame-Right"
+      ]
+    },
     "silk-pouf.glb": {
       "bytes": 1001992,
       "sha256": "69b56c46585beb413f0edf27952009bbb4afc02cdf47c2e953ba9c2949187dda",
@@ -143,6 +225,25 @@
       "bytes": 1158236,
       "sha256": "b23e6c37bfa7986acfd73e6d8b8cd1b399a6475a6f37c0f9f2da55a1e64c508c",
       "nodes": ["Body", "Chrome", "Lights", "Tires", "Windows"]
+    },
+    "tufted-dining-chair.glb": {
+      "bytes": 1034840,
+      "sha256": "e157da0369ce513ae05379f829ea62708979c5a09d85d48f3494fe2e59a44db0",
+      "nodes": [
+        "Button-01",
+        "Button-02",
+        "Button-03",
+        "Button-04",
+        "Button-05",
+        "Button-06",
+        "Button-07",
+        "Button-08",
+        "Leg-Back-Left",
+        "Leg-Back-Right",
+        "Leg-Front-Left",
+        "Leg-Front-Right",
+        "Upholstery"
+      ]
     },
     "tulip-lamp.glb": {
       "bytes": 807132,

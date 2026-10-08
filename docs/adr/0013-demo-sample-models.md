@@ -51,3 +51,11 @@ Vercel build pays for them, and Git LFS bandwidth runs out) and puts hosted asse
 - Rebuilding a model that was already uploaded means bumping `version` in the manifest and
   `HOSTED_SAMPLES_VERSION` in `demo-config.ts` (a test keeps them equal).
 - If a rebuild renames a part, the manifest changes and CI fails until the sample config is fixed.
+
+## Update (2026-10-07): Poly Haven furniture
+
+Furniture is the first target market, so the catalogue adds Poly Haven furniture (CC0) through the
+same pipeline and hosting. Sources are fetched at 2k through Poly Haven's API, each `.gltf` pinned
+by MD5 and every texture checked against the MD5 Poly Haven publishes. Models are only added when
+every option can recolour or resize its part cleanly: Sofa 02 was left out because its leather and
+carved wood share UV islands, so neither can be recoloured without bleeding into the other.
