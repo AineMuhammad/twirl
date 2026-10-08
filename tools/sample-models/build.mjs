@@ -65,12 +65,12 @@ function flatten(doc) {
   }
 }
 
-async function split(doc, nodeName, classify) {
+async function split(doc, nodeName, classify, options) {
   const node = nodeByName(doc, nodeName);
   const prim = node.getMesh().listPrimitives()[0];
-  const info = components(prim);
+  const info = components(prim, options);
   await sampleColors(prim, info);
-  const names = splitNode(doc, node, info, classify);
+  const names = splitNode(doc, node, info, (c, i) => classify(c, i, info.comps));
   // Lift the new children to the scene root so names are flat and unique.
   for (const child of node.listChildren()) {
     const world = child.getWorldMatrix();
@@ -81,6 +81,40 @@ async function split(doc, nodeName, classify) {
   node.dispose();
   return names;
 }
+
+/** Gives each primitive of a multi-material mesh its own node, named in primitive order. */
+function separatePrimitives(doc, nodeName, names) {
+  const node = nodeByName(doc, nodeName);
+  const mesh = node.getMesh();
+  const prims = mesh.listPrimitives();
+  if (prims.length !== names.length) {
+    throw new Error(`${nodeName}: ${prims.length} primitives, ${names.length} names`);
+  }
+  prims.forEach((prim, i) => {
+    const part = doc.createMesh(names[i]).addPrimitive(prim);
+    const child = doc.createNode(names[i]).setMesh(part).setMatrix(node.getWorldMatrix());
+    scene(doc).addChild(child);
+  });
+  node.setMesh(null);
+  mesh.dispose();
+  node.dispose();
+}
+
+/**
+ * Names a leg by where it stands, from its centre in the primitive's local space: `front` says
+ * which local axis points to the product's front and its sign (glTF front is +z), e.g.
+ * Leg-Front-Left, Leg-Back-Centre.
+ */
+const legName = (c, { front = [2, 1], prefix = 'Leg' } = {}) => {
+  const centre = mid(c);
+  const depth = centre[front[0]] * front[1];
+  const x = centre[0];
+  const side = Math.abs(x) < 0.05 ? 'Centre' : x < 0 ? 'Left' : 'Right';
+  return `${prefix}-${depth > 0 ? 'Front' : 'Back'}-${side}`;
+};
+
+/** Poly Haven source: the 2k glTF fetched into raw/polyhaven/<id>/. */
+const polyHaven = (id) => `raw/polyhaven/${id}/${id}_2k.gltf`;
 
 /** Numbers components left-to-right along x (in the primitive's local space). */
 const indexed = (prefix) => {
@@ -337,6 +371,94 @@ const MODELS = {
       scaleTo(doc, 2, 0.2);
     },
   },
+
+  // ── Poly Haven furniture (CC0, already in metres; fronts face +z) ──────────────────────
+
+  'linen-loveseat': {
+    file: polyHaven('Sofa_01'),
+    async build(doc) {
+      // 0: exposed wooden frame, 1: upholstered body, 2: seat cushion, 3–8: legs.
+      await split(doc, 'Sofa_01', (c, i) =>
+        i === 0 ? 'Frame' : i === 1 ? 'Upholstery' : i === 2 ? 'Seat_Cushion' : legName(c),
+      );
+      wrapRoots(doc, 'Product');
+    },
+  },
+
+  'leather-ottoman': {
+    file: polyHaven('Ottoman_01'),
+    async build(doc) {
+      // 0: leather body (with its wooden base board), 1: top cushion, 2–5: feet.
+      await split(doc, 'Ottoman_01', (c, i) =>
+        i === 0 ? 'Body' : i === 1 ? 'Top_Cushion' : legName(c, { prefix: 'Foot' }),
+      );
+      wrapRoots(doc, 'Product');
+    },
+  },
+
+  'mid-century-lounge-chair': {
+    file: polyHaven('mid_century_lounge_chair'),
+    async build(doc) {
+      await split(
+        doc,
+        'mid_century_lounge_chair',
+        (c, i) => ['Back_Cushion', 'Seat_Shell', 'Seat_Cushion', 'Base', 'Back_Shell', 'Swivel'][i],
+      );
+      wrapRoots(doc, 'Product');
+    },
+  },
+
+  'oak-armchair': {
+    file: polyHaven('modern_arm_chair_01'),
+    async build(doc) {
+      separatePrimitives(doc, 'modern_arm_chair_01', ['Frame', 'Cushions']);
+      // Frame: 0–1 side frames (arm and legs), 2 seat rail, 3 back rail, 4 front rail.
+      await split(doc, 'Frame', (c, i) =>
+        i <= 1
+          ? mid(c)[0] < 0
+            ? 'Side_Frame-Left'
+            : 'Side_Frame-Right'
+          : ['Seat_Rail', 'Back_Rail', 'Front_Rail'][i - 2],
+      );
+      await split(doc, 'Cushions', (c, i) => (i === 0 ? 'Seat_Cushion' : 'Back_Cushion'));
+      wrapRoots(doc, 'Product');
+    },
+  },
+
+  'tufted-dining-chair': {
+    file: polyHaven('dining_chair_02'),
+    async build(doc) {
+      // Four dark wooden legs, eight covered buttons on the back; everything else is leather.
+      const legs = new Set([15, 16, 18, 19]);
+      await split(doc, 'dining_chair_02', (c, i) => {
+        if (legs.has(i)) return legName(c);
+        if (i >= 20 && i <= 27) return `Button-${String(i - 19).padStart(2, '0')}`;
+        return 'Upholstery';
+      });
+      wrapRoots(doc, 'Product');
+    },
+  },
+
+  'industrial-coffee-table': {
+    file: polyHaven('industrial_coffee_table'),
+    async build(doc) {
+      // Authored z-up (the node turns it upright): local x = width, local y = depth (front +y),
+      // local z = minus height. 0–3 rails along the depth, 4–7 rails along the width, 8–11 legs,
+      // 12–14 the top's planks, 15–30 bolts.
+      await split(doc, 'industrial_coffee_table', (c, i) => {
+        const [x, y] = mid(c);
+        const side = x < 0 ? 'Left' : 'Right';
+        const end = y > 0 ? 'Front' : 'Back';
+        const level = mid(c)[2] > -0.3 ? 'Lower' : 'Upper';
+        if (i <= 3) return `Depth_Rail-${level}-${side}`;
+        if (i <= 7) return `Width_Rail-${level}-${end}`;
+        if (i <= 11) return `Leg-${end}-${side}`;
+        if (i <= 14) return `Plank-${Math.abs(x) < 0.05 ? 'Centre' : side}`;
+        return `Bolt-${String(i - 14).padStart(2, '0')}`;
+      });
+      wrapRoots(doc, 'Product');
+    },
+  },
 };
 
 const ids = process.argv.slice(2).length ? process.argv.slice(2) : Object.keys(MODELS);
@@ -347,7 +469,7 @@ const manifest = fs.existsSync(MANIFEST)
   : { version: 'v1', files: {} };
 for (const id of ids) {
   const spec = MODELS[id];
-  const doc = await read(`raw/${spec.src}.glb`);
+  const doc = await read(spec.file ?? `raw/${spec.src}.glb`);
   await spec.build(doc);
   // Every remaining mesh node must have a unique, non-empty name (configs reference them).
   const names = allNodes(doc)

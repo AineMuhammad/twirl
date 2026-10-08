@@ -119,8 +119,10 @@ function trianglesOf(prim) {
 }
 
 /** Splits a primitive's triangles into pieces connected through shared vertex positions
- * (welded by position, so UV seams don't break a piece). */
-export function components(prim) {
+ * (welded by position, so UV seams don't break a piece). With `{ uvIslands: true }` it splits
+ * by shared vertices instead, i.e. into UV islands: pieces of one solid that are textured as
+ * different materials (leather and wood trim, say) come apart along their UV seams. */
+export function components(prim, { uvIslands = false } = {}) {
   const pos = positionsOf(prim);
   const tris = trianglesOf(prim);
   // Weld by quantised position.
@@ -134,12 +136,15 @@ export function components(prim) {
   const tol = Math.max(hi[0] - lo[0], hi[1] - lo[1], hi[2] - lo[2]) * 1e-5;
   const key = (p) => p.map((v) => Math.round(v / tol)).join(',');
   const canon = new Map();
-  const vid = pos.map((p) => {
-    const k = key(p);
-    if (!canon.has(k)) canon.set(k, canon.size);
-    return canon.get(k);
-  });
-  const parent = Array.from({ length: canon.size }, (_, i) => i);
+  const vid = uvIslands
+    ? pos.map((_, i) => i)
+    : pos.map((p) => {
+        const k = key(p);
+        if (!canon.has(k)) canon.set(k, canon.size);
+        return canon.get(k);
+      });
+  const vertexCount = uvIslands ? pos.length : canon.size;
+  const parent = Array.from({ length: vertexCount }, (_, i) => i);
   const find = (a) => {
     while (parent[a] !== a) {
       parent[a] = parent[parent[a]];

@@ -1,7 +1,9 @@
 # Sample models
 
-Builds the demo models from open-licensed sources in the
-[Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) repository.
+Builds the demo models from open-licensed sources: the
+[Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets) repository
+(pinned commit) and [Poly Haven](https://polyhaven.com/models) furniture (CC0, 2k textures, each
+source pinned by MD5).
 Credits and licences are in [`apps/web/public/samples/CREDITS.md`](../../apps/web/public/samples/CREDITS.md).
 
 This folder is outside the pnpm workspace on purpose: its dependencies (sharp, meshoptimizer) are
@@ -13,7 +15,7 @@ Build them once to run the demo locally without `NEXT_PUBLIC_ASSETS_BASE_URL`:
 ```bash
 cd tools/sample-models
 npm install
-npm run fetch    # downloads sources into raw/ (pinned commit)
+npm run fetch    # downloads sources into raw/ (pinned commit / pinned MD5s)
 npm run build    # writes apps/web/public/samples/<id>.glb (git-ignored) and the manifest
 npm run upload   # uploads to R2 at samples/<version>/ (reads apps/web/.env.local)
 ```
@@ -33,7 +35,9 @@ For each model (`build.mjs` holds one recipe per product):
 2. **Segments into parts:** single-mesh models are split into connected pieces (welded by
    position, so UV seams don't break a piece). Each piece is assigned to a named part by its
    sampled texture colour or position. `npm run analyze -- raw/<Name>.glb <node>` prints the
-   pieces of a mesh to help write a recipe.
+   pieces of a mesh to help write a recipe. Where one solid is textured as two materials
+   (leather with carved wood trim, say), `split(..., { uvIslands: true })` splits along UV seams
+   instead; it only helps when each UV island holds a single material.
 3. **Flattens the hierarchy:** every part becomes a top-level node, so colouring one part never
    colours another through a parent.
 4. **Names nodes** with stable, unique names that the sample configs reference
