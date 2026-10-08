@@ -25,6 +25,19 @@ demo are fictional.
 | `beverage-cooler.glb`    | CommercialRefrigerator    | Darmstadt Graphics Group GmbH; Sean Thomas   | CC BY 4.0 | Door animation removed                       |
 | `toy-car.glb`            | ToyCar                    | Public domain                                | CC0 1.0   | Display cloth removed; car split into parts  |
 
+The furniture below comes from [Poly Haven](https://polyhaven.com/models) (2k textures). Changes:
+split into named parts, wrapped in a product node and compressed (Meshopt geometry, WebP
+textures). CC0 needs no credit; we give it anyway.
+
+| File                           | Source model             | Author          | Licence | Other changes                                      |
+| ------------------------------ | ------------------------ | --------------- | ------- | -------------------------------------------------- |
+| `linen-loveseat.glb`           | Sofa 01                  | Kirill Sannikov | CC0 1.0 | Frame, upholstery, seat cushion and six legs split |
+| `leather-ottoman.glb`          | Ottoman 01               | Caspian Fortune | CC0 1.0 | Body, top cushion and four feet split              |
+| `mid-century-lounge-chair.glb` | Mid Century Lounge Chair | Kuutti Siitonen | CC0 1.0 | Cushions, wood shells, base and swivel split       |
+| `oak-armchair.glb`             | Modern Arm Chair 01      | Vibrant Nordic  | CC0 1.0 | Frame pieces and cushions split                    |
+| `tufted-dining-chair.glb`      | Dining Chair 02          | James Ray Cock  | CC0 1.0 | Upholstery, four legs and eight buttons split      |
+| `industrial-coffee-table.glb`  | Industrial Coffee Table  | Ulan Cabanilla  | CC0 1.0 | Planks, rails, legs and bolts split; stood upright |
+
 CC BY 4.0: <https://creativecommons.org/licenses/by/4.0/>. CC0 1.0:
 <https://creativecommons.org/publicdomain/zero/1.0/>.
 
