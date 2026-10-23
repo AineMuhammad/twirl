@@ -53,10 +53,10 @@ export const chesterfieldSofaConfig = {
       default: null,
       originalLabel: 'Antique brown',
       swatches: [
-        { id: 'cognac', label: 'Cognac', color: '#8a4b25' },
-        { id: 'tan', label: 'Saddle tan', color: '#a87443' },
-        { id: 'black', label: 'Black', color: '#1c1a19' },
-        { id: 'oxblood', label: 'Oxblood', color: '#4e1a17', price: 25000 },
+        { id: 'cognac', label: 'Cognac', color: '#8a4b25', material: 'leather' },
+        { id: 'tan', label: 'Saddle tan', color: '#a87443', material: 'leather' },
+        { id: 'black', label: 'Black', color: '#1c1a19', material: 'leather' },
+        { id: 'oxblood', label: 'Oxblood', color: '#4e1a17', material: 'leather', price: 25000 },
       ],
     },
     {
@@ -67,7 +67,7 @@ export const chesterfieldSofaConfig = {
       default: null,
       originalLabel: 'Gold paisley',
       swatches: [
-        { id: 'ivory-linen', label: 'Ivory linen', color: '#e6dccb' },
+        { id: 'ivory-linen', label: 'Ivory linen', color: '#e6dccb', material: 'linen' },
         { id: 'sage', label: 'Sage', color: '#8a9a7b' },
         { id: 'navy', label: 'Navy', color: '#2b3550' },
       ],

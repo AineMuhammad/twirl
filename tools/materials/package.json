@@ -1,0 +1,16 @@
+{
+  "name": "twirl-materials",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "description": "Builds the viewer's material library (fabrics, leathers, woods) from Poly Haven.",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "dependencies": {
+    "sharp": "0.35.5"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

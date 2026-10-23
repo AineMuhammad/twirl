@@ -25,6 +25,7 @@ import {
 } from '@/app/dashboard/products/actions';
 import { LazyViewer } from '@/components/demo/LazyViewer';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
+import { MATERIALS_URL } from '@/lib/sample-urls';
 import type { EventCounts } from '@/server/events';
 import type { ConfigIssue } from '@/server/products';
 
@@ -667,6 +668,7 @@ export function Editor({
             modelUrl={modelUrl}
             scene={previewConfig.scene}
             environmentSources={ENVIRONMENT_SOURCES}
+            materialsUrl={MATERIALS_URL}
             meshOverrides={meshOverrides}
             deformations={deformations}
             highlightedMeshId={highlighted}
@@ -742,7 +744,7 @@ export function Editor({
             config={previewConfig}
             modelUrl={modelUrl}
             Viewer={LazyViewer}
-            viewerProps={{ environmentSources: ENVIRONMENT_SOURCES }}
+            viewerProps={{ environmentSources: ENVIRONMENT_SOURCES, materialsUrl: MATERIALS_URL }}
           />
           <div className="absolute top-3 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-full bg-ink py-1.5 pr-1.5 pl-4 text-[13px] text-surface shadow-lg">
             Shopper preview

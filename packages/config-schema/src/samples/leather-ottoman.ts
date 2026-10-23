@@ -27,11 +27,11 @@ export const leatherOttomanConfig = {
       default: null,
       originalLabel: 'Espresso',
       swatches: [
-        { id: 'cognac', label: 'Cognac', color: '#8a4b25' },
-        { id: 'tan', label: 'Saddle tan', color: '#a87443' },
-        { id: 'black', label: 'Black', color: '#1c1a19' },
-        { id: 'chalk', label: 'Chalk', color: '#e3dbcd', price: 6000 },
-        { id: 'oxblood', label: 'Oxblood', color: '#4e1a17', price: 6000 },
+        { id: 'cognac', label: 'Cognac', color: '#8a4b25', material: 'leather' },
+        { id: 'tan', label: 'Saddle tan', color: '#a87443', material: 'leather' },
+        { id: 'black', label: 'Black', color: '#1c1a19', material: 'leather' },
+        { id: 'chalk', label: 'Chalk', color: '#e3dbcd', material: 'leather', price: 6000 },
+        { id: 'oxblood', label: 'Oxblood', color: '#4e1a17', material: 'leather', price: 6000 },
       ],
     },
     {
@@ -42,7 +42,7 @@ export const leatherOttomanConfig = {
       default: null,
       originalLabel: 'Matte black',
       swatches: [
-        { id: 'walnut', label: 'Walnut', color: '#6b4428' },
+        { id: 'walnut', label: 'Walnut', color: '#6b4428', material: 'walnut' },
         { id: 'brass', label: 'Brushed brass', color: '#b08d57', price: 4000 },
       ],
     },

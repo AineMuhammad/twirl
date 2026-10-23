@@ -1,3 +1,5 @@
+import type { MaterialId } from '@twirl/config-schema/constants';
+
 /** Where the viewer fetches decoder files from. Must be same-origin (or CORS-enabled) URLs ending in `/`. */
 export interface DecoderPaths {
   /** Directory containing three's `draco_decoder.js/.wasm` and `draco_wasm_wrapper.js`. */
@@ -56,6 +58,11 @@ export interface MeshOverride {
   color?: string;
   /** Show or hide this node. Hiding a group hides everything under it. */
   visible?: boolean;
+  /**
+   * A real material from the library (a fabric, leather or wood texture set), tiled to true size
+   * and tinted with `color`. Needs UVs; parts without them just take the colour.
+   */
+  material?: MaterialId;
 }
 
 export type MeshOverrides = Record<string, MeshOverride>;

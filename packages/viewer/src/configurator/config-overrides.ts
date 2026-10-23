@@ -1,6 +1,6 @@
 import type { ProductConfig, Selections } from '@twirl/config-schema/engine';
 
-import type { Deformation, MeshOverrides, MeshTreeNode } from '../types';
+import type { Deformation, MeshOverride, MeshOverrides, MeshTreeNode } from '../types';
 
 /**
  * Node ids for each mesh reference: a node name matches every named node with that name; `#path`
@@ -44,6 +44,13 @@ export function colorFor(config: ProductConfig, groupId: string, value: unknown)
   return group.swatches.find((s) => s.id === value)?.color;
 }
 
+/** The library material of the chosen swatch, if it has one (custom colours never do). */
+export function materialFor(config: ProductConfig, groupId: string, value: unknown) {
+  const group = config.groups.find((g) => g.id === groupId);
+  if (group?.type !== 'color' || typeof value !== 'string') return undefined;
+  return group.swatches.find((s) => s.id === value)?.material;
+}
+
 /**
  * The viewer's mesh overrides for (rule-corrected) selections: hidden meshes stay hidden, colour
  * groups paint their parts, and switched-off visibility groups hide theirs. Dimension groups don't change appearance yet.
@@ -60,7 +67,7 @@ export function overridesForSelections(
   for (const mesh of config.hiddenMeshes) {
     for (const id of byMesh.get(mesh) ?? []) overrides[id] = { visible: false };
   }
-  const patch = (partIds: readonly string[], value: { color?: string; visible?: boolean }) => {
+  const patch = (partIds: readonly string[], value: MeshOverride) => {
     for (const id of partIds.flatMap((p) => nodes.get(p) ?? [])) {
       overrides[id] = { ...overrides[id], ...value };
     }
@@ -69,7 +76,8 @@ export function overridesForSelections(
     const value = selections[group.id];
     if (group.type === 'color') {
       const color = colorFor(config, group.id, value);
-      if (color) patch(group.parts, { color });
+      const material = materialFor(config, group.id, value);
+      if (color) patch(group.parts, material ? { color, material } : { color });
     } else if (group.type === 'visibility' && value === false) {
       patch(group.parts, { visible: false });
     }

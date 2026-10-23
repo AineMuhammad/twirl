@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-import { CAMERA_VIEWS, DEFAULT_SCENE } from './constants';
+import { CAMERA_VIEWS, DEFAULT_SCENE, MATERIAL_IDS, type MaterialId } from './constants';
 import { sceneSchema } from './look';
 import { currencySchema, hexColorSchema, idSchema, labelSchema, moneySchema } from './primitives';
 
@@ -26,7 +26,10 @@ export type ReservedOptionId = (typeof RESERVED_OPTION_IDS)[number];
 export const swatchSchema = z.object({
   id: idSchema,
   label: labelSchema,
+  /** The colour; with a material, its dye or stain. */
   color: hexColorSchema,
+  /** A real fabric, leather or wood texture for the part (see MATERIALS), tinted with `color`. */
+  material: z.enum(MATERIAL_IDS as [MaterialId, ...MaterialId[]]).optional(),
   /** Price change when chosen (minor units). */
   price: moneySchema.default(0),
 });

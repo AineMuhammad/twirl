@@ -8,7 +8,7 @@ import {
   useLayoutEffect,
   useRef,
 } from 'react';
-import type { PerspectiveCamera } from 'three';
+import { type PerspectiveCamera, Vector3 } from 'three';
 
 import type { Framing } from '../internal/framing';
 import { INTRO_SECONDS, introPosition } from '../internal/intro';
@@ -60,6 +60,18 @@ export const IDLE_SECONDS = 4;
  * Orbit, zoom and touch controls, plus camera placement when a model loads.
  * Touch: one finger rotates, pinch zooms, two fingers pan (when enabled).
  */
+/** Pulls a panned orbit centre back within the product's bounding sphere, moving the camera
+ * with it so the view slides rather than turns. */
+function keepTargetNear(c: { target: Vector3 }, camera: { position: Vector3 }, framing: Framing) {
+  const centre = new Vector3(...framing.target);
+  const offset = c.target.clone().sub(centre);
+  const excess = offset.length() - framing.radius;
+  if (excess <= 0) return;
+  const back = offset.setLength(excess);
+  c.target.sub(back);
+  camera.position.sub(back);
+}
+
 /** Sets zoom-out and azimuth limits on the controls (kept out of JSX so they change gently). */
 function applyLimits(
   c: { maxDistance: number; minAzimuthAngle: number; maxAzimuthAngle: number },
@@ -224,6 +236,8 @@ export function CameraRig({
       c.autoRotate =
         canRotate && !interacting.current && !holdView.current && idleTime.current >= IDLE_SECONDS;
     }
+    // Panning keeps the view's centre within the product, so it can't be lost.
+    if (c && framing && glide.current === null) keepTargetNear(c, getState().camera, framing);
     const waiting = pendingLimits.current;
     if (c && waiting && glide.current === null && introTime.current === null) {
       applyLimits(c, waiting.maxDistance, waiting.minAzimuth, waiting.maxAzimuth);

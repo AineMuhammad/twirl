@@ -27,10 +27,10 @@ export const tuftedDiningChairConfig = {
       default: null,
       originalLabel: 'Chestnut',
       swatches: [
-        { id: 'cognac', label: 'Cognac', color: '#8a4b25' },
-        { id: 'black', label: 'Black', color: '#1c1a19' },
-        { id: 'stone', label: 'Stone', color: '#b7aa98' },
-        { id: 'forest', label: 'Forest green', color: '#2f4a3a', price: 4000 },
+        { id: 'cognac', label: 'Cognac', color: '#8a4b25', material: 'leather' },
+        { id: 'black', label: 'Black', color: '#1c1a19', material: 'leather' },
+        { id: 'stone', label: 'Stone', color: '#b7aa98', material: 'leather' },
+        { id: 'forest', label: 'Forest green', color: '#2f4a3a', material: 'leather', price: 4000 },
       ],
     },
     {
@@ -41,8 +41,9 @@ export const tuftedDiningChairConfig = {
       default: null,
       originalLabel: 'Dark walnut',
       swatches: [
-        { id: 'natural-oak', label: 'Natural oak', color: '#b48a5a' },
-        { id: 'black', label: 'Black', color: '#1b1b1b' },
+        { id: 'natural-oak', label: 'Natural oak', color: '#b48a5a', material: 'oak' },
+        { id: 'black', label: 'Black', color: '#1b1b1b', material: 'oak' },
+        { id: 'walnut', label: 'Walnut', color: '#5c3a22', material: 'walnut', price: 3000 },
       ],
     },
   ],

@@ -21,6 +21,28 @@ export const ENVIRONMENT_IDS = [
 ] as const;
 export type EnvironmentId = (typeof ENVIRONMENT_IDS)[number];
 
+/**
+ * Real materials a colour option can use: a fabric, leather or wood texture set (served by the
+ * host app, see tools/materials), tinted with the option's colour as its dye or stain.
+ */
+export const MATERIALS = {
+  velvet: { label: 'Velvet', kind: 'fabric' },
+  linen: { label: 'Linen', kind: 'fabric' },
+  boucle: { label: 'Bouclé', kind: 'fabric' },
+  herringbone: { label: 'Wool herringbone', kind: 'fabric' },
+  corduroy: { label: 'Corduroy', kind: 'fabric' },
+  jacquard: { label: 'Jacquard', kind: 'fabric' },
+  leather: { label: 'Smooth leather', kind: 'leather' },
+  'grained-leather': { label: 'Grained leather', kind: 'leather' },
+  oak: { label: 'Oak', kind: 'wood' },
+  walnut: { label: 'Walnut', kind: 'wood' },
+  teak: { label: 'Teak', kind: 'wood' },
+  cherry: { label: 'Cherry', kind: 'wood' },
+  sheesham: { label: 'Sheesham', kind: 'wood' },
+} as const satisfies Record<string, { label: string; kind: 'fabric' | 'leather' | 'wood' }>;
+export type MaterialId = keyof typeof MATERIALS;
+export const MATERIAL_IDS = Object.keys(MATERIALS) as MaterialId[];
+
 /** Preset camera views available on every model. */
 export const CAMERA_VIEWS = ['front', 'threeQuarter', 'side', 'back', 'top'] as const;
 export type CameraView = (typeof CAMERA_VIEWS)[number];

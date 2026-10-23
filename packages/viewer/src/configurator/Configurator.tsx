@@ -334,7 +334,7 @@ export function Configurator({
         )}
         {info && hintVisible && (
           <p className="pointer-events-none absolute right-4 bottom-4 hidden rounded-full bg-surface/70 px-3 py-1.5 text-[13px] text-ink-soft ring-1 ring-line backdrop-blur lg:block">
-            Drag to rotate · Scroll to zoom
+            Drag to rotate · Right-drag to pan · Scroll to zoom
           </p>
         )}
       </div>
@@ -413,6 +413,7 @@ export function Configurator({
                       config={config}
                       evaluation={current}
                       onChange={change}
+                      {...(viewerProps?.materialsUrl && { materialsUrl: viewerProps.materialsUrl })}
                       {...(layout.options && { className: layout.options })}
                     />
                   </>

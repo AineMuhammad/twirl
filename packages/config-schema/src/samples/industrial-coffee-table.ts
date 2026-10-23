@@ -35,9 +35,11 @@ export const industrialCoffeeTableConfig = {
       default: null,
       originalLabel: 'Reclaimed pine',
       swatches: [
-        { id: 'walnut', label: 'Walnut', color: '#5c3a22' },
-        { id: 'natural-oak', label: 'Natural oak', color: '#b48a5a' },
-        { id: 'smoked', label: 'Smoked oak', color: '#4a3a2c' },
+        { id: 'walnut', label: 'Walnut', color: '#5c3a22', material: 'walnut' },
+        { id: 'natural-oak', label: 'Natural oak', color: '#b48a5a', material: 'oak' },
+        { id: 'smoked', label: 'Smoked oak', color: '#4a3a2c', material: 'oak' },
+        { id: 'teak', label: 'Teak', color: '#8a5a32', material: 'teak', price: 6000 },
+        { id: 'sheesham', label: 'Sheesham', color: '#6b3f26', material: 'sheesham', price: 8000 },
       ],
     },
     {
