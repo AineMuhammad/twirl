@@ -16,8 +16,10 @@ import { prefersReducedMotion } from '../internal/motion';
 import {
   azimuthOf,
   type CameraView,
+  clampOrbit,
   glidePosition,
   glideTarget,
+  type OrbitLimits,
   VIEW_GLIDE_SECONDS,
   viewPosition,
 } from '../internal/views';
@@ -44,6 +46,11 @@ export interface CameraRigProps {
   /** Slowly orbit the product after a few idle seconds (skipped for reduced motion). */
   idleRotate?: boolean;
   controllerRef?: RefObject<CameraRigController | null>;
+  /**
+   * Where the camera may orbit (a room's open side and free space). When limits arrive the camera
+   * moves inside them at once (the viewer veils the switch into a room), then they apply.
+   */
+  limits?: OrbitLimits | null;
 }
 
 /** Seconds without interaction before the turntable starts. */
@@ -53,6 +60,18 @@ export const IDLE_SECONDS = 4;
  * Orbit, zoom and touch controls, plus camera placement when a model loads.
  * Touch: one finger rotates, pinch zooms, two fingers pan (when enabled).
  */
+/** Sets zoom-out and azimuth limits on the controls (kept out of JSX so they change gently). */
+function applyLimits(
+  c: { maxDistance: number; minAzimuthAngle: number; maxAzimuthAngle: number },
+  maxDistance: number,
+  minAzimuth: number,
+  maxAzimuth: number,
+) {
+  c.maxDistance = maxDistance;
+  c.minAzimuthAngle = minAzimuth;
+  c.maxAzimuthAngle = maxAzimuth;
+}
+
 export function CameraRig({
   framing,
   enablePan,
@@ -62,6 +81,7 @@ export function CameraRig({
   frontAzimuth = 0,
   idleRotate = true,
   controllerRef,
+  limits = null,
 }: CameraRigProps) {
   // Read the camera from the store when applying, rather than mutating a hook return value.
   const getState = useThree((state) => state.get);
@@ -82,11 +102,14 @@ export function CameraRig({
   const interacting = useRef(false);
   /** A preset view was chosen: hold it (no turntable) until the shopper moves the camera. */
   const holdView = useRef(false);
+  /** Limits waiting for a glide to finish before they apply; the ones in force. */
+  const pendingLimits = useRef<OrbitLimits | null>(null);
+  const activeLimits = useRef<OrbitLimits | null>(null);
   /** A glide between views in progress. */
   const glide = useRef<{
     from: [number, number, number];
     to: [number, number, number];
-    /** Where the orbit target starts: zooming toward the cursor moves it off the centre. */
+    /** Where the orbit target starts (panning can move it off the centre). */
     fromTarget: [number, number, number];
     time: number;
   } | null>(null);
@@ -102,7 +125,9 @@ export function CameraRig({
       goTo: (view) => {
         if (!framing) return;
         const camera = getState().camera;
-        const to = viewPosition(framing, view, frontAzimuth);
+        const limit = activeLimits.current ?? pendingLimits.current;
+        const preset = viewPosition(framing, view, frontAzimuth);
+        const to = limit ? clampOrbit(framing.target, preset, limit) : preset;
         introTime.current = null;
         idleTime.current = 0;
         holdView.current = true;
@@ -134,7 +159,9 @@ export function CameraRig({
     glide.current = null;
     holdView.current = false;
     const view = initialViewRef.current;
-    const end = view ? viewPosition(framing, view, frontAzimuthRef.current) : framing.position;
+    const preset = view ? viewPosition(framing, view, frontAzimuthRef.current) : framing.position;
+    const limit = activeLimits.current;
+    const end = limit ? clampOrbit(framing.target, preset, limit) : preset;
     introEnd.current = end;
     camera.position.fromArray(animate ? introPosition(framing.target, end, 0) : end);
     camera.near = framing.near;
@@ -143,6 +170,26 @@ export function CameraRig({
     controls.current?.target.fromArray(framing.target);
     controls.current?.update();
   }, [getState, framing, intro]);
+
+  // Limits: the camera moves inside them at once (hidden behind the room's veil), then they apply.
+  useLayoutEffect(() => {
+    const c = controls.current;
+    if (!c || !framing) return;
+    if (!limits) {
+      pendingLimits.current = null;
+      activeLimits.current = null;
+      applyLimits(c, framing.maxDistance, -Infinity, Infinity);
+      return;
+    }
+    const camera = getState().camera;
+    introTime.current = null;
+    glide.current = null;
+    camera.position.fromArray(clampOrbit(c.target.toArray(), camera.position.toArray(), limits));
+    applyLimits(c, limits.maxDistance, limits.minAzimuth, limits.maxAzimuth);
+    c.update();
+    activeLimits.current = limits;
+    pendingLimits.current = null;
+  }, [limits, framing, getState]);
 
   // Any user interaction ends the intro and the turntable, and restarts the idle timer.
   useEffect(() => {
@@ -177,6 +224,12 @@ export function CameraRig({
       c.autoRotate =
         canRotate && !interacting.current && !holdView.current && idleTime.current >= IDLE_SECONDS;
     }
+    const waiting = pendingLimits.current;
+    if (c && waiting && glide.current === null && introTime.current === null) {
+      applyLimits(c, waiting.maxDistance, waiting.minAzimuth, waiting.maxAzimuth);
+      activeLimits.current = waiting;
+      pendingLimits.current = null;
+    }
     const g = glide.current;
     if (g && framing) {
       g.time = Math.min(VIEW_GLIDE_SECONDS, g.time + delta);
@@ -204,14 +257,12 @@ export function CameraRig({
       dampingFactor={0.08}
       enablePan={enablePan}
       minDistance={framing?.minDistance ?? 0.1}
-      maxDistance={framing?.maxDistance ?? 100}
       maxPolarAngle={maxPolarAngle}
       rotateSpeed={0.8}
       // Turntable speed when idle: about 80 s per full turn.
       autoRotateSpeed={0.75}
+      // Zoom always goes toward the product's centre (not the cursor), so it stays framed.
       zoomSpeed={0.9}
-      // Zoom toward what's under the pointer, so details can be inspected up close.
-      zoomToCursor
     />
   );
 }

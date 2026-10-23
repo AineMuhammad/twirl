@@ -75,6 +75,27 @@ export function glideTarget(from: Vec3, to: Vec3, t: number): [number, number, n
   ];
 }
 
+/** Limits on where the camera may orbit (a room's open side and free space). */
+export interface OrbitLimits {
+  maxDistance: number;
+  /** Azimuth range in radians around the target (0 = +Z, toward +X positive). */
+  minAzimuth: number;
+  maxAzimuth: number;
+}
+
+/** `position` moved (around `target`) to the nearest place within `limits`. */
+export function clampOrbit(
+  target: Vec3,
+  position: Vec3,
+  limits: OrbitLimits,
+): [number, number, number] {
+  const center = new Vector3(...target);
+  const s = new Spherical().setFromVector3(new Vector3(...position).sub(center));
+  s.theta = Math.min(limits.maxAzimuth, Math.max(limits.minAzimuth, s.theta));
+  s.radius = Math.min(limits.maxDistance, s.radius);
+  return new Vector3().setFromSpherical(s).add(center).toArray();
+}
+
 /** The camera's angle around `target` in degrees (−180…180, 0 = +Z), as views measure it. */
 export function azimuthOf(target: Vec3, position: Vec3): number {
   const degrees = MathUtils.radToDeg(Math.atan2(position[0] - target[0], position[2] - target[2]));
