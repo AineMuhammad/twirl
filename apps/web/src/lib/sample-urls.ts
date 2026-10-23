@@ -14,3 +14,11 @@ export const HOSTED_SAMPLES_VERSION = 'v1';
 export function hostedSampleUrl(file: string, base = clientEnv.NEXT_PUBLIC_ASSETS_BASE_URL) {
   return base ? `${base}/samples/${HOSTED_SAMPLES_VERSION}/${file}` : `/samples/${file}`;
 }
+
+/** Folder of the hosted room scenes (built by tools/rooms). Bump it when a room changes. */
+export const HOSTED_ROOMS_VERSION = 'v1';
+
+/** Where a room scene is served from: the asset bucket, or the app's own `/rooms/` locally. */
+export function hostedRoomUrl(file: string, base = clientEnv.NEXT_PUBLIC_ASSETS_BASE_URL) {
+  return base ? `${base}/rooms/${HOSTED_ROOMS_VERSION}/${file}` : `/rooms/${file}`;
+}

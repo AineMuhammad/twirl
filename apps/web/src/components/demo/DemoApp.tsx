@@ -1,6 +1,6 @@
 'use client';
 
-import type { ModelInfo, ViewerError, ViewerProps } from '@twirl/viewer';
+import type { ModelInfo, RoomMood, ViewerError, ViewerProps } from '@twirl/viewer';
 import { DEFAULT_SCENE, type SceneSettings } from '@twirl/viewer/settings';
 import {
   ChevronDownIcon,
@@ -17,6 +17,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
 import { ENVIRONMENT_SOURCES, SAMPLE_CATEGORIES, SAMPLE_MODELS } from '@/lib/demo-config';
+import { hostedRoomUrl } from '@/lib/sample-urls';
 import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
 import { LazyViewer } from './LazyViewer';
@@ -30,6 +31,8 @@ function sceneFor(url: string | null): SceneSettings {
   const sample = SAMPLE_MODELS.find((m) => m.url === url);
   return { ...DEFAULT_SCENE, ...sample?.config.scene } as SceneSettings;
 }
+
+const LIVING_ROOM_URL = hostedRoomUrl('living-room.glb');
 
 export function DemoApp() {
   const [modelUrl, setModelUrl] = useState(SAMPLE_MODELS[0]?.url ?? null);
@@ -80,9 +83,15 @@ export function DemoApp() {
   const onError = useCallback((error: ViewerError) => {
     console.error('[demo] viewer error', error.kind, error.cause);
   }, []);
+  const [room, setRoom] = useState<RoomMood | null>(null);
   const viewerProps = useMemo<Partial<ViewerProps>>(
-    () => ({ environmentSources: ENVIRONMENT_SOURCES, onEnvironmentStatus: setLighting, onError }),
-    [onError],
+    () => ({
+      environmentSources: ENVIRONMENT_SOURCES,
+      onEnvironmentStatus: setLighting,
+      onError,
+      room: room && { url: LIVING_ROOM_URL, mood: room, name: 'lounge' },
+    }),
+    [onError, room],
   );
   const onLoad = useCallback(
     (info: ModelInfo) => {
@@ -197,6 +206,8 @@ export function DemoApp() {
               scene={sceneForTheme}
               onChange={setScene}
               lightingLoading={lighting === 'loading'}
+              room={room}
+              onRoomChange={setRoom}
             />
           ),
         },
