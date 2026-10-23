@@ -300,3 +300,36 @@ details.faq[open]::details-content {
   font-weight: 650;
   letter-spacing: -0.035em;
 }
+
+/* Cursors: Tailwind v4 leaves buttons with the default arrow, so say what's clickable. */
+@layer base {
+  button:not(:disabled),
+  [role='button']:not([aria-disabled='true']),
+  [role='tab'],
+  [role='switch'],
+  [role='option'],
+  a[href],
+  summary,
+  select:not(:disabled),
+  input[type='range']:not(:disabled),
+  input[type='color']:not(:disabled),
+  input[type='checkbox']:not(:disabled),
+  input[type='radio']:not(:disabled),
+  input[type='file']:not(:disabled),
+  label:has(> input[type='checkbox'], > input[type='radio']) {
+    cursor: pointer;
+  }
+  button:disabled,
+  select:disabled,
+  input:disabled,
+  [aria-disabled='true'] {
+    cursor: not-allowed;
+  }
+  /* The 3D view: a hand to grab and turn the product. */
+  [data-twirl-viewer] canvas {
+    cursor: grab;
+  }
+  [data-twirl-viewer] canvas:active {
+    cursor: grabbing;
+  }
+}
