@@ -95,6 +95,8 @@ export interface ViewerProps {
   environmentSources?: Partial<EnvironmentSources>;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
   scene?: Partial<SceneSettings>;
+  /** Where library materials (fabrics, leathers, woods) are served from. Defaults to `/materials/`. */
+  materialsUrl?: string;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
   decoderPaths?: Partial<DecoderPaths>;
   /**
@@ -111,7 +113,10 @@ export interface ViewerProps {
   initialView?: CameraView;
   /** Where the model's front faces (degrees, 0 = +Z); preset views are measured from it. */
   frontAzimuth?: number;
-  /** Allow two-finger / right-drag panning. Off by default so shoppers can't lose the product. */
+  /**
+   * Allow right-drag / two-finger panning (on by default). The view's centre stays within the
+   * product's bounds, so it can't be lost, and preset views re-centre it.
+   */
   enablePan?: boolean;
   /**
    * Play the model's built-in animations once when it loads, holding the last frame.
@@ -188,7 +193,7 @@ export function Viewer({
   scene: sceneOverrides,
   environmentSources,
   decoderPaths,
-  enablePan = false,
+  enablePan = true,
   initialView,
   frontAzimuth = 0,
   effects = 'auto',
@@ -198,6 +203,7 @@ export function Viewer({
   onEnvironmentStatus,
   onError,
   room = null,
+  materialsUrl = '/materials/',
   className,
   style,
 }: ViewerProps) {
@@ -440,6 +446,7 @@ export function Viewer({
               <Model
                 url={modelUrl}
                 decoders={decoders}
+                materialsUrl={materialsUrl}
                 playAnimationsOnLoad={playAnimationsOnLoad}
                 meshOverrides={meshOverrides}
                 deformations={deformations}

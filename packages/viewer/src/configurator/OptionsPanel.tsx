@@ -11,12 +11,12 @@ import {
   type SelectionValue,
   type VisibilityGroup,
 } from '@twirl/config-schema/engine';
-import { useId, useState } from 'react';
+import { type CSSProperties, useId, useState } from 'react';
 
 import { ColorPicker } from '../ui/ColorPicker';
 import { CheckIcon, ChevronIcon } from '../ui/icons';
 import { focusRing, RAINBOW } from '../ui/ui';
-import { colorFor } from './config-overrides';
+import { colorFor, materialFor } from './config-overrides';
 
 export interface OptionsPanelProps {
   config: ProductConfig;
@@ -24,10 +24,31 @@ export interface OptionsPanelProps {
   onChange: (group: string, value: SelectionValue) => void;
   /** Extra classes for the list (e.g. a grid in wide layouts). */
   className?: string;
+  /** Where library materials are served from (for material swatch thumbnails). */
+  materialsUrl?: string;
 }
 
 const CHECKER = 'repeating-conic-gradient(#e5e5e5 0 25%, #fff 0 50%) 50% / 8px 8px';
 const NO_STATE: GroupAvailability = { hidden: false, disabled: false, options: {} };
+
+/**
+ * A swatch's look: its colour, or for a library material the material's thumbnail dyed that
+ * colour (a grayscale thumbnail multiplied by it), so "sage velvet" looks like sage velvet.
+ */
+function swatchStyle(
+  color: string | undefined,
+  material: string | undefined,
+  materialsUrl: string,
+): CSSProperties {
+  if (!color) return { background: CHECKER };
+  if (!material) return { background: color };
+  return {
+    backgroundColor: color,
+    backgroundImage: `url(${materialsUrl}${material}/thumb.webp)`,
+    backgroundSize: 'cover',
+    backgroundBlendMode: 'multiply',
+  };
+}
 
 function isLight(hex: string) {
   const n = Number.parseInt(hex.slice(1), 16);
@@ -45,7 +66,13 @@ function priceDelta(amount: number, currency: string) {
  * visibility groups as switches, dimension groups as sliders. Hidden groups and options are
  * left out; disabled ones stay visible with the rule's reason.
  */
-export function OptionsPanel({ config, evaluation, onChange, className = '' }: OptionsPanelProps) {
+export function OptionsPanel({
+  config,
+  evaluation,
+  onChange,
+  className = '',
+  materialsUrl = '/materials/',
+}: OptionsPanelProps) {
   const firstColor = config.groups.find((g) => g.type === 'color')?.id ?? null;
   const [openId, setOpenId] = useState<string | null>(firstColor);
   const currency = config.pricing.currency;
@@ -65,6 +92,8 @@ export function OptionsPanel({ config, evaluation, onChange, className = '' }: O
                 state={state}
                 currency={currency}
                 color={colorFor(config, group.id, value)}
+                material={materialFor(config, group.id, value)}
+                materialsUrl={materialsUrl}
                 open={openId === group.id}
                 onToggle={() => setOpenId(openId === group.id ? null : group.id)}
                 onChange={(v) => onChange(group.id, v)}
@@ -107,6 +136,8 @@ function ColorCard({
   state,
   currency,
   color,
+  material,
+  materialsUrl,
   open,
   onToggle,
   onChange,
@@ -116,6 +147,8 @@ function ColorCard({
   state: GroupAvailability;
   currency: string;
   color: string | undefined;
+  material: string | undefined;
+  materialsUrl: string;
   open: boolean;
   onToggle: () => void;
   onChange: (value: SelectionValue) => void;
@@ -132,7 +165,7 @@ function ColorCard({
   const custom = optionState('custom');
 
   const options = [
-    { id: 'original', label: group.originalLabel, color: undefined, price: 0 },
+    { id: 'original', label: group.originalLabel, color: undefined, material: undefined, price: 0 },
     ...group.swatches,
   ].filter((o) => !optionState(o.id).hidden);
 
@@ -152,7 +185,7 @@ function ColorCard({
         <span
           aria-hidden
           className="size-8 shrink-0 rounded-xl shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)]"
-          style={{ background: color ?? CHECKER }}
+          style={swatchStyle(color, material, materialsUrl)}
         />
         <span className="min-w-0 flex-1">
           <span className="block truncate text-[14px] font-medium text-ink">{group.label}</span>
@@ -192,7 +225,7 @@ function ColorCard({
                     setCustomOpen(false);
                   }}
                   className={`grid aspect-square place-items-center rounded-full shadow-[inset_0_0_0_1px_rgba(0,0,0,0.1)] transition-transform duration-150 enabled:hover:scale-110 disabled:cursor-not-allowed disabled:opacity-30 ${focusRing} ${active ? 'ring-2 ring-brand-600 ring-offset-2 ring-offset-surface' : ''}`}
-                  style={{ background: option.color ?? CHECKER }}
+                  style={swatchStyle(option.color, option.material, materialsUrl)}
                 >
                   {active && (
                     <CheckIcon

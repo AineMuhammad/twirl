@@ -9,6 +9,7 @@ import { useMemo, useState } from 'react';
 import { LazyViewer } from '@/components/demo/LazyViewer';
 import { APP_NAME } from '@/config/app';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
+import { MATERIALS_URL } from '@/lib/sample-urls';
 
 /**
  * A product whose free trial has ended: its default design as a still picture. No options,
@@ -49,6 +50,7 @@ export function StillProduct({
           modelUrl={modelUrl}
           scene={config.scene}
           environmentSources={ENVIRONMENT_SOURCES}
+          materialsUrl={MATERIALS_URL}
           meshOverrides={meshOverrides}
           deformations={deformations}
           initialView={config.presentation.camera.initialView}

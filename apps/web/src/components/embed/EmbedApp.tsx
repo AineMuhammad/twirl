@@ -8,9 +8,10 @@ import { LazyViewer } from '@/components/demo/LazyViewer';
 import { APP_NAME } from '@/config/app';
 import { EMBED_SOURCE, type EmbedMessage, preferredHeight } from '@/lib/embed-protocol';
 import { ENVIRONMENT_SOURCES } from '@/lib/environments';
+import { MATERIALS_URL } from '@/lib/sample-urls';
 import { changedGroups, createTracker } from '@/lib/tracker';
 
-const VIEWER_PROPS = { environmentSources: ENVIRONMENT_SOURCES };
+const VIEWER_PROPS = { environmentSources: ENVIRONMENT_SOURCES, materialsUrl: MATERIALS_URL };
 
 /** Tells the host page (via embed.js) about size and changes. The data isn't sensitive. */
 function post(message: EmbedMessage) {

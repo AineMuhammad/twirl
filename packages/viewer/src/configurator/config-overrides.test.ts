@@ -38,7 +38,10 @@ function config(): ProductConfig {
         id: 'legs-color',
         label: 'Legs',
         parts: ['legs'],
-        swatches: [{ id: 'oak', label: 'Oak', color: '#aa7744' }],
+        swatches: [
+          { id: 'oak', label: 'Oak', color: '#aa7744' },
+          { id: 'walnut', label: 'Walnut', color: '#5c3a22', material: 'walnut' },
+        ],
         default: null,
         allowCustom: true,
       },
@@ -70,6 +73,15 @@ describe('overridesForSelections', () => {
     expect(
       overridesForSelections(c, { 'legs-color': { custom: '#112233' }, cushion: true }, tree),
     ).toEqual({ '0/0': { color: '#112233' }, '0/1': { color: '#112233' } });
+  });
+
+  it("carries a swatch's library material with its colour", () => {
+    expect(
+      overridesForSelections(config(), { 'legs-color': 'walnut', cushion: true }, tree),
+    ).toEqual({
+      '0/0': { color: '#5c3a22', material: 'walnut' },
+      '0/1': { color: '#5c3a22', material: 'walnut' },
+    });
   });
 
   it('always hides meshes removed from the product', () => {

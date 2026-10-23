@@ -27,10 +27,10 @@ export const midCenturyLoungeChairConfig = {
       default: null,
       originalLabel: 'Chocolate',
       swatches: [
-        { id: 'black', label: 'Black', color: '#1c1a19' },
-        { id: 'cognac', label: 'Cognac', color: '#8a4b25' },
-        { id: 'tan', label: 'Saddle tan', color: '#a87443' },
-        { id: 'ivory', label: 'Ivory', color: '#e6dccb', price: 25000 },
+        { id: 'black', label: 'Black', color: '#1c1a19', material: 'leather' },
+        { id: 'cognac', label: 'Cognac', color: '#8a4b25', material: 'leather' },
+        { id: 'tan', label: 'Saddle tan', color: '#a87443', material: 'leather' },
+        { id: 'ivory', label: 'Ivory', color: '#e6dccb', material: 'leather', price: 25000 },
       ],
     },
     {
@@ -41,9 +41,10 @@ export const midCenturyLoungeChairConfig = {
       default: null,
       originalLabel: 'Teak',
       swatches: [
-        { id: 'walnut', label: 'Walnut', color: '#5c3a22' },
-        { id: 'white-oak', label: 'White oak', color: '#cdb48e' },
-        { id: 'ebony', label: 'Ebonised ash', color: '#2a2522', price: 20000 },
+        { id: 'walnut', label: 'Walnut', color: '#5c3a22', material: 'walnut' },
+        { id: 'white-oak', label: 'White oak', color: '#cdb48e', material: 'oak' },
+        { id: 'ebony', label: 'Ebonised oak', color: '#2a2522', material: 'oak', price: 20000 },
+        { id: 'sheesham', label: 'Sheesham', color: '#6b3f26', material: 'sheesham', price: 30000 },
       ],
     },
     {
@@ -64,7 +65,7 @@ export const midCenturyLoungeChairConfig = {
       when: { group: 'leather', equals: 'ivory' },
       target: { group: 'veneer', options: ['ebony'] },
       effect: 'disable',
-      message: 'Ivory leather is paired with teak, walnut or white oak.',
+      message: 'Ivory leather is paired with teak, walnut, white oak or sheesham.',
     },
   ],
   scene: {

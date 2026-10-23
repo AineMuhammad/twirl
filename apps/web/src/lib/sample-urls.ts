@@ -22,3 +22,14 @@ export const HOSTED_ROOMS_VERSION = 'v1';
 export function hostedRoomUrl(file: string, base = clientEnv.NEXT_PUBLIC_ASSETS_BASE_URL) {
   return base ? `${base}/rooms/${HOSTED_ROOMS_VERSION}/${file}` : `/rooms/${file}`;
 }
+
+/** Folder of the hosted material library (built by tools/materials). Bump it when it changes. */
+export const HOSTED_MATERIALS_VERSION = 'v1';
+
+/** Where library materials (fabrics, leathers, woods) are served from, ending in `/`. */
+export function hostedMaterialsUrl(base = clientEnv.NEXT_PUBLIC_ASSETS_BASE_URL) {
+  return base ? `${base}/materials/${HOSTED_MATERIALS_VERSION}/` : '/materials/';
+}
+
+/** The material library's URL for this deployment. */
+export const MATERIALS_URL = hostedMaterialsUrl();

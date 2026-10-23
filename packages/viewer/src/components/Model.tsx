@@ -18,6 +18,7 @@ import { configureGltfLoader } from '../internal/loaders';
 import { indexNodes, type NodeId } from '../internal/mesh-tree';
 import { describeModel } from '../internal/model-info';
 import { prefersReducedMotion } from '../internal/motion';
+import { materialLibrary } from '../internal/materials';
 import { MeshOverrideApplier } from '../internal/overrides';
 import { DeformationApplier } from '../internal/deform';
 import type { DecoderPaths, Deformation, MeshOverrides, ModelInfo } from '../types';
@@ -36,6 +37,8 @@ export interface ModelController {
 export interface ModelProps {
   url: string;
   decoders: DecoderPaths;
+  /** Where library materials (fabrics, leathers, woods) are served from, ending in `/`. */
+  materialsUrl: string;
   playAnimationsOnLoad: boolean;
   meshOverrides: MeshOverrides;
   deformations: readonly Deformation[];
@@ -60,6 +63,7 @@ function setCastShadows(root: Object3D, cast: boolean) {
 export function Model({
   url,
   decoders,
+  materialsUrl,
   playAnimationsOnLoad,
   meshOverrides,
   deformations,
@@ -94,16 +98,24 @@ export function Model({
   const index = useMemo(() => indexNodes(scene), [scene]);
   const idOf = useMemo(() => new Map([...index].map(([id, object]) => [object, id])), [index]);
   // Colour changes cross-fade over 0.2 s (instantly for users who prefer reduced motion).
+  // Bumped when a library material finishes loading, so overrides re-apply with it.
+  const [materialsLoaded, setMaterialsLoaded] = useState(0);
   const overrides = useMemo(
-    () => new MeshOverrideApplier(index, prefersReducedMotion() ? 0 : COLOR_FADE_SECONDS),
-    [index],
+    () =>
+      new MeshOverrideApplier(
+        index,
+        prefersReducedMotion() ? 0 : COLOR_FADE_SECONDS,
+        materialLibrary(materialsUrl),
+        () => setMaterialsLoaded((n) => n + 1),
+      ),
+    [index, materialsUrl],
   );
   const highlighted = highlightedMeshId ? index.get(highlightedMeshId) : undefined;
 
   // Layout effect so the first frame already shows the overrides.
   useLayoutEffect(() => {
     overrides.apply(meshOverrides);
-  }, [overrides, meshOverrides]);
+  }, [overrides, meshOverrides, materialsLoaded]);
 
   const deformer = useMemo(() => new DeformationApplier(scene, index), [scene, index]);
   // Parts are measured when applied; re-measure once built-in animations settle.
