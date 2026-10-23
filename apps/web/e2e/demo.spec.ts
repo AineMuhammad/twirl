@@ -4,12 +4,22 @@ import { expect, type Page, test } from '@playwright/test';
 
 const SAMPLES = resolve(import.meta.dirname, '../public/samples');
 
+/**
+ * Hosted assets CI doesn't have: they live on the asset bucket, not in git (material textures and
+ * swatch thumbnails, rooms, hosted sample models). A missing one is a deployment matter, not an
+ * app error.
+ */
+const HOSTED_ASSET = /\/(materials|rooms|samples)\//;
+
 /** Collects console errors and uncaught exceptions so tests can assert there were none. */
 function trackErrors(page: Page) {
   const errors: string[] = [];
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
+    if (m.type() !== 'error') return;
+    if (m.text().startsWith('Failed to load resource') && HOSTED_ASSET.test(m.location().url))
+      return;
+    errors.push(m.text());
   });
   return errors;
 }
