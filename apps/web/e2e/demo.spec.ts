@@ -54,7 +54,10 @@ test('options update the price, rules correct conflicts, custom colours work', a
     .getByRole('group', { name: 'Frame finish' })
     .getByRole('button', { name: /^Brushed brass/ })
     .click();
-  await expect(page.getByRole('status')).toContainText("Brushed brass isn't offered");
+  // Filtered by text: the lighting indicator is also a status region.
+  await expect(
+    page.getByRole('status').filter({ hasText: "Brushed brass isn't offered" }),
+  ).toBeVisible();
   await expect(options(page).getByRole('button', { name: /^Seat fabric/ })).not.toContainText(
     'Terracotta',
   );
@@ -74,7 +77,9 @@ test('options update the price, rules correct conflicts, custom colours work', a
 
   // Large sizes need the brass frame: the slider switches it automatically.
   await page.getByRole('slider', { name: 'Diameter' }).fill('140');
-  await expect(page.getByRole('status')).toContainText('Sizes of 135 cm and up');
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Sizes of 135 cm and up' }),
+  ).toBeVisible();
   await expect(options(page).getByRole('button', { name: /^Frame finish/ })).toContainText(
     'Brushed brass',
   );
@@ -113,10 +118,9 @@ test('uploading a local model replaces the sample; bad files are explained', asy
   await input.setInputFiles(resolve(SAMPLES, 'jeep_2021.glb'));
   // Uploads get a generated config: a colour and a show/hide option per part.
   await expect(options(page).getByRole('button', { name: /^Body Exterior/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Your file' })).toHaveAttribute(
-    'aria-pressed',
-    'true',
-  );
+  // The model picker switches to the upload.
+  await expect(page.getByRole('combobox', { name: 'Model' })).toHaveValue(/^blob:/);
+  await expect(page.getByRole('option', { name: 'Your file' })).toBeAttached();
   await expect(page.getByRole('heading', { name: 'jeep_2021.glb' })).toBeVisible();
 });
 

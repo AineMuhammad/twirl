@@ -65,6 +65,16 @@ export function glidePosition(
   return new Vector3().setFromSpherical(s).add(center).toArray();
 }
 
+/** The orbit target at progress `t` (0–1) gliding from `from` to `to`, eased like the camera. */
+export function glideTarget(from: Vec3, to: Vec3, t: number): [number, number, number] {
+  const k = easeOutCubic(t);
+  return [0, 1, 2].map((i) => (from[i] ?? 0) + ((to[i] ?? 0) - (from[i] ?? 0)) * k) as [
+    number,
+    number,
+    number,
+  ];
+}
+
 /** The camera's angle around `target` in degrees (−180…180, 0 = +Z), as views measure it. */
 export function azimuthOf(target: Vec3, position: Vec3): number {
   const degrees = MathUtils.radToDeg(Math.atan2(position[0] - target[0], position[2] - target[2]));

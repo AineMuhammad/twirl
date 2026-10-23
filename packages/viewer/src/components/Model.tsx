@@ -8,7 +8,7 @@ import {
   useRef,
   useState,
 } from 'react';
-import { AnimationMixer, type Box3 } from 'three';
+import { AnimationMixer, type Box3, type Object3D } from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
@@ -50,6 +50,13 @@ export interface ModelProps {
 }
 
 /** Loads a GLB/glTF (suspends while loading) and renders a private copy of its scene. */
+/** Turns shadow casting on or off for every part of a model. */
+function setCastShadows(root: Object3D, cast: boolean) {
+  root.traverse((object) => {
+    object.castShadow = cast;
+  });
+}
+
 export function Model({
   url,
   decoders,
@@ -165,6 +172,9 @@ export function Model({
     const running = clips.some((clip) => mixer.existingAction(clip)?.isRunning() === true);
     if (running !== animating.current) {
       animating.current = running;
+      // Moving parts start outside the area the shadows are sized for (the settled model) and
+      // would cast cut-off, plane-like shadows; they cast none until the model settles.
+      setCastShadows(scene, !running);
       onAnimatingChange(running);
       if (!running && deformations.length > 0) setSettled((n) => n + 1);
     }
