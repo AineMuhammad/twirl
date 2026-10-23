@@ -140,7 +140,8 @@ const GL: Partial<WebGLRendererParameters> & { toneMapping: number; toneMappingE
     alpha: true,
     preserveDrawingBuffer: false,
     toneMapping: NeutralToneMapping,
-    toneMappingExposure: 1,
+    // A touch brighter than neutral, so products read clearly without looking over-lit.
+    toneMappingExposure: 1.1,
   };
 const NO_OVERRIDES: MeshOverrides = {};
 const NO_DEFORMATIONS: readonly Deformation[] = [];
@@ -367,12 +368,8 @@ export function Viewer({
         {current && scene.cyclorama && (
           <Cyclorama stage={stage} color={cycloramaColor(scene.background)} />
         )}
-        {current && scene.shadows && (
-          <SoftShadow
-            key={`${current.url}|${shapeSignature}|${animating}`}
-            stage={stage}
-            live={animating}
-          />
+        {current && scene.shadows && !animating && (
+          <SoftShadow key={`${current.url}|${shapeSignature}`} stage={stage} />
         )}
         {current && !scene.cyclorama && (
           // The cyclorama is the floor (and shadow catcher) when it's on.
