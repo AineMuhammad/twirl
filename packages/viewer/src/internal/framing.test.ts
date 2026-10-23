@@ -1,7 +1,7 @@
 import { Box3, MathUtils, PerspectiveCamera, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 
-import { computeFraming, MAX_ZOOM_FACTOR, MIN_ZOOM_FACTOR } from './framing';
+import { computeFraming, MAX_ZOOM_FACTOR, MIN_ZOOM_RADIUS } from './framing';
 
 const unitBox = () => new Box3(new Vector3(-1, -1, -1), new Vector3(1, 1, 1));
 
@@ -69,8 +69,11 @@ describe('computeFraming', () => {
   it('sets sane zoom limits and clip planes', () => {
     const f = computeFraming(unitBox(), { fov: 35, aspect: 1 });
     const distance = new Vector3().fromArray(f.position).length();
-    expect(f.minDistance).toBeGreaterThan(f.radius);
-    expect(f.minDistance).toBeLessThan(distance);
+    // Close enough to inspect the surface (zoom goes toward the cursor), but never zero.
+    expect(f.minDistance).toBeGreaterThan(0);
+    expect(f.minDistance).toBeLessThan(f.radius);
+    // The near plane never clips at the closest zoom.
+    expect(f.near).toBeLessThan(f.minDistance);
     expect(f.maxDistance).toBeGreaterThan(distance);
     expect(f.near).toBeLessThan(distance - f.radius);
     expect(f.far).toBeGreaterThan(distance + f.radius);
@@ -105,9 +108,9 @@ describe('computeFraming', () => {
     const distance = new Vector3()
       .fromArray(f.position)
       .distanceTo(new Vector3().fromArray(f.target));
-    expect(f.minDistance).toBeGreaterThan(f.radius * 1.2); // never inside the model
-    expect(f.minDistance).toBeCloseTo(Math.max(f.radius * 1.25, distance * MIN_ZOOM_FACTOR));
+    expect(f.minDistance).toBeCloseTo(f.radius * MIN_ZOOM_RADIUS);
     expect(f.maxDistance).toBeCloseTo(distance * MAX_ZOOM_FACTOR);
-    expect(f.maxDistance / f.minDistance).toBeLessThan(4);
+    // Several times closer than the framed view.
+    expect(distance / f.minDistance).toBeGreaterThan(3);
   });
 });

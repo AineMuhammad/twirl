@@ -2,7 +2,7 @@ import { Box3, MathUtils, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 
 import { computeFraming } from './framing';
-import { azimuthOf, CAMERA_VIEWS, glidePosition, viewPosition } from './views';
+import { azimuthOf, CAMERA_VIEWS, glidePosition, glideTarget, viewPosition } from './views';
 
 const framing = computeFraming(new Box3(new Vector3(-1, 0, -1), new Vector3(1, 2, 1)), {
   fov: 35,
@@ -61,5 +61,15 @@ describe('front direction', () => {
     expect(azimuthOf([0, 0, 0], [0, 0, 5])).toBe(0);
     expect(azimuthOf([0, 0, 0], [5, 0, 0])).toBe(90);
     expect(azimuthOf([0, 0, 0], [-5, 0, -0.0001])).toBeCloseTo(-90, 0);
+  });
+});
+
+describe('glideTarget', () => {
+  it('eases the orbit target from where zoom left it back to the centre', () => {
+    expect(glideTarget([2, 1, 0], [0, 0, 0], 0)).toEqual([2, 1, 0]);
+    expect(glideTarget([2, 1, 0], [0, 0, 0], 1)).toEqual([0, 0, 0]);
+    const half = glideTarget([2, 0, 0], [0, 0, 0], 0.5);
+    expect(half[0]).toBeGreaterThan(0);
+    expect(half[0]).toBeLessThan(1); // eased out: most of the way there by halfway
   });
 });
