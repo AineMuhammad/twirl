@@ -56,3 +56,6 @@ apps/web/public/samples/*.glb
 
 # Room scenes hosted on R2 (built by tools/rooms); local copies for development.
 apps/web/public/rooms/
+
+# Material library hosted on R2 (built by tools/materials); local copies for development.
+apps/web/public/materials/
