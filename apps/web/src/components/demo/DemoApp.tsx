@@ -17,7 +17,7 @@ import { useCallback, useMemo, useRef, useState } from 'react';
 
 import { Logo } from '@/components/brand/Logo';
 import { ENVIRONMENT_SOURCES, SAMPLE_CATEGORIES, SAMPLE_MODELS } from '@/lib/demo-config';
-import { hostedRoomUrl } from '@/lib/sample-urls';
+import { hostedRoomUrl, MATERIALS_URL } from '@/lib/sample-urls';
 import { BACKDROP_FOR_THEME, sameBackground } from '@/lib/scene-presets';
 
 import { LazyViewer } from './LazyViewer';
@@ -87,6 +87,7 @@ export function DemoApp() {
   const viewerProps = useMemo<Partial<ViewerProps>>(
     () => ({
       environmentSources: ENVIRONMENT_SOURCES,
+      materialsUrl: MATERIALS_URL,
       onEnvironmentStatus: setLighting,
       onError,
       room: room && { url: LIVING_ROOM_URL, mood: room, name: 'lounge' },
