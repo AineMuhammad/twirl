@@ -413,6 +413,7 @@ export function Configurator({
                       config={config}
                       evaluation={current}
                       onChange={change}
+                      {...(viewerProps?.materialsUrl && { materialsUrl: viewerProps.materialsUrl })}
                       {...(layout.options && { className: layout.options })}
                     />
                   </>

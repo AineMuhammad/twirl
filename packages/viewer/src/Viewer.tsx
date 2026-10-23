@@ -95,6 +95,8 @@ export interface ViewerProps {
   environmentSources?: Partial<EnvironmentSources>;
   /** Background, lighting, floor and shadows. Missing fields use `DEFAULT_SCENE`. */
   scene?: Partial<SceneSettings>;
+  /** Where library materials (fabrics, leathers, woods) are served from. Defaults to `/materials/`. */
+  materialsUrl?: string;
   /** Where decoder files are served from. Defaults to `/decoders/draco/` and `/decoders/basis/`. */
   decoderPaths?: Partial<DecoderPaths>;
   /**
@@ -201,6 +203,7 @@ export function Viewer({
   onEnvironmentStatus,
   onError,
   room = null,
+  materialsUrl = '/materials/',
   className,
   style,
 }: ViewerProps) {
@@ -443,6 +446,7 @@ export function Viewer({
               <Model
                 url={modelUrl}
                 decoders={decoders}
+                materialsUrl={materialsUrl}
                 playAnimationsOnLoad={playAnimationsOnLoad}
                 meshOverrides={meshOverrides}
                 deformations={deformations}

@@ -1,7 +1,23 @@
-import { Color, type Material, type Mesh, type Object3D } from 'three';
+import type { MaterialId } from '@twirl/config-schema/constants';
+import {
+  Color,
+  type Material,
+  type Mesh,
+  type MeshPhysicalMaterial,
+  type MeshStandardMaterial,
+  type Object3D,
+} from 'three';
 
 import type { MeshOverride, MeshOverrides } from '../types';
 import type { NodeId } from './mesh-tree';
+import {
+  applyLibraryMaterial,
+  MATERIAL_SHEEN,
+  MATERIAL_TILE_METERS,
+  type MaterialLibrary,
+  setSheen,
+  toPhysical,
+} from './materials';
 import { prepareForTint } from './tint';
 
 type MaterialSlot = Material | Material[];
@@ -57,6 +73,8 @@ export class MeshOverrideApplier {
   private readonly fades = new Map<Material, Fade>();
   /** Meshes fading back to their original colour, restored when the fade ends. */
   private readonly restoring = new Set<Mesh>();
+  /** The library material on each mesh (on its private clones). */
+  private readonly materialOf = new Map<Mesh, MaterialId>();
 
   /**
    * @param fadeSeconds Colour changes cross-fade over this long (0 = instant, e.g. for reduced
@@ -65,6 +83,10 @@ export class MeshOverrideApplier {
   constructor(
     private readonly index: ReadonlyMap<NodeId, Object3D>,
     private readonly fadeSeconds = 0,
+    /** Where library materials come from; without one, material overrides just tint. */
+    private readonly library: MaterialLibrary | null = null,
+    /** Called when a material that was asked for finishes loading (re-apply then). */
+    private readonly onMaterialLoaded: () => void = () => {},
   ) {}
 
   apply(overrides: MeshOverrides) {
@@ -72,6 +94,7 @@ export class MeshOverrideApplier {
       // Visibility applies to the node itself; three.js hides a hidden group's subtree.
       this.setVisibility(object, overrides[id]?.visible);
       if (!isMesh(object)) continue;
+      this.setMaterial(object, resolveOverride(id, overrides, 'material'));
       const color = resolveOverride(id, overrides, 'color');
       if (color === undefined) this.fadeBack(object);
       else this.tint(object, color);
@@ -119,6 +142,36 @@ export class MeshOverrideApplier {
     object.visible = visible;
   }
 
+  /** Swaps a mesh onto a library material (fresh clones), or back off one. */
+  private setMaterial(mesh: Mesh, id: MaterialId | undefined) {
+    const current = this.materialOf.get(mesh);
+    if (id === current) return;
+    const textures = id ? this.library?.get(id) : null;
+    if (id && !textures) {
+      // Not loaded yet: tint meanwhile, and re-apply when it arrives.
+      this.library?.load(id).then(this.onMaterialLoaded, () => undefined);
+      if (current === undefined) return;
+    }
+    // Start again from the original materials (the tint depends on which texture is on).
+    this.restoreMaterials(mesh);
+    if (!id || !textures) return;
+    const original = mesh.material;
+    this.originals.set(mesh, original);
+    // Fabrics with a pile need a physical material for sheen.
+    const copy = (m: Material) =>
+      MATERIAL_SHEEN[id] ? toPhysical(m as MeshStandardMaterial) : m.clone();
+    mesh.material = Array.isArray(original) ? original.map(copy) : copy(original);
+    for (const material of asList(mesh.material)) {
+      applyLibraryMaterial(
+        material as MeshStandardMaterial,
+        mesh,
+        textures,
+        MATERIAL_TILE_METERS[id],
+      );
+    }
+    this.materialOf.set(mesh, id);
+  }
+
   private tint(mesh: Mesh, color: string) {
     this.restoring.delete(mesh);
     if (!this.originals.has(mesh)) {
@@ -127,10 +180,14 @@ export class MeshOverrideApplier {
         ? mesh.material.map((m) => m.clone())
         : mesh.material.clone();
     }
+    const fabric = this.materialOf.get(mesh);
     for (const material of asList(mesh.material)) {
       // Make texture/vertex colors show the chosen color rather than mostly their own.
       prepareForTint(material, mesh);
       this.fadeTo(material, new Color(color));
+      if (fabric && (material as MeshPhysicalMaterial).isMeshPhysicalMaterial) {
+        setSheen(material as MeshPhysicalMaterial, fabric, color);
+      }
     }
   }
 
@@ -166,11 +223,18 @@ export class MeshOverrideApplier {
   private restoreMaterials(mesh: Mesh) {
     const original = this.originals.get(mesh);
     if (!original) return;
+    const tiled = this.materialOf.has(mesh);
     for (const clone of asList(mesh.material)) {
       this.fades.delete(clone);
+      if (tiled) {
+        // Its per-part texture copies (the images themselves stay cached in the library).
+        const m = clone as MeshStandardMaterial;
+        for (const texture of [m.map, m.normalMap, m.roughnessMap]) texture?.dispose();
+      }
       clone.dispose();
     }
     mesh.material = original;
     this.originals.delete(mesh);
+    this.materialOf.delete(mesh);
   }
 }

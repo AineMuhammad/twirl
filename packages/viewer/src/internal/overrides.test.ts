@@ -1,6 +1,7 @@
-import { BoxGeometry, Group, Mesh, MeshStandardMaterial } from 'three';
+import { BoxGeometry, Group, Mesh, MeshStandardMaterial, Texture } from 'three';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { MaterialLibrary } from './materials';
 import { indexNodes } from './mesh-tree';
 import { MeshOverrideApplier, resolveOverride } from './overrides';
 
@@ -182,5 +183,50 @@ describe('MeshOverrideApplier (colour fades)', () => {
     applier.step(FADE);
     expect(m.frame.material).not.toBe(m.shared);
     expect(hex(m.frame)).toBe('#00ff00');
+  });
+});
+
+describe('MeshOverrideApplier (material)', () => {
+  /** One UV-mapped plane (BoxGeometry has UVs) under a group. */
+  function scene() {
+    const root = new Group();
+    const mesh = new Mesh(new BoxGeometry(1, 1, 1), new MeshStandardMaterial());
+    root.add(mesh);
+    return { root, mesh, original: mesh.material };
+  }
+  const textures = {
+    color: new Texture(),
+    normal: new Texture(),
+    roughness: new Texture(),
+  };
+
+  it('puts a loaded library material on a private copy, and takes it off again', () => {
+    const { root, mesh, original } = scene();
+    const library = { get: () => textures, load: vi.fn() } as unknown as MaterialLibrary;
+    const applier = new MeshOverrideApplier(indexNodes(root), 0, library);
+    applier.apply({ '0': { color: '#5c3a22', material: 'walnut' } });
+    const material = mesh.material as MeshStandardMaterial;
+    expect(material).not.toBe(original);
+    expect(material.map?.image).toBe(textures.color.image);
+    expect((original as MeshStandardMaterial).map).toBeNull(); // the original is untouched
+    applier.apply({});
+    expect(mesh.material).toBe(original);
+  });
+
+  it('tints meanwhile and re-applies once a material has loaded', async () => {
+    const { root, mesh } = scene();
+    let resolve = () => {};
+    const loaded = new Promise<void>((r) => (resolve = r));
+    const onLoaded = vi.fn();
+    const library = { get: () => null, load: () => loaded } as unknown as MaterialLibrary;
+    new MeshOverrideApplier(indexNodes(root), 0, library, onLoaded).apply({
+      '0': { color: '#5c3a22', material: 'walnut' },
+    });
+    expect((mesh.material as MeshStandardMaterial).map).toBeNull();
+    expect((mesh.material as MeshStandardMaterial).color.getHexString()).toBe('5c3a22');
+    resolve();
+    await loaded;
+    await Promise.resolve();
+    expect(onLoaded).toHaveBeenCalled();
   });
 });
