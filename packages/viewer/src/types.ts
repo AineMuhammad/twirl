@@ -73,3 +73,17 @@ export interface Deformation {
 
 /** HDRI environment loading state ('ready' also covers procedural presets, which are instant). */
 export type EnvironmentStatus = 'loading' | 'ready' | 'error';
+
+/** Time of day for a room scene: sunlight through the window, or lamps in the evening. */
+export type RoomMood = 'day' | 'night';
+
+/**
+ * A furnished room shown around the product, in place of the studio backdrop. The GLB carries
+ * anchor nodes for the product spot and its light fittings (see tools/rooms).
+ */
+export interface RoomSettings {
+  url: string;
+  mood: RoomMood;
+  /** What the loader calls it ("Setting up the lounge…"). Defaults to "room". */
+  name?: string;
+}

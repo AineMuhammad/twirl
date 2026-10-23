@@ -14,6 +14,8 @@ export {
   type MeshOverrides,
   type MeshTreeNode,
   type ModelInfo,
+  type RoomMood,
+  type RoomSettings,
   type ViewerError,
   type ViewerErrorKind,
 } from './types';

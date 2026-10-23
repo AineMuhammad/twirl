@@ -25,6 +25,8 @@ import { SceneLighting } from './components/SceneLighting';
 import { SoftShadow } from './components/SoftShadow';
 import { LoadingOverlay, type OverlayState } from './components/LoadingOverlay';
 import { Model, type ModelController } from './components/Model';
+import { Room } from './components/Room';
+import { RoomLoadingIndicator } from './components/RoomLoadingIndicator';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import {
   DEFAULT_ENVIRONMENT_SOURCES,
@@ -36,7 +38,7 @@ import { effectsEnabled, type EffectsSetting } from './internal/effects';
 import { progressFromEvent, toViewerError } from './internal/errors';
 import { cycloramaColor } from './internal/cyclorama';
 import { floorColorFor } from './internal/floor-color';
-import type { CameraView } from './internal/views';
+import type { CameraView, OrbitLimits } from './internal/views';
 import { computeFraming, type Framing } from './internal/framing';
 import { qualitySettings } from './internal/quality';
 import { type Stage, stageFromBounds } from './internal/stage';
@@ -47,7 +49,9 @@ import {
   type EnvironmentStatus,
   type Deformation,
   type MeshOverrides,
+  type LoadProgress,
   type ModelInfo,
+  type RoomSettings,
   type ViewerError,
 } from './types';
 
@@ -122,11 +126,23 @@ export interface ViewerProps {
   onEnvironmentStatus?: (status: EnvironmentStatus) => void;
   /** Called with a friendly message and the original error (for logging). */
   onError?: (error: ViewerError) => void;
+  /**
+   * Show the product in a furnished room (with the room's own day or night lighting) instead of
+   * the studio backdrop. The room loads only when set.
+   */
+  room?: RoomSettings | null;
   className?: string;
   style?: CSSProperties;
 }
 
 const CAMERA_FOV = 35;
+const veilStyle: CSSProperties = {
+  position: 'absolute',
+  inset: 0,
+  pointerEvents: 'none',
+};
+const ignoreQuality = () => {};
+const logRoomError = (cause: unknown) => console.error('[viewer] room failed to load', cause);
 // Post-processing is a separate chunk, fetched only when enabled.
 const Effects = lazy(() => import('./components/Effects'));
 
@@ -181,6 +197,7 @@ export function Viewer({
   onLoad,
   onEnvironmentStatus,
   onError,
+  room = null,
   className,
   style,
 }: ViewerProps) {
@@ -323,6 +340,55 @@ export function Viewer({
     [onEnvironmentStatus],
   );
 
+  // Room download progress, keyed by URL so a new room starts from zero without an effect.
+  const [roomLoad, setRoomLoad] = useState<{
+    url: string;
+    progress: LoadProgress;
+    /** Downloading, then preparing its lighting (behind a veil), then shown. */
+    phase: 'download' | 'lighting' | 'ready';
+  } | null>(null);
+  const roomUrl = room?.url ?? null;
+  const setRoomPhase = useCallback(
+    (phase: 'download' | 'lighting' | 'ready', progress?: LoadProgress) => {
+      if (!roomUrl) return;
+      setRoomLoad((prev) => ({
+        url: roomUrl,
+        progress:
+          progress ?? (prev?.url === roomUrl ? prev.progress : { fraction: 1, loadedBytes: 0 }),
+        phase,
+      }));
+    },
+    [roomUrl],
+  );
+  const handleRoomProgress = useCallback(
+    (event: ProgressEvent) => setRoomPhase('download', progressFromEvent(event)),
+    [setRoomPhase],
+  );
+  const handleRoomLighting = useCallback(() => setRoomPhase('lighting'), [setRoomPhase]);
+  const handleRoomReady = useCallback(() => setRoomPhase('ready'), [setRoomPhase]);
+  const roomState = roomLoad?.url === roomUrl ? roomLoad : null;
+  const roomBusy = room !== null && roomState?.phase !== 'ready';
+  // Where the camera may orbit in the room, keyed by room URL like the load state.
+  const [orbit, setOrbit] = useState<{ url: string; limits: OrbitLimits } | null>(null);
+  const handleOrbitLimits = useCallback(
+    (limits: OrbitLimits) => {
+      if (roomUrl) setOrbit({ url: roomUrl, limits });
+    },
+    [roomUrl],
+  );
+  const orbitLimits = room && orbit?.url === roomUrl ? orbit.limits : null;
+
+  const studioLighting = (
+    <SceneLighting
+      scene={scene}
+      stage={stage}
+      shadowMapSize={quality.shadowMapSize}
+      sources={sources}
+      resolution={resolution}
+      onStatus={handleEnvironmentStatus}
+    />
+  );
+
   return (
     <div
       ref={container}
@@ -335,17 +401,39 @@ export function Viewer({
         shadows="percentage"
         camera={{ fov: CAMERA_FOV, near: 0.01, far: 1000, position: [3, 2, 5] }}
         gl={GL}
+        // Blurred (and scaled a touch, hiding the soft edges) while a room loads.
+        style={{
+          filter: roomBusy && current ? 'blur(14px)' : 'none',
+          transform: roomBusy && current ? 'scale(1.04)' : 'none',
+          transition: 'filter 450ms ease, transform 450ms ease',
+        }}
       >
-        <AdaptiveQuality onChange={setQualityFactor} />
+        {/* Frozen while a room loads or lights: compiling makes a few frames slow, and the
+            resolution change it would trigger clears the canvas for a frame. */}
+        <AdaptiveQuality onChange={roomBusy ? ignoreQuality : setQualityFactor} />
         <Capturer controllerRef={capturerRef} />
-        <SceneLighting
-          scene={scene}
-          stage={stage}
-          shadowMapSize={quality.shadowMapSize}
-          sources={sources}
-          resolution={resolution}
-          onStatus={handleEnvironmentStatus}
-        />
+        {/* One studio light, kept until the room arrives (a fresh copy would flash black). */}
+        {(!room || !current || !roomState || roomState.phase === 'download') && studioLighting}
+        {room && current && (
+          // A room failing to load leaves the product on its own rather than breaking the viewer.
+          <ErrorBoundary key={room.url} onError={logRoomError}>
+            <Suspense fallback={null}>
+              <Room
+                url={room.url}
+                mood={room.mood}
+                stage={stage}
+                decoders={decoders}
+                shadowMapSize={quality.shadowMapSize}
+                onProgress={handleRoomProgress}
+                onLighting={handleRoomLighting}
+                onReady={handleRoomReady}
+                minDistance={current.framing.minDistance}
+                maxDistance={current.framing.maxDistance}
+                onOrbitLimits={handleOrbitLimits}
+              />
+            </Suspense>
+          </ErrorBoundary>
+        )}
         {modelUrl && (
           <ErrorBoundary key={modelUrl} onError={handleError}>
             <Suspense fallback={null}>
@@ -365,13 +453,13 @@ export function Viewer({
             </Suspense>
           </ErrorBoundary>
         )}
-        {current && scene.cyclorama && (
+        {current && !room && scene.cyclorama && (
           <Cyclorama stage={stage} color={cycloramaColor(scene.background)} />
         )}
         {current && scene.shadows && !animating && (
           <SoftShadow key={`${current.url}|${shapeSignature}`} stage={stage} />
         )}
-        {current && !scene.cyclorama && (
+        {current && !room && !scene.cyclorama && (
           // The cyclorama is the floor (and shadow catcher) when it's on.
           <Floor
             stage={stage}
@@ -393,9 +481,32 @@ export function Viewer({
           initialView={initialView}
           frontAzimuth={frontAzimuth}
           controllerRef={rigController}
+          limits={orbitLimits}
         />
       </Canvas>
       <LoadingOverlay state={overlayState} />
+      {room && (
+        <>
+          {/* Covers the switch to the room's lighting, so its first frames never show. */}
+          <div
+            aria-hidden
+            style={{
+              ...veilStyle,
+              background: backgroundCss(scene.background),
+              opacity: current && roomState?.phase === 'lighting' ? 0.94 : 0,
+              // On at once (hiding the first frames), off with a fade.
+              transition: roomState?.phase === 'lighting' ? 'none' : 'opacity 450ms ease',
+            }}
+          />
+          <RoomLoadingIndicator
+            name={room.name ?? 'room'}
+            mood={room.mood}
+            phase={roomState?.phase === 'lighting' ? 'lighting' : 'download'}
+            progress={roomState?.progress ?? { fraction: null, loadedBytes: 0 }}
+            visible={current !== null && roomState?.phase !== 'ready'}
+          />
+        </>
+      )}
       {environmentStatus === 'loading' && overlayState.phase !== 'loading' && (
         <EnvironmentIndicator />
       )}

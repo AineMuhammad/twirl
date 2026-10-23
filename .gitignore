@@ -53,3 +53,6 @@ apps/web/src/generated/
 apps/web/public/samples/*.glb
 !apps/web/public/samples/sofa.glb
 !apps/web/public/samples/jeep_2021.glb
+
+# Room scenes hosted on R2 (built by tools/rooms); local copies for development.
+apps/web/public/rooms/
