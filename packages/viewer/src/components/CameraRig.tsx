@@ -17,6 +17,7 @@ import {
   azimuthOf,
   type CameraView,
   glidePosition,
+  glideTarget,
   VIEW_GLIDE_SECONDS,
   viewPosition,
 } from '../internal/views';
@@ -85,6 +86,8 @@ export function CameraRig({
   const glide = useRef<{
     from: [number, number, number];
     to: [number, number, number];
+    /** Where the orbit target starts: zooming toward the cursor moves it off the centre. */
+    fromTarget: [number, number, number];
     time: number;
   } | null>(null);
 
@@ -105,11 +108,17 @@ export function CameraRig({
         holdView.current = true;
         if (prefersReducedMotion()) {
           camera.position.fromArray(to);
+          controls.current?.target.fromArray(framing.target);
           controls.current?.update();
           glide.current = null;
           return;
         }
-        glide.current = { from: camera.position.toArray(), to, time: 0 };
+        glide.current = {
+          from: camera.position.toArray(),
+          to,
+          fromTarget: controls.current?.target.toArray() ?? framing.target,
+          time: 0,
+        };
       },
     }),
     [framing, getState, frontAzimuth],
@@ -171,9 +180,10 @@ export function CameraRig({
     const g = glide.current;
     if (g && framing) {
       g.time = Math.min(VIEW_GLIDE_SECONDS, g.time + delta);
-      getState().camera.position.fromArray(
-        glidePosition(framing.target, g.from, g.to, g.time / VIEW_GLIDE_SECONDS),
-      );
+      const t = g.time / VIEW_GLIDE_SECONDS;
+      getState().camera.position.fromArray(glidePosition(framing.target, g.from, g.to, t));
+      // Bring the orbit target back to the product's centre along the way.
+      controls.current?.target.fromArray(glideTarget(g.fromTarget, framing.target, t));
       controls.current?.update();
       if (g.time >= VIEW_GLIDE_SECONDS) glide.current = null;
       return;
@@ -200,6 +210,8 @@ export function CameraRig({
       // Turntable speed when idle: about 80 s per full turn.
       autoRotateSpeed={0.75}
       zoomSpeed={0.9}
+      // Zoom toward what's under the pointer, so details can be inspected up close.
+      zoomToCursor
     />
   );
 }

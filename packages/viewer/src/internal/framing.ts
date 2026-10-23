@@ -24,8 +24,12 @@ export interface Framing {
   radius: number;
 }
 
-/** Closest zoom, as a fraction of the framing distance. */
-export const MIN_ZOOM_FACTOR = 0.5;
+/**
+ * Closest zoom, as a fraction of the model's bounding radius from the orbit target. Zoom goes
+ * toward the cursor (which moves the target onto the surface), so this lets shoppers get right up
+ * to a carving or a weave.
+ */
+export const MIN_ZOOM_RADIUS = 0.75;
 /** Farthest zoom, as a multiple of the framing distance. */
 export const MAX_ZOOM_FACTOR = 1.6;
 
@@ -61,11 +65,12 @@ export function computeFraming(box: Box3, options: FramingOptions): Framing {
   return {
     target: sphere.center.toArray(),
     position: position.toArray(),
-    near: distance / 100,
+    // Close enough for the nearest zoom without clipping the surface.
+    near: (radius * MIN_ZOOM_RADIUS) / 20,
     far: distance * 100,
-    // Zoom range per model: in to about twice the framed size (never inside the model), out to
-    // a little smaller than framed, so the product never becomes a speck.
-    minDistance: Math.max(radius * 1.25, distance * MIN_ZOOM_FACTOR),
+    // Zoom range per model: in close enough to inspect details, out to a little smaller than
+    // framed, so the product never becomes a speck.
+    minDistance: radius * MIN_ZOOM_RADIUS,
     maxDistance: distance * MAX_ZOOM_FACTOR,
     radius,
   };
