@@ -24,12 +24,9 @@ export interface Framing {
   radius: number;
 }
 
-/**
- * Closest zoom, as a fraction of the model's bounding radius from the orbit target. Zoom goes
- * toward the cursor (which moves the target onto the surface), so this lets shoppers get right up
- * to a carving or a weave.
- */
-export const MIN_ZOOM_RADIUS = 0.75;
+/** Closest zoom, as a fraction of the model's bounding radius from its centre: close enough to
+ * see a weave or a carving, always zooming toward the centre. */
+export const MIN_ZOOM_RADIUS = 0.9;
 /** Farthest zoom, as a multiple of the framing distance. */
 export const MAX_ZOOM_FACTOR = 1.6;
 

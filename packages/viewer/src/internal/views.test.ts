@@ -2,7 +2,14 @@ import { Box3, MathUtils, Vector3 } from 'three';
 import { describe, expect, it } from 'vitest';
 
 import { computeFraming } from './framing';
-import { azimuthOf, CAMERA_VIEWS, glidePosition, glideTarget, viewPosition } from './views';
+import {
+  azimuthOf,
+  CAMERA_VIEWS,
+  clampOrbit,
+  glidePosition,
+  glideTarget,
+  viewPosition,
+} from './views';
 
 const framing = computeFraming(new Box3(new Vector3(-1, 0, -1), new Vector3(1, 2, 1)), {
   fov: 35,
@@ -71,5 +78,20 @@ describe('glideTarget', () => {
     const half = glideTarget([2, 0, 0], [0, 0, 0], 0.5);
     expect(half[0]).toBeGreaterThan(0);
     expect(half[0]).toBeLessThan(1); // eased out: most of the way there by halfway
+  });
+});
+
+describe('clampOrbit', () => {
+  const limits = { maxDistance: 3, minAzimuth: -Math.PI / 2, maxAzimuth: Math.PI / 2 };
+
+  it('leaves a position inside the limits alone', () => {
+    const p = clampOrbit([0, 0, 0], [0, 1, 2], limits);
+    expect(p[2]).toBeCloseTo(2);
+  });
+
+  it('pulls a far camera in, and one behind the product round to the open side', () => {
+    expect(new Vector3(...clampOrbit([0, 0, 0], [0, 0, 10], limits)).length()).toBeCloseTo(3);
+    const behind = clampOrbit([0, 0, 0], [0.1, 0, -2], limits);
+    expect(behind[2]).toBeCloseTo(0, 1); // swung round to the edge of the arc
   });
 });
